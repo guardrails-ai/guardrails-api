@@ -27,9 +27,10 @@ def home():
 @app.route("/health-check")
 def healthCheck():
     try:
-      query = '''SELECT 1 FROM DUAL;'''
-      response = db.session.query(text(query))
-      print(response)
+      # Make sure we're connected to the database and can run queries
+      query = text("SELECT count(*) FROM pg_stat_activity;")
+      response = db.session.execute(query).all()
+      print('response: ', response)
       return HealthCheck(200, 'Ok').toDict()
     except Exception as e:
        print(e)

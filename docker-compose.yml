@@ -26,5 +26,6 @@ services:
       PGHOST: postgres
       PGUSER: ${PGUSER:-postgres}
       PGPASSWORD: ${PGPASSWORD:-changeme}
+      PYTHONUNBUFFERED: 1
     depends_on:
       - postgres
