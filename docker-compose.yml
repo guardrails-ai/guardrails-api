@@ -1,0 +1,30 @@
+version: '3'
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${PGUSER:-postgres}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-changeme}
+      POSTGRES_DATA: /data/postgres
+    volumes:
+       - ./postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: always
+  guardrails-api:
+    image: guardrails-api:latest
+    build:
+      context: .
+      args:
+        PORT: "8000"
+    ports:
+      - "8000:8000"
+    environment: 
+      PGPORT: 5432
+      REDIS_ENDPOINT: http://postgres:5432
+      PGDATABASE: postgres
+      PGHOST: postgres
+      PGUSER: ${PGUSER:-postgres}
+      PGPASSWORD: ${PGPASSWORD:-changeme}
+    depends_on:
+      - postgres
