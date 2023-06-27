@@ -30,7 +30,6 @@ def healthCheck():
       query = '''SELECT 1 FROM DUAL;'''
       response = db.session.query(text(query))
       print(response)
-      # return Flask.make_response()
       return HealthCheck(200, 'Ok').toDict()
     except Exception as e:
        print(e)
