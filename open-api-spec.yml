@@ -1,0 +1,236 @@
+openapi: '3.0.0'
+info:
+  title: GuardRails API
+  version: '1.0'
+  description: Hello!
+paths:
+  /health-check:
+    get:
+      tags:
+        - Service Health 
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Returns the status of the server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerStatus'
+        default:
+          $ref: '#/components/schemas/HttpError'
+  /guards:
+    get:
+      operationId: getGuards
+      tags:
+        - guard
+      summary: Fetches the configuration for all Guards the user has access to.
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of Guards.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Guard'
+        default:
+          $ref: '#/components/schemas/HttpError'
+    post:
+      operationId: createGuard
+      tags:
+        - guard
+      summary: Creates a Guard
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Guard'
+      responses:
+        '200':
+          description: the new Guard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guard'
+        default:
+          $ref: '#/components/schemas/HttpError'
+  /guards/{guardName}:
+    put:
+      operationId: updateGuard
+      tags:
+        - guard
+      summary: Updates a Guard
+      parameters:
+        - $ref: '#/components/parameters/GuardName'
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Guard'
+      responses:
+        '200':
+          description: the updated Guard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guard'
+        default:
+          $ref: '#/components/schemas/HttpError'
+    delete:
+      operationId: deleteGuard
+      tags:
+        - guard
+      summary: Deletes a Guard
+      parameters:
+        - $ref: '#/components/parameters/GuardName'
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: the deleted Guard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guard'
+        default:
+          $ref: '#/components/schemas/HttpError'
+  /guards/{guardName}/validate:
+    post:
+      operationId: validate
+      tags:
+        - guard
+        - validate
+      summary: Runs the validations specified in a Guard
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              $ref: '#/components/schemas/ValidatePayload'
+      responses:
+        '200':
+          description: The output of the validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationOutput'
+        default:
+          $ref: '#/components/schemas/HttpError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: authorization
+      description: JWT token
+  parameters:
+    GuardName:
+      name: guardName
+      in: path
+      description: Guard name
+      required: true
+      schema:
+        type: string
+  schemas:
+    HttpError:
+      type: object
+      properties:
+        status:
+          type: number
+          description: A valid http status code
+        message:
+          type: string
+          description: A message explaining the status
+        cause:
+          type: string
+          description: Used to describe the origin of an error if that original error has meaning to the client.  This field should add specificity to 'message'.
+        fields:
+          type: object
+          description: Used to identify specific fields in a JSON body that caused the error.  Typically only used for 4xx type responses.  The key should be the json path to the invalid property and the value should be an error message specific to that property.
+          additionalProperties:
+            type: string
+        context:
+          type: string
+          description: Used to identify what part of the request caused the error for non-JSON payloads.
+      required:
+        - status
+        - message
+    ServerStatus:
+      type: object
+      properties:
+        status:
+          type: number
+          description: A valid http status code
+        message:
+          type: string
+          description: A message explaining the status
+      required:
+        - status
+        - message
+    Guard:
+      type: object
+      properties:
+        name:
+          type: string
+          description: A unique name for this guard configuration.
+        railspec:
+          type: object
+          description: A JSONified version of the user provided railspec.
+          additionalProperties: true
+        guardConfig:
+          type: object
+          description: Addtional guard configuration attributes.
+          additionalProperties: true
+        llmEndpoint:
+          type: string
+          description: The endpoint for the targetted LLM.
+      required:
+        - name
+        - railspec
+        - llmEndpoint
+    ValidationOutput:
+      type: object
+      properties:
+        result:
+          type: boolean
+          description: Whether the validation passed or failed
+        sessionHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryEvent'
+        additionalProperties: true
+    HistoryEvent:
+      type: object
+      properties:
+        input:
+          type: string
+        validationId:
+          type: string
+        output:
+          type: boolean
+        additionalProperties: true 
+    ValidatePayload:
+      type: string
+      description: The LLM output as a string or the input prompts for the LLM
+      example: stubbed llm output
