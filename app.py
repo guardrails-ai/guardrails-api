@@ -28,7 +28,7 @@ def home():
 def healthCheck():
     try:
       # Make sure we're connected to the database and can run queries
-      query = text("SELECT count(*) FROM pg_stat_activity;")
+      query = text("SELECT count(datid) FROM pg_stat_activity;")
       response = db.session.execute(query).all()
       print('response: ', response)
       return HealthCheck(200, 'Ok').toDict()
