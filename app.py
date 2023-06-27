@@ -31,7 +31,7 @@ def healthCheck():
       response = db.session.query(text(query))
       print(response)
       # return Flask.make_response()
-      return Flask.make_response(HealthCheck(200, 'Ok').toDict())
+      return HealthCheck(200, 'Ok').toDict()
     except Exception as e:
        print(e)
        return HttpError(500, 'Internal Server Error').toDict()
