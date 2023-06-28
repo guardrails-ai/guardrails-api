@@ -4,14 +4,23 @@ FROM public.ecr.aws/docker/library/python:3-slim
 # Create app directory
 WORKDIR /app
 
+# start the virtual environment
+RUN python3 -m venv /opt/venv
+# Enable venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY ./guardrails-sdk ./guardrails-sdk
+
 # Copy the requirements file
 COPY requirements.txt .
+
+RUN pip install ./guardrails-sdk
 
 # Install app dependencies
 RUN pip install -r requirements.txt
 
-# start the virtual environment
-RUN python3 -m venv venv
+# Freeze dependencies
+RUN pip freeze > requirements.txt
 
 # Copy the whole folder inside the Image filesystem
 COPY . .
