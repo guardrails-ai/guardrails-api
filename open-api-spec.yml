@@ -118,6 +118,8 @@ paths:
       security:
         - apiKeyAuth: []
         - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GuardName'
       requestBody:
         required: true
         content:
@@ -197,11 +199,11 @@ components:
         railspec:
           type: object
           description: A JSONified version of the user provided railspec.
-          additionalProperties: true
+          additionalProperties: {}
         guardConfig:
           type: object
           description: Addtional guard configuration attributes.
-          additionalProperties: true
+          additionalProperties: {}
         llmEndpoint:
           type: string
           description: The endpoint for the targetted LLM.
@@ -215,11 +217,15 @@ components:
         result:
           type: boolean
           description: Whether the validation passed or failed
+        validatedOutput:
+          type: string
         sessionHistory:
           type: array
           items:
             $ref: '#/components/schemas/HistoryEvent'
-        additionalProperties: true
+        additionalProperties: {}
+      required:
+        - result
     HistoryEvent:
       type: object
       properties:
@@ -229,7 +235,7 @@ components:
           type: string
         output:
           type: boolean
-        additionalProperties: true 
+        additionalProperties: {}
     ValidatePayload:
       type: string
       description: The LLM output as a string or the input prompts for the LLM

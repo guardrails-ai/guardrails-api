@@ -1,4 +1,4 @@
-class HttpError:
+class HttpError(Exception):
   def __init__(self, status: int, message: str, cause: str = None, fields: dict = None, context: str = None):
     self.status = status
     self.message = message
@@ -6,7 +6,7 @@ class HttpError:
     self.fields = fields
     self.context = context
   
-  def toDict(self):
+  def to_dict(self):
     return {
       'status': self.status,
       'message': self.message,

@@ -15,6 +15,7 @@ services:
     image: guardrails-api:latest
     build:
       context: .
+      dockerfile: Dockerfile.dev
       args:
         PORT: "8000"
     ports:
@@ -27,5 +28,6 @@ services:
       PGUSER: ${PGUSER:-postgres}
       PGPASSWORD: ${PGPASSWORD:-changeme}
       PYTHONUNBUFFERED: 1
+      LOGLEVEL: DEBUG
     depends_on:
       - postgres
