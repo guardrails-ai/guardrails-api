@@ -1,0 +1,84 @@
+# Reference: https://opensearch.org/docs/latest/data-prepper/pipelines/pipelines/
+log-pipeline:
+  source:
+    # http:
+    #   ssl_certificate_file: "/full/path/to/certfile.crt"
+    #   ssl_key_file: "/full/path/to/keyfile.key"
+    #   authentication:
+    #     http_basic:
+    #       username: "myuser"
+    #       password: "mys3cret"
+    otel_logs_source:
+      ssl: false
+  processor:
+    - grok:
+        match:
+          log: [ "%{COMMONAPACHELOG}" ]
+  sink:
+    - opensearch:
+        hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
+        insecure: true
+        username: "admin"
+        password: "admin"
+        index: apache_logs
+entry-pipeline:
+  delay: "100"
+  source:
+    otel_trace_source:
+      ssl: false
+  buffer:
+    bounded_blocking:
+      buffer_size: 10240
+      batch_size: 160
+  sink:
+    - pipeline:
+        name: "raw-pipeline"
+    - pipeline:
+        name: "service-map-pipeline"
+raw-pipeline:
+  source:
+    pipeline:
+      name: "entry-pipeline"
+  buffer:
+    bounded_blocking:
+      buffer_size: 10240
+      batch_size: 160
+  processor:
+    - otel_trace_raw:
+  sink:
+    - opensearch:
+        hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
+        insecure: true
+        username: admin
+        password: admin
+        index_type: trace-analytics-raw
+service-map-pipeline:
+  delay: "100"
+  source:
+    pipeline:
+      name: "entry-pipeline"
+  buffer:
+    bounded_blocking:
+      buffer_size: 10240
+      batch_size: 160
+  processor:
+    - service_map_stateful:
+  sink:
+    - opensearch:
+        hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
+        insecure: true
+        username: admin
+        password: admin
+        index_type: trace-analytics-service-map
+metrics-pipeline:
+  source:
+    otel_metrics_source:
+      ssl: false
+  processor:
+    - otel_metrics_raw_processor:
+  sink:
+    - opensearch:
+      hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
+      username: admin
+      password: admin
+      index: metrics_index
