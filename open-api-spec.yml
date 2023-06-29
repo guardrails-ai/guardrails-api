@@ -197,9 +197,11 @@ components:
           type: string
           description: A unique name for this guard configuration.
         railspec:
-          type: object
-          description: A JSONified version of the user provided railspec.
-          additionalProperties: {}
+          $ref: '#/components/schemas/RailSpec'
+        numReasks:
+          type: number
+          description: The number of re-asks to perform during validation when a validation fails.
+        # The below might belong in the /validate endpoint payload
         guardConfig:
           type: object
           description: Addtional guard configuration attributes.
@@ -210,7 +212,80 @@ components:
       required:
         - name
         - railspec
-        - llmEndpoint
+    RailSpec:
+      type: object
+      description: A JSONified version of the user provided railspec.
+      properties:
+        inputSchema:
+          $ref: '#/components/schemas/Schema'
+        outputSchema:
+          $ref: '#/components/schemas/Schema'
+        instructions:
+          $ref: '#/components/schemas/Prompt'
+        prompt:
+          $ref: '#/components/schemas/Prompt'
+        script:
+          $ref: '#/components/schemas/Script'
+        version:
+          type: string
+          default: "0.1"
+          enum:
+            - "0.1"
+    Schema:
+      type: object
+      properties:
+        schema:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DataType'
+    DataType:
+      type: object
+      properties:
+        children:
+          type: object
+          additionalProperties: {}
+        formatters:
+          type: array
+          items:
+            type: string
+        element:
+          $ref: '#/components/schemas/SchemaElement'
+    Prompt:
+      type: object
+      properties:
+        source:
+          type: string
+        outputSchema:
+          type: string
+    Script:
+      type: object
+      properties:
+        text:
+          type: string
+        language:
+          type: string
+        variables:
+          type: object
+          additionalProperties: {}
+    SchemaElement:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        strict:
+          type: boolean
+        date_format:
+          type: string
+        time_format:
+          type: string
+        on_fail:
+          type: string
+        model:
+          type: string
     ValidationOutput:
       type: object
       properties:
