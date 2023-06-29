@@ -42,7 +42,7 @@ class GuardStruct:
 
     def to_dict(self):
        return {
-          self.name,
-          self.railspec.to_dict(),
-          self.num_reasks
+          "name": self.name,
+          "railspec": self.railspec.to_dict(),
+          "num_reasks": self.num_reasks
        }

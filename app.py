@@ -64,7 +64,7 @@ def guards():
     guardClient = GuardClient()
     if request.method == 'GET':
         guards = guardClient.get_guards()
-        return map(lambda g: g.to_dict(), guards)
+        return [g.to_dict() for g in guards]
     elif request.method == 'POST':
         payload = request.json
         guard = guardClient.create_guard(payload)
