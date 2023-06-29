@@ -19,7 +19,7 @@ paths:
         - $ref: '#/components/parameters/TimeRange'
       responses:
         '200':
-          description: An object containing vector embeddings of the source text and LLM outputs as x, y coordinates and their corresponding labels that identify the source and validationId-step#
+          description: An object containing vector embeddings of the source text and LLM outputs as x, y coordinates and their corresponding labels that identify the source or validationId-step#
           content:
             application/json:
               schema:
@@ -40,7 +40,7 @@ paths:
         - $ref: '#/components/parameters/TimeRange'
       responses:
         '200':
-          description: An object containing vector embeddings of the source text and LLM outputs as x, y coordinates and their corresponding labels that identify the source and step#
+          description: An object containing vector embeddings of the source text and LLM outputs as x, y coordinates and their corresponding labels that identify the source or step#
           content:
             application/json:
               schema:
