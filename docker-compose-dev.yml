@@ -11,6 +11,16 @@ services:
     ports:
       - "5432:5432"
     restart: always
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGUSER:-postgres}@guardrails.com"
+      PGADMIN_DEFAULT_PASSWORD: ${PGPASSWORD:-changeme}
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
   guardrails-api:
     image: guardrails-api:latest
     build:

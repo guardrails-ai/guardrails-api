@@ -22,3 +22,9 @@ class BasePromptStruct:
             "source": self.source,
             "output_schema": self.output_schema
         }
+    
+    def to_response(self):
+        return {
+            "source": self.source,
+            "outputSchema": self.output_schema
+        }

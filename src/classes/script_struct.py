@@ -35,3 +35,10 @@ class ScriptStruct:
           "language": self.language,
           "variables": self.variables   
         }
+    
+    @classmethod
+    def from_request(cls, script: dict):
+        return cls.from_dict(script)
+    
+    def to_response(self):
+        return self.to_dict()

@@ -60,3 +60,43 @@ class SchemaElementStruct:
           "on_fail": self.on_fail,
           "model": self.model   
         }
+    
+    @classmethod
+    def from_request(cls, schema_element: dict):
+        if schema_element != None:
+          type, name, description, strict, date_format, time_format, on_fail, model = pluck(
+              schema_element,
+              [      
+                "type",
+                "name",
+                "description",
+                "strict",
+                "dateFormat",
+                "timeFormat",
+                "onFail",
+                "model"
+              ]
+          )
+          return cls(
+              type,
+              name,
+              description,
+              strict,
+              date_format,
+              time_format,
+              on_fail,
+              model
+            )
+        
+    def to_response(self):
+        return {
+          "type": self.type,
+          "name": self.name,
+          "description": self.description,
+          "strict": self.strict,
+          "dateFormat": self.date_format,
+          "timeFormat": self.time_format,
+          "onFail": self.on_fail,
+          "model": self.model   
+        }
+    

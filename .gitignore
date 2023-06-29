@@ -2,3 +2,4 @@ src/__pycache__
 postgres
 guardrails-sdk
 scratch.py
+pgadmin-data

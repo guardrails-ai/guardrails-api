@@ -221,9 +221,9 @@ components:
         outputSchema:
           $ref: '#/components/schemas/Schema'
         instructions:
-          $ref: '#/components/schemas/Prompt'
+          type: string
         prompt:
-          $ref: '#/components/schemas/Prompt'
+          type: string
         script:
           $ref: '#/components/schemas/Script'
         version:
@@ -250,13 +250,6 @@ components:
             type: string
         element:
           $ref: '#/components/schemas/SchemaElement'
-    Prompt:
-      type: object
-      properties:
-        source:
-          type: string
-        outputSchema:
-          type: string
     Script:
       type: object
       properties:
@@ -278,11 +271,11 @@ components:
           type: string
         strict:
           type: boolean
-        date_format:
+        dateFormat:
           type: string
-        time_format:
+        timeFormat:
           type: string
-        on_fail:
+        onFail:
           type: string
         model:
           type: string

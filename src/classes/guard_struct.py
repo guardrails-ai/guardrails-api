@@ -46,3 +46,19 @@ class GuardStruct:
           "railspec": self.railspec.to_dict(),
           "num_reasks": self.num_reasks
        }
+    
+    @classmethod
+    def from_request(cls, guard: dict):
+       name, railspec, num_reasks = pluck(
+          guard,
+          [  
+            "name",
+            "railspec",
+            "numReasks"
+          ]
+        )
+       return cls(
+          name,
+          RailSpecStruct.from_request(railspec),
+          num_reasks
+       )

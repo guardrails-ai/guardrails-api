@@ -37,3 +37,22 @@ class SchemaStruct:
           schemaElement = self.schema[key]
           dict_schema[key] = schemaElement.to_dict()
       return dict_schema
+    
+    @classmethod
+    def from_request(cls, schema: dict):
+      if schema != None:
+        serialized_schema = {}
+        orig_schema = schema["schema"]
+        for key in orig_schema:
+            schema_element = orig_schema[key]
+            serialized_schema[key] = DataTypeStruct.from_request(schema_element)
+        return cls(
+            serialized_schema
+        )
+      
+    def to_response(self):
+      dict_schema = {}
+      for key in self.schema:
+          schema_element = self.schema[key]
+          dict_schema[key] = schema_element.to_response()
+      return dict_schema

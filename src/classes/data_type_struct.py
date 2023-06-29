@@ -79,5 +79,40 @@ class DataTypeStruct:
             "formatters": self.formatters,
             "element": self.element.to_dict()
         }
+    
+    @classmethod
+    def from_request(cls, dataType: dict):
+        if dataType != None:
+          children, formatters, element = pluck(
+              dataType,
+              [   
+                "children",
+                "formatters",
+                "element"
+              ]
+          )
+          serialied_children = {}
+          if children != None:
+            child_entries = children.get("item", {}) if element["type"] else children
+            for child_key in child_entries:
+                serialied_children[child_key] = cls.from_request(child_entries[child_key])
+          return cls(
+              serialied_children,
+              formatters,
+              SchemaElementStruct.from_request(element)
+          )
+        
+    def to_response(self):
+        dict_children = {}
+        elem_type = self.element.type if self.element != None else None
+        if self.children != None:
+          child_entries = self.children.get("item", {}) if elem_type == "list" else self.children
+          for childKey in child_entries:
+              dict_children[childKey] = child_entries[childKey].to_response()
+        return {
+            "children": dict_children,
+            "formatters": self.formatters,
+            "element": self.element.to_response()
+        }
         
     

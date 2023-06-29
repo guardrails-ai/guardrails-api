@@ -1,4 +1,3 @@
-import os
 import traceback
 from flask import Flask, request
 from sqlalchemy import text
@@ -8,6 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from src.classes.validation_output import ValidationOutput
 from swagger_ui import api_doc
 from functools import wraps
+
+from src.clients.postgres_client import PostgresClient
 
 def handle_error(fn):
     @wraps(fn)
@@ -29,19 +30,9 @@ from src.clients.guard_client import GuardClient
 app = Flask(__name__)
 api_doc(app, config_path='./open-api-spec.yml', url_prefix='/docs', title='GuardRails API Docs')
 
-pg_user = os.environ.get('PGUSER', 'postgres')
-pg_password = os.environ.get('PGPASSWORD','undefined')
-pg_host = os.environ.get('PGHOST','localhost')
-pg_port = os.environ.get('PGPORT','5432')
-pg_database = os.environ.get('PGDATABASE','postgres')
-
-CONF = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}"
-app.config['SQLALCHEMY_DATABASE_URI'] = CONF
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = 'secret'
-db = SQLAlchemy(app)
-
+# TODO: put this inside of a singleton getter/refresher to handle stale connections
+pg = PostgresClient(app)
+db = pg.db
 
 @app.route("/")
 @handle_error
@@ -63,23 +54,37 @@ def healthCheck():
 def guards():
     guardClient = GuardClient()
     if request.method == 'GET':
-        guards = guardClient.get_guards()
+        guards = guardClient.get_guards(db)
         return [g.to_dict() for g in guards]
     elif request.method == 'POST':
         payload = request.json
-        guard = guardClient.create_guard(payload)
+        guard = guardClient.post_guard(payload, db)
         return guard.to_dict()
     else:
         raise HttpError(405, 'Method Not Allowed', '/guards only supports the GET and POST methods. You specified %s'.format(request.method))
 
-@app.route("/guards/<guard_id>/validate", methods = ['POST'])
+@app.route("/guards/<guard_name>", methods = ['GET', 'POST'])
 @handle_error
-def validate(guard_id: str):
+def guard(guard_name: str):
+    guardClient = GuardClient()
+    if request.method == 'PUT':
+        payload = request.json
+        guards = guardClient.put_guard(guard_name, payload, db)
+        return [g.to_dict() for g in guards]
+    elif request.method == 'DELETE':
+        guard = guardClient.delete_guard(guard_name, db)
+        return guard.to_dict()
+    else:
+        raise HttpError(405, 'Method Not Allowed', '/guard/<guard_name> only supports the PUT and DELETE methods. You specified %s'.format(request.method))
+
+@app.route("/guards/<guard_name>/validate", methods = ['POST'])
+@handle_error
+def validate(guard_name: str):
     if request.method != 'POST':
-        raise HttpError(405, 'Method Not Allowed', '/guards/<guard_id>/validate only supports the POST method. You specified %s'.format(request.method))
+        raise HttpError(405, 'Method Not Allowed', '/guards/<guard_name>/validate only supports the POST method. You specified %s'.format(request.method))
     payload = request.data.decode()
     guardClient = GuardClient()
-    guard = guardClient.get_guard(guard_id)
+    guard = guardClient.get_guard(guard_name)
     result = guard.parse(payload)
     return ValidationOutput(True, result, guard.state.all_histories).to_dict()
 

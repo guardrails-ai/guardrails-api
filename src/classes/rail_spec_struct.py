@@ -76,3 +76,48 @@ class RailSpecStruct:
             rail["script"] = self.script.to_dict()
 
         return rail
+    
+    @classmethod
+    def from_request(cls, rail: dict):
+        input_schema, output_schema, instructions, prompt, script, version = pluck(
+            rail,
+            [   
+              "inputSchema",
+              "outputSchema",
+              "instructions",
+              "prompt",
+              "script",
+              "version"
+            ]
+        )
+        return cls(
+          SchemaStruct.from_request(input_schema),
+          SchemaStruct.from_request(output_schema),
+          BasePromptStruct(instructions),
+          BasePromptStruct(prompt),
+          ScriptStruct.from_request(script),
+          version
+       )
+    
+    def to_response(self):
+        rail = {
+            "inputSchema": None,
+            "outputSchema": None,
+            "instructions": None,
+            "prompt": None,
+            "script": None,
+            "version": self.version
+        }
+
+        if self.input_schema != None:
+            rail["inputSchema"] = self.input_schema.to_response()
+        if self.output_schema != None:
+            rail["outputSchema"] = self.output_schema.to_response()
+        if self.instructions != None:
+            rail["instructions"] = self.instructions.to_response()
+        if self.prompt != None:
+            rail["prompt"] = self.prompt.to_response()
+        if self.script != None:
+            rail["script"] = self.script.to_response()
+
+        return rail
