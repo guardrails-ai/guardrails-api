@@ -91,17 +91,31 @@ services:
   data-prepper:
     restart: unless-stopped
     container_name: data-prepper
-    image: opensearchproject/data-prepper:2
+    image: opensearchproject/data-prepper:latest
     volumes:
       - ./data-prepper-configs/pipelines.yml:/usr/share/data-prepper/pipelines/pipelines.yml
       - ./data-prepper-configs/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yml
     ports:
-      - "21890:21890"
+      - 21890:21890
+    expose:
+      - "21890"
     networks:
       - opensearch-net
     depends_on:
       - opensearch-node1
       - opensearch-node2
+  otel-collector:
+    restart: unless-stopped
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./data-prepper-configs/otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - 55680:55680
+    depends_on:
+      - data-prepper
+    networks:
+      - opensearch-net
 
 volumes:
   opensearch-data1:
