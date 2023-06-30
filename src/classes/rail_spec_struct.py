@@ -1,6 +1,5 @@
 from guardrails import Rail
 from src.classes.schema_struct import SchemaStruct
-from src.classes.base_prompt_struct import BasePromptStruct
 from src.classes.script_struct import ScriptStruct
 from src.utils.pluck import pluck
 
@@ -9,8 +8,8 @@ class RailSpecStruct:
         self,
         input_schema: SchemaStruct = None,
         output_schema: SchemaStruct = None,
-        instructions: BasePromptStruct = None,
-        prompt: BasePromptStruct = None,
+        instructions: str = None,
+        prompt: str = None,
         script: ScriptStruct = None,
         version: str = "0.1",
     ):
@@ -26,8 +25,8 @@ class RailSpecStruct:
         return cls(
           SchemaStruct.from_schema(rail.input_schema),
           SchemaStruct.from_schema(rail.output_schema),
-          BasePromptStruct.from_prompt(rail.instructions),
-          BasePromptStruct.from_prompt(rail.prompt),
+          rail.instructions.source,
+          rail.prompt.source,
           ScriptStruct.from_script(rail.script),
           rail.version
        )
@@ -48,8 +47,8 @@ class RailSpecStruct:
         return cls(
           SchemaStruct.from_dict(input_schema),
           SchemaStruct.from_dict(output_schema),
-          BasePromptStruct(instructions),
-          BasePromptStruct(prompt),
+          instructions,
+          prompt,
           ScriptStruct.from_dict(script),
           version
        )
@@ -69,9 +68,9 @@ class RailSpecStruct:
         if self.output_schema != None:
             rail["output_schema"] = self.output_schema.to_dict()
         if self.instructions != None:
-            rail["instructions"] = self.instructions.to_dict()
+            rail["instructions"] = self.instructions
         if self.prompt != None:
-            rail["prompt"] = self.prompt.to_dict()
+            rail["prompt"] = self.prompt
         if self.script != None:
             rail["script"] = self.script.to_dict()
 
@@ -93,8 +92,8 @@ class RailSpecStruct:
         return cls(
           SchemaStruct.from_request(input_schema),
           SchemaStruct.from_request(output_schema),
-          BasePromptStruct(instructions),
-          BasePromptStruct(prompt),
+          instructions,
+          prompt,
           ScriptStruct.from_request(script),
           version
        )
@@ -114,9 +113,9 @@ class RailSpecStruct:
         if self.output_schema != None:
             rail["outputSchema"] = self.output_schema.to_response()
         if self.instructions != None:
-            rail["instructions"] = self.instructions.to_response()
+            rail["instructions"] = self.instructions
         if self.prompt != None:
-            rail["prompt"] = self.prompt.to_response()
+            rail["prompt"] = self.prompt
         if self.script != None:
             rail["script"] = self.script.to_response()
 

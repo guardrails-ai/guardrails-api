@@ -19,8 +19,11 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: "${PGUSER:-postgres}@guardrails.com"
       PGADMIN_DEFAULT_PASSWORD: ${PGPASSWORD:-changeme}
+      PGADMIN_SERVER_JSON_FILE: /var/lib/pgadmin/servers.json
     volumes:
       - ./pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
   guardrails-api:
     image: guardrails-api:latest
     build:

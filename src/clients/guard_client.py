@@ -1,8 +1,9 @@
 import os
+from typing import List
 from guardrails import Guard
-from flask_sqlalchemy import SQLAlchemy
 from src.classes.guard_struct import GuardStruct
-from src.clients.postgres_client import GuardItem
+from src.models.guard_item import GuardItem
+from src.clients.postgres_client import PostgresClient
 
 mockGuard = {
    "name": "guard-1",
@@ -73,77 +74,59 @@ mockGuard = {
 }
 
 class GuardClient:
-    
     def __init__(self):
         self.initialized = True
         dirname = os.path.dirname(__file__)
         filename = os.path.join(dirname, '../../rail-spec.xml')
         self.rail_file = os.path.abspath(filename)
+        self.pgClient = PostgresClient()
     
-    def get_guard(self, guard_name: str):
-        return Guard.from_rail(self.rail_file)
+    def get_guard(self, guard_name: str) -> GuardStruct:
+        guard_item = self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
+        return GuardStruct.from_guard_item(guard_item)
+
+    def get_guard_item(self, guard_name: str) -> GuardItem:
+        return self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
 
     def get_guards(
-        self,
-        db: SQLAlchemy = None
-    ):
+        self
+    ) -> List[GuardStruct]:
         # TODO: fetch from postgres or w/e database
-        guard_items = db.session.query(GuardItem).all()
+        guard_items = self.pgClient.db.session.query(GuardItem).all()
 
-        return [GuardStruct.from_dict(gi) for gi in guard_items]
+        return [GuardStruct.from_guard_item(gi) for gi in guard_items]
 
     def create_guard(
         self,
-        guard: GuardStruct,
-        db: SQLAlchemy = None
-    ):
+        guard: GuardStruct
+    ) -> GuardStruct:
         guard_item = GuardItem(
             name=guard.name,
             railspec=guard.railspec.to_dict(),
             num_reasks=guard.num_reasks
         )
-        db.session.add(guard_item)
-        db.session.commit()
-        return guard
-    
-    def post_guard(
-        self,
-        payload: dict,
-        db: SQLAlchemy = None
-    ):
-        # TODO: Upsert to postgres or w/e database
-        guard = GuardStruct.from_request(payload)
-        return self.create_guard(guard, db)
+        self.pgClient.db.session.add(guard_item)
+        self.pgClient.db.session.commit()
+        return GuardStruct.from_guard_item(guard_item)
     
     def update_guard(
         self,
         guard_name: str,
-        payload: dict,
-        db: SQLAlchemy = None
-    ):
-        # TODO: Upsert to postgres or w/e database
-        guard = GuardStruct.from_dict(payload)
-        guard.name = guard_name
-        return guard
-    
-    def put_guard(
-        self,
-        guard_name: str,
-        payload: dict,
-        db: SQLAlchemy = None
-    ):
-        # TODO: Upsert to postgres or w/e database
-        guard = GuardStruct.from_request(payload)
-        guard.name = guard_name
-        return guard
+        guard: GuardStruct
+    ) -> GuardStruct:
+        guard_item = self.get_guard_item(guard_name)
+        guard_item.railspec = guard.railspec.to_dict()
+        guard_item.num_reasks = guard.num_reasks
+        self.pgClient.db.session.commit()
+        return GuardStruct.from_guard_item(guard_item)
 
     def delete_guard(
         self,
-        guard_name: str,
-        db: SQLAlchemy = None
-    ):
-        # TODO: Upsert to postgres or w/e database
-        guard = GuardStruct.from_dict(mockGuard)
-        guard.name = guard_name
+        guard_name: str
+    ) -> GuardStruct:
+        guard_item = self.get_guard_item(guard_name)
+        self.pgClient.db.session.delete(guard_item)
+        self.pgClient.db.session.commit()
+        guard = GuardStruct.from_guard_item(guard_item)
         return guard
         

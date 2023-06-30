@@ -1,5 +1,7 @@
+import json
 from guardrails import Guard
 from src.classes.rail_spec_struct import RailSpecStruct
+from src.models.guard_item import GuardItem
 
 from src.utils.pluck import pluck
 
@@ -61,4 +63,12 @@ class GuardStruct:
           name,
           RailSpecStruct.from_request(railspec),
           num_reasks
+       )
+    
+    @classmethod
+    def from_guard_item(cls, guard_item: GuardItem):
+       return cls(
+          guard_item.name,
+          RailSpecStruct.from_dict(guard_item.railspec),
+          guard_item.num_reasks
        )

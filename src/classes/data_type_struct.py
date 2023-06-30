@@ -7,7 +7,7 @@ from src.utils.pluck import pluck
 class DataTypeStruct:
     def __init__(
         self,
-        children: Dict[str, Any],
+        children: Dict[str, Any] = None,
         formatters: List[str] = [],
         element: SchemaElementStruct = None
     ):
@@ -56,29 +56,35 @@ class DataTypeStruct:
                 "element"
               ]
           )
-          serialied_children = {}
+          children_data_types = None
           if children != None:
-            child_entries = children.get("item", {}) if element["type"] else children
+            class_children = {}
+            elem_type = element["type"] if element != None else None
+            elem_is_list = elem_type == "list"
+            child_entries = children.get("item", {}) if elem_is_list else children
             for child_key in child_entries:
-                serialied_children[child_key] = cls.from_dict(child_entries[child_key])
+                class_children[child_key] = cls.from_dict(child_entries[child_key])
+            children_data_types = { "item": class_children } if elem_is_list else class_children
           return cls(
-              serialied_children,
+              children_data_types,
               formatters,
               SchemaElementStruct.from_dict(element)
           )
     
     def to_dict(self):
-        dict_children = {}
-        elem_type = self.element.type if self.element != None else None
-        if self.children != None:
-          child_entries = self.children.get("item", {}) if elem_type == "list" else self.children
-          for childKey in child_entries:
-              dict_children[childKey] = child_entries[childKey].to_dict()
-        return {
-            "children": dict_children,
-            "formatters": self.formatters,
+        response = {
+           "formatters": self.formatters,
             "element": self.element.to_dict()
         }
+        if self.children != None:
+          serialized_children = {}
+          elem_type = self.element.type if self.element != None else None
+          elem_is_list = elem_type == "list"
+          child_entries = self.children.get("item", {}) if elem_is_list else self.children
+          for childKey in child_entries:
+              serialized_children[childKey] = child_entries[childKey].to_dict()
+          response["children"] = { "item": serialized_children } if elem_is_list else serialized_children
+        return response
     
     @classmethod
     def from_request(cls, dataType: dict):
@@ -91,28 +97,36 @@ class DataTypeStruct:
                 "element"
               ]
           )
-          serialied_children = {}
+          children_data_types = None
           if children != None:
+            class_children = {}
+            elem_type = element["type"] if element != None else None
+            elem_is_list = elem_type == "list"
             child_entries = children.get("item", {}) if element["type"] else children
             for child_key in child_entries:
-                serialied_children[child_key] = cls.from_request(child_entries[child_key])
-          return cls(
-              serialied_children,
+                class_children[child_key] = cls.from_request(child_entries[child_key])
+            children_data_types = { "item": class_children } if elem_is_list else class_children
+          
+          return cls (
+              children_data_types,
               formatters,
               SchemaElementStruct.from_request(element)
           )
         
     def to_response(self):
-        dict_children = {}
-        elem_type = self.element.type if self.element != None else None
-        if self.children != None:
-          child_entries = self.children.get("item", {}) if elem_type == "list" else self.children
-          for childKey in child_entries:
-              dict_children[childKey] = child_entries[childKey].to_response()
-        return {
-            "children": dict_children,
+        response = {
             "formatters": self.formatters,
             "element": self.element.to_response()
         }
+        if self.children != None:
+          serialized_children = {}
+          elem_type = self.element.type if self.element != None else None
+          elem_is_list = elem_type == "list"
+          child_entries = self.children.get("item", {}) if elem_type == "list" else self.children
+          for childKey in child_entries:
+              serialized_children[childKey] = child_entries[childKey].to_response()
+          children_resposne = { "item": serialized_children } if elem_is_list else serialized_children
+          response["children"]: children_resposne
+        return response
         
     
