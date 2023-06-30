@@ -1,4 +1,7 @@
 from guardrails import Rail
+from guardrails.schema import JsonSchema, Schema, StringSchema
+from lxml import etree
+from lxml.etree import Element, SubElement
 from src.classes.schema_struct import SchemaStruct
 from src.classes.script_struct import ScriptStruct
 from src.utils.pluck import pluck
@@ -30,6 +33,17 @@ class RailSpecStruct:
           ScriptStruct.from_script(rail.script),
           rail.version
        )
+
+    # def to_rail(self) -> Rail:
+    #     output_schema = self.output_schema.to_schema() if self.output_schema else None
+    #     return Rail(
+    #         self.input_schema.to_schema() if self.input_schema else None,
+    #         output_schema,
+    #         Instructions(self.instructions, output_schema) if self.instructions else None,
+    #         Prompt(self.prompt, output_schema) if self.prompt else None,
+    #         self.script.to_script() if self.script else None,
+    #         self.version
+    #     )
 
     @classmethod
     def from_dict(cls, rail: dict):
@@ -120,3 +134,56 @@ class RailSpecStruct:
             rail["script"] = self.script.to_response()
 
         return rail
+    
+    @classmethod
+    def from_xml(cls, railspec: str):
+        XMLPARSER = etree.XMLParser(encoding="utf-8")
+        elem_tree = etree.fromstring(railspec, parser=XMLPARSER)
+
+        if "version" not in elem_tree.attrib or elem_tree.attrib["version"] != "0.1":
+            raise ValueError(
+                "RAIL file must have a version attribute set to 0.1."
+                "Change the opening <rail> element to: <rail version='0.1'>."
+            )
+
+        # Load <input /> schema
+        input_schema = None
+        raw_input_schema = elem_tree.find("input")
+        if raw_input_schema is not None:
+            input_schema = SchemaStruct.from_xml(raw_input_schema)
+
+        # Load <output /> schema
+        output_schema = None
+        raw_output_schema = elem_tree.find("output")
+        if raw_output_schema is not None:
+            output_schema = SchemaStruct.from_xml(raw_output_schema)
+        
+        
+        # Parse instructions for the LLM. These are optional but if given,
+        # LLMs can use them to improve their output. Commonly these are
+        # prepended to the prompt.
+        instructions = elem_tree.find("instructions")
+        # if instructions is not None:
+        #     instructions = cls.load_instructions(instructions, output_schema)
+
+        # Load <prompt />
+        prompt = elem_tree.find("prompt")
+        if prompt is None:
+            raise ValueError("RAIL file must contain a prompt element.")
+        # prompt = cls.load_prompt(prompt, output_schema)
+
+        # Execute the script before validating the rest of the RAIL file.
+        script = None
+        raw_script = elem_tree.find("script")
+        if raw_script is not None:
+            script = raw_script
+            # script = cls.load_script(raw_script)
+
+        return cls(
+            input_schema=input_schema,
+            output_schema=output_schema,
+            instructions=instructions,
+            prompt=prompt,
+            script=script,
+            version=elem_tree.attrib["version"]
+        )

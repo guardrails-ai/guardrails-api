@@ -1,4 +1,5 @@
 from typing import Optional
+from lxml.etree import _Element
 from src.utils.pluck import pluck
 
 class SchemaElementStruct:
@@ -11,6 +12,7 @@ class SchemaElementStruct:
         date_format: Optional[str],
         time_format: Optional[str],
         on_fail: Optional[str],
+        on_fail_tag: Optional[str],
         model: Optional[str],
     ):
         self.type = type
@@ -20,6 +22,7 @@ class SchemaElementStruct:
         self.date_format = date_format
         self.time_format = time_format
         self.on_fail = on_fail
+        self.on_fail_tag = on_fail_tag
         self.model = model
 
     @classmethod
@@ -100,3 +103,33 @@ class SchemaElementStruct:
           "model": self.model   
         }
     
+    @classmethod
+    def from_xml(cls, xml: _Element):
+        type = xml.tag
+        name = xml.get("name")
+        description = xml.get("name")
+        strict = None
+        strict_tag = xml.get("strict")
+        if strict_tag:
+            strict = True if strict_tag == "true" else False
+        date_format = xml.get("date-format")
+        time_format  = xml.get("time-format")
+        on_fail = None
+        on_fail_tag = None
+        attr_keys = xml.keys()
+        for attr_key in attr_keys:
+            if attr_key.startswith("on-fail"):
+                on_fail = xml.get(attr_key)
+                on_fail_tag = attr_key
+        model = xml.get("model")
+        return cls(
+            type,
+            name,
+            description,
+            strict,
+            date_format,
+            time_format,
+            on_fail,
+            on_fail_tag,
+            model
+        )

@@ -1,5 +1,7 @@
+import re
 from typing import Any, Dict, List
 from operator import attrgetter
+from lxml.etree import _Element
 from guardrails.datatypes import DataType
 from src.classes.schema_element_struct import SchemaElementStruct
 from src.utils.pluck import pluck
@@ -16,7 +18,7 @@ class DataTypeStruct:
         self.element = element
     
     @classmethod
-    def fromDataType(cls, dataType: DataType):
+    def from_data_type(cls, dataType: DataType):
         xmlement = dataType.element
         name, description, strict, date_format, time_format, model = attrgetter(
           "name",
@@ -26,7 +28,7 @@ class DataTypeStruct:
           "time-format",
           "model"
         )(xmlement)
-        on_fail = ''
+        on_fail = None
         for attr in xmlement.attrib:
             if attr.startswith("on-fail"):
                 on_fail = attr
@@ -34,15 +36,15 @@ class DataTypeStruct:
             dataType.children,
             dataType.format_attr.tokens,
             SchemaElementStruct(
-            xmlement.tag,
-            name,
-            description,
-            strict,
-            date_format,
-            time_format,
-            on_fail,
-            model
-          )
+              xmlement.tag,
+              name,
+              description,
+              strict,
+              date_format,
+              time_format,
+              on_fail,
+              model
+            )
         )
     
     @classmethod
@@ -129,4 +131,23 @@ class DataTypeStruct:
           response["children"]: children_resposne
         return response
         
-    
+    @classmethod
+    def from_xml(cls, elem: _Element):
+      elem_format = elem.get("format", "")
+      pattern = re.compile(r";(?![^{}]*})")
+      tokens = re.split(pattern, elem_format)
+      formatters = list(filter(None, tokens))
+
+      element = SchemaElementStruct.from_xml(elem)
+      
+      children = None
+      # TODO: how to get children? Check lxml documentation
+      print('elem.keys(): ', elem.keys())
+      print('elem.values(): ', elem.values())
+
+      
+      return cls(
+        children,
+        formatters,
+        element
+      )

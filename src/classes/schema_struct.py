@@ -1,4 +1,5 @@
 from typing import Dict
+from lxml.etree import _Element, _Comment
 from guardrails.schema import Schema
 from src.classes.data_type_struct import DataTypeStruct
 
@@ -17,10 +18,19 @@ class SchemaStruct:
         serialized_schema = {}
         for key in schema._schema:
             schema_element = schema._schema[key]
-            serialized_schema[key] = DataTypeStruct.fromDataType(schema_element)
+            serialized_schema[key] = DataTypeStruct.from_data_type(schema_element)
         return cls(
             { "schema": serialized_schema }
         )
+    
+    # def to_schema(self) -> Schema:
+    #     schema = {}
+    #     inner_schema = self.schema["schema"]
+    #     for key in inner_schema:
+    #         schema_element = inner_schema[key]
+    #         schema[key] = schema_element.to_dict()
+    #     # return { "schema": dict_schema }
+    #     return Schema()
 
     @classmethod
     def from_dict(cls, schema: dict):
@@ -60,3 +70,16 @@ class SchemaStruct:
           schema_element = self.schema[key]
           dict_schema[key] = schema_element.to_response()
       return { "schema": dict_schema }
+    
+    @classmethod
+    def from_xml(cls, xml: _Element):
+      schema = {}
+      #  if "type" in xml.attrib and xml.attrib["type"] == "string":
+      #       return StringSchema(root)
+      #   return JsonSchema(root)
+      child: _Element
+      for child in xml:
+          if isinstance(child, _Comment):
+              continue
+          name = child.get("name")
+          schema[name] = DataTypeStruct.from_xml(child)

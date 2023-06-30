@@ -26,7 +26,11 @@ class GuardStruct:
        )
     
     def to_guard(self) -> Guard:
-       return
+        return
+      #  return Guard(
+      #     RailSpecStruct.to_rail(),
+      #     self.num_reasks
+      #  )
 
     @classmethod
     def from_dict(cls, guard: dict):
@@ -80,4 +84,12 @@ class GuardStruct:
           guard_item.name,
           RailSpecStruct.from_dict(guard_item.railspec),
           guard_item.num_reasks
+       )
+    
+    @classmethod
+    def from_railspec(cls, name: str, railspec: str, num_reasks: int = None):
+       return cls(
+          name,
+          RailSpecStruct.from_xml(railspec),
+          num_reasks
        )

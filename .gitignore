@@ -3,3 +3,4 @@ postgres
 guardrails-sdk
 scratch.py
 pgadmin-data
+__pycache__/
