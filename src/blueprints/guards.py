@@ -13,12 +13,12 @@ def guards():
     guardClient = GuardClient()
     if request.method == 'GET':
         guards = guardClient.get_guards()
-        return [g.to_dict() for g in guards]
+        return [g.to_response() for g in guards]
     elif request.method == 'POST':
         payload = request.json
         guard = GuardStruct.from_request(payload)
         new_guard = guardClient.create_guard(guard)
-        return new_guard.to_dict()
+        return new_guard.to_response()
     else:
         raise HttpError(405, 'Method Not Allowed', '/guards only supports the GET and POST methods. You specified %s'.format(request.method))
 
@@ -30,10 +30,10 @@ def guard(guard_name: str):
         payload = request.json
         guard = GuardStruct.from_request(payload)
         updated_guard = guardClient.update_guard(guard_name, guard)
-        return updated_guard.to_dict()
+        return updated_guard.to_response()
     elif request.method == 'DELETE':
         guard = guardClient.delete_guard(guard_name)
-        return guard.to_dict()
+        return guard.to_response()
     else:
         raise HttpError(405, 'Method Not Allowed', '/guard/<guard_name> only supports the PUT and DELETE methods. You specified %s'.format(request.method))
 
@@ -46,4 +46,4 @@ def validate(guard_name: str):
     guardClient = GuardClient()
     guard = guardClient.get_guard(guard_name)
     result = guard.parse(payload)
-    return ValidationOutput(True, result, guard.state.all_histories).to_dict()
+    return ValidationOutput(True, result, guard.state.all_histories).to_response()

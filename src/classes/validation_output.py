@@ -3,7 +3,7 @@ class ValidationOutput:
         self.result = result
         self.validated_output = validated_output
         self.history = history
-    def to_dict(self):
+    def to_response(self):
         return {
           'result': self.result,
           'validatedOutput': self.validated_output,

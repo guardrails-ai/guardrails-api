@@ -1,4 +1,3 @@
-import json
 from guardrails import Guard
 from src.classes.rail_spec_struct import RailSpecStruct
 from src.models.guard_item import GuardItem
@@ -25,6 +24,9 @@ class GuardStruct:
           RailSpecStruct.from_rail(guard.rail),
           guard.num_reasks
        )
+    
+    def to_guard(self) -> Guard:
+       return
 
     @classmethod
     def from_dict(cls, guard: dict):
@@ -42,7 +44,7 @@ class GuardStruct:
           num_reasks
        )
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
        return {
           "name": self.name,
           "railspec": self.railspec.to_dict(),
@@ -64,6 +66,13 @@ class GuardStruct:
           RailSpecStruct.from_request(railspec),
           num_reasks
        )
+    
+    def to_response(self) -> dict:
+       return {
+          "name": self.name,
+          "railspec": self.railspec.to_response(),
+          "num_reasks": self.num_reasks
+       }
     
     @classmethod
     def from_guard_item(cls, guard_item: GuardItem):
