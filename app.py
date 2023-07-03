@@ -52,6 +52,7 @@ def validate(guard_id: str):
       guardClient = GuardClient()
       guard = guardClient.get_guard(guard_id)
       result = guard.parse(payload)
+      # Add telemetry here
       return ValidationOutput(True, result, guard.state.all_histories).to_dict()
     except HttpError as http_error:
        print(e)

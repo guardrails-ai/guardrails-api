@@ -3,15 +3,14 @@ info:
   title: GuardRails Telemetry
   version: '1.0'
   description: Hello!
-# NOTE: can do away with 'validations' in path
 paths:
-  /guards/{guardName}/validations/metrics/embeddings:
+  /guards/{guardName}/metrics/embeddings:
     get:
-      operationId: getEmbeddingsForValidations
+      operationId: getEmbeddings
       tags:
         - metrics
         - plot
-      summary: Fetches the vector embeddings for each step for all validation runs on a Guard
+      summary: Fetches the 2D projected vector embeddings for each step in each request to a Guard
       security:
         - apiKeyAuth: []
         - bearerAuth: []
@@ -19,41 +18,20 @@ paths:
         - $ref: '#/components/parameters/TimeRange'
       responses:
         '200':
-          description: An object containing vector embeddings of the source text and LLM outputs as x, y coordinates and their corresponding labels that identify the source or validationId-step#
+          description: 'An object containing projected vector embeddings of the source document and value as x, y coordinates and their corresponding labels that identify either "source" or "request{#}-step{#}"'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Data'
         default:
           $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/{validationId}/metrics/embeddings:
+  /guards/{guardName}/metrics/embedding-distances:
     get:
-      operationId: getEmbeddingsForValidation
+      operationId: getEmbeddingDistances
       tags:
         - metrics
         - plot
-      summary: Fetches the vector embeddings for each validation step on a Guard
-      security:
-        - apiKeyAuth: []
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/TimeRange'
-      responses:
-        '200':
-          description: An object containing vector embeddings of the source text and LLM outputs as x, y coordinates and their corresponding labels that identify the source or step#
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Data'
-        default:
-          $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/metrics/embedding-distances:
-    get:
-      operationId: getEmbeddingDistancesForValidations
-      tags:
-        - metrics
-        - plot
-      summary: Fetches the vector embedding distances to the source embedding for each step for all validation runs on a Guard
+      summary: Fetches the vector embedding distances from the value to the source for each step in each request to a Guard
       security:
         - apiKeyAuth: []
         - bearerAuth: []
@@ -66,46 +44,20 @@ paths:
           description: Name of distance function to use
       responses:
         '200':
-          description: An object containing vector embedding distances from each LLM output to the source text as x, y coordinates. x - validationId-step#, y - embedding distance
+          description: An object containing vector embedding distances from each value to the source text as x, y coordinates. x - request{#}-step{#}, y - {embedding distance}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Data'
         default:
           $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/{validationId}/metrics/embedding-distances:
+  /guards/{guardName}/metrics/results:
     get:
-      operationId: getEmbeddingDistancesForValidation
+      operationId: getResults
       tags:
         - metrics
         - plot
-      summary: Fetches the vector embedding distances to the source embedding for each validation step on a Guard
-      security:
-        - apiKeyAuth: []
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/TimeRange'
-        - in: query
-          name: distanceFunction
-          schema:
-            type: string
-          description: Name of distance function to use
-      responses:
-        '200':
-          description: An object containing vector embedding distances from each LLM output to the source text as x, y coordinates. x - step#, y - embedding distance
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Data'
-        default:
-          $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/metrics/results:
-    get:
-      operationId: getResultsForValidations
-      tags:
-        - metrics
-        - plot
-      summary: Fetches the results (pass or fail) for each step for all validation runs on a Guard
+      summary: Fetches the results (pass or fail) for each step in each request to a Guard
       security:
         - apiKeyAuth: []
         - bearerAuth: []
@@ -113,41 +65,20 @@ paths:
         - $ref: '#/components/parameters/TimeRange'
       responses:
         '200':
-          description: An object containing the result of each validation step as x, y coordinates. x - validationId-step#, y - pass or fail
+          description: 'An object containing the result of each step as x, y coordinates. x - request{#}-step{#}, y - "pass" or "fail"'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Data'
         default:
           $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/{validationId}/metrics/results:
-    get:
-      operationId: getResultsForValidation
-      tags:
-        - metrics
-        - plot
-      summary: Fetches the results (pass or fail) for each validation step on a Guard
-      security:
-        - apiKeyAuth: []
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/TimeRange'
-      responses:
-        '200':
-          description: An object containing the result of each validation step as x, y coordinates. x - step#, y - pass or fail
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Data'
-        default:
-          $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/metrics/durations:
+  /guards/{guardName}/metrics/durations:
     get:
       operationId: getDurationsForValidations
       tags:
         - metrics
         - plot
-      summary: Fetches the durations for each step for all validation runs on a Guard
+      summary: Fetches the duration for each step in each request to a Guard
       security:
         - apiKeyAuth: []
         - bearerAuth: []
@@ -155,41 +86,20 @@ paths:
         - $ref: '#/components/parameters/TimeRange'
       responses:
         '200':
-          description: 'An object containing the duration (milliseconds) of each validation steps as x, y coordinates. x - validationId-step#, y - duration'
+          description: 'An object containing the duration (milliseconds) of each step as x, y coordinates. x - request{#}-step{#}, y - {duration}'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Data'
         default:
           $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/{validationId}/metrics/durations:
-    get:
-      operationId: getDurationsForValidation
-      tags:
-        - metrics
-        - plot
-      summary: Fetches the durations for each validation step on a Guard
-      security:
-        - apiKeyAuth: []
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/TimeRange'
-      responses:
-        '200':
-          description: 'An object containing the duration (milliseconds) of each validation step as x, y coordinates. x - step#, y - duration'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Data'
-        default:
-          $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/metrics/tokens:
+  /guards/{guardName}/metrics/tokens:
     get:
       operationId: getTokensUsedForValidations
       tags:
         - metrics
         - plot
-      summary: Fetches the number of tokens used for each step for all validation runs on a Guard
+      summary: Fetches the number of tokens used for each step in each request to a Guard
       security:
         - apiKeyAuth: []
         - bearerAuth: []
@@ -197,28 +107,7 @@ paths:
         - $ref: '#/components/parameters/TimeRange'
       responses:
         '200':
-          description: An object containing the number of tokens used by each validation step as x, y coordinates. x - validationId-step#, y - duration
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Data'
-        default:
-          $ref: '#/components/schemas/HttpError'
-  /guards/{guardName}/validations/{validationId}/metrics/tokens:
-    get:
-      operationId: getDurationsForValidation
-      tags:
-        - metrics
-        - plot
-      summary: Fetches the number of tokens used for each validation step on a Guard
-      security:
-        - apiKeyAuth: []
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/TimeRange'
-      responses:
-        '200':
-          description: An object containing the number of tokens used by each validation step as x, y coordinates. x - step#, y - duration
+          description: An object containing the number of tokens used for step as x, y coordinates. x - request{#}-step{#}, y - {tokens}
           content:
             application/json:
               schema:
@@ -258,7 +147,7 @@ paths:
         - $ref: '#/components/parameters/TimeRange'
       responses:
         '200':
-          description: 'An array containing the tree (trace of reasks) for each validation on a Guard'
+          description: 'An array containing the tree (trace of reasks) for each request to a Guard'
           content:
             application/json:
               schema:
@@ -282,7 +171,7 @@ paths:
         - $ref: '#/components/parameters/LogQuery'
       responses:
         '200':
-          description: 'An array containing the tree (trace of reasks) for each validation on a Guard'
+          description: 'Logs as an array of timestamped events'
           content:
             application/json:
               schema:
@@ -306,13 +195,6 @@ components:
       name: guardName
       in: path
       description: Guard name
-      required: true
-      schema:
-        type: string
-    ValidationId:
-      name: validationId
-      in: path
-      description: Validation Id
       required: true
       schema:
         type: string
@@ -383,38 +265,48 @@ components:
     Embedding:
       type: array
       items:
-        type: number
-    ValidationStepMetrics:
+        type: array
+        items:
+          type: number
+    StepMetrics:
       type: object
       properties:
-        distance:
-          type: number
         result:
           type: string
         duration:
           type: number
-        tokens:
+        tokensUsed:
           type: number
-    ValidationMetrics:
+        outputEmbedding:
+          $ref: '#/components/schemas/Embedding'
+        documentEmbedding:
+          $ref: '#/components/schemas/Embedding'
+        distanceScalar:
+          type: number
+      required:
+        - result
+        - duration
+        - tokensUsed
+    RequestMetrics:
       type: object
       properties:
-        id:
-          type: string
-        stepMetrics:
+        timestamp:
+          type: number
+        stepsMetrics:
           type: array
           items:
-            $ref: '#/components/schemas/ValidationStepMetrics'
+            $ref: '#/components/schemas/StepMetrics'
     GuardMetrics:
       type: object
       properties:
-        sourceEmbedding:
+        name:
+          type: string
+        timestamp:
+          type: number
+        requestsMetrics:
           type: array
           items:
-            $ref: '#/components/schemas/Embedding'
-        validationMetrics:
-          type: array
-          items:
-            $ref: '#/components/schemas/ValidationMetrics'
+            $ref: '#/components/schemas/RequestMetrics'
     Tree:
       type: object
       properties:

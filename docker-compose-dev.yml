@@ -53,8 +53,8 @@ services:
     ports:
       - 9200:9200
       - 9600:9600
-    networks:
-      - opensearch-net
+    # networks:
+    #   - opensearch-net
   opensearch-node2:
     image: opensearchproject/opensearch:latest
     container_name: opensearch-node2
@@ -74,8 +74,8 @@ services:
         hard: 65536
     volumes:
       - opensearch-data2:/usr/share/opensearch/data
-    networks:
-      - opensearch-net
+    # networks:
+    #   - opensearch-net
   # For demo purposes
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:latest
@@ -86,21 +86,21 @@ services:
       - "5601"
     environment:
       OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
-    networks:
-      - opensearch-net
+    # networks:
+    #   - opensearch-net
   data-prepper:
     restart: unless-stopped
     container_name: data-prepper
     image: opensearchproject/data-prepper:latest
     volumes:
-      - ./data-prepper-configs/pipelines.yml:/usr/share/data-prepper/pipelines/pipelines.yml
-      - ./data-prepper-configs/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yml
+      - ./data-prepper-configs/pipelines.yml:/usr/share/data-prepper/pipelines/pipelines.yaml
+      - ./data-prepper-configs/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yaml
     ports:
       - 21890:21890
     expose:
       - "21890"
-    networks:
-      - opensearch-net
+    # networks:
+    #   - opensearch-net
     depends_on:
       - opensearch-node1
       - opensearch-node2
@@ -114,12 +114,12 @@ services:
       - 55680:55680
     depends_on:
       - data-prepper
-    networks:
-      - opensearch-net
+    # networks:
+    #   - opensearch-net
 
 volumes:
   opensearch-data1:
   opensearch-data2:
 
-networks:
-  opensearch-net:
+# networks:
+#   opensearch-net:

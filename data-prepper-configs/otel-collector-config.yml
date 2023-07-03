@@ -10,7 +10,7 @@ receivers:
 
 exporters:
   otlp/2:
-    endpoint: data-prepper:21890
+    endpoint: http://data-prepper:21890
     tls:
       insecure: true
       insecure_skip_verify: true

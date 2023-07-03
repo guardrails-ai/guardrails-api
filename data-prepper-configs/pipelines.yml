@@ -75,10 +75,11 @@ metrics-pipeline:
     otel_metrics_source:
       ssl: false
   processor:
-    - otel_metrics_raw_processor:
+    - otel_metrics:
   sink:
     - opensearch:
-      hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
-      username: admin
-      password: admin
-      index: metrics_index
+        hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
+        insecure: true
+        username: admin
+        password: admin
+        index: metrics_index
