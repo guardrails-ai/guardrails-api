@@ -28,7 +28,7 @@ class SchemaElementStruct:
     @classmethod
     def from_dict(cls, schema_element: dict):
         if schema_element != None:
-          type, name, description, strict, date_format, time_format, on_fail, model = pluck(
+          type, name, description, strict, date_format, time_format, on_fail, on_fail_tag, model = pluck(
               schema_element,
               [      
                 "type",
@@ -38,6 +38,7 @@ class SchemaElementStruct:
                 "date_format",
                 "time_format",
                 "on_fail",
+                "on_fail_tag",
                 "model"
               ]
           )
@@ -49,6 +50,7 @@ class SchemaElementStruct:
               date_format,
               time_format,
               on_fail,
+              on_fail_tag,
               model
             )
     
@@ -61,13 +63,14 @@ class SchemaElementStruct:
           "date_format": self.date_format,
           "time_format": self.time_format,
           "on_fail": self.on_fail,
+          "on_fail_tag": self.on_fail_tag,
           "model": self.model   
         }
     
     @classmethod
     def from_request(cls, schema_element: dict):
         if schema_element != None:
-          type, name, description, strict, date_format, time_format, on_fail, model = pluck(
+          type, name, description, strict, date_format, time_format, on_fail, on_fail_tag, model = pluck(
               schema_element,
               [      
                 "type",
@@ -77,6 +80,7 @@ class SchemaElementStruct:
                 "dateFormat",
                 "timeFormat",
                 "onFail",
+                "onFailTag",
                 "model"
               ]
           )
@@ -88,6 +92,7 @@ class SchemaElementStruct:
               date_format,
               time_format,
               on_fail,
+              on_fail_tag,
               model
             )
         
@@ -100,6 +105,7 @@ class SchemaElementStruct:
           "dateFormat": self.date_format,
           "timeFormat": self.time_format,
           "onFail": self.on_fail,
+          "onFailTag": self.on_fail_tag,
           "model": self.model   
         }
     

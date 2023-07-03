@@ -83,8 +83,8 @@ class DataTypeStruct:
           elem_type = self.element.type if self.element != None else None
           elem_is_list = elem_type == "list"
           child_entries = self.children.get("item", {}) if elem_is_list else self.children
-          for childKey in child_entries:
-              serialized_children[childKey] = child_entries[childKey].to_dict()
+          for child_key in child_entries:
+              serialized_children[child_key] = child_entries[child_key].to_dict()
           response["children"] = { "item": serialized_children } if elem_is_list else serialized_children
         return response
     
@@ -124,11 +124,10 @@ class DataTypeStruct:
           serialized_children = {}
           elem_type = self.element.type if self.element != None else None
           elem_is_list = elem_type == "list"
-          child_entries = self.children.get("item", {}) if elem_type == "list" else self.children
-          for childKey in child_entries:
-              serialized_children[childKey] = child_entries[childKey].to_response()
-          children_resposne = { "item": serialized_children } if elem_is_list else serialized_children
-          response["children"]: children_resposne
+          child_entries = self.children.get("item", {}) if elem_is_list else self.children
+          for child_key in child_entries:
+              serialized_children[child_key] = child_entries[child_key].to_response()
+          response["children"] = { "item": serialized_children } if elem_is_list else serialized_children
         return response
         
     @classmethod
@@ -140,12 +139,20 @@ class DataTypeStruct:
 
       element = SchemaElementStruct.from_xml(elem)
       
+      elem_type = elem.tag
+      elem_is_list = elem_type == 'list'
       children = None
-      # TODO: how to get children? Check lxml documentation
-      print('elem.keys(): ', elem.keys())
-      print('elem.values(): ', elem.values())
+      elem_children = list(elem) # Not strictly necessary but more readable
+      if (len(elem_children) > 0):
+        if elem_is_list:
+           children = { "item": cls.from_xml(elem_children[0]).children }
+        else:
+          children = {}
+          child: _Element
+          for child in elem_children:
+            child_key = child.get("name")
+            children[child_key] = cls.from_xml(child)
 
-      
       return cls(
         children,
         formatters,

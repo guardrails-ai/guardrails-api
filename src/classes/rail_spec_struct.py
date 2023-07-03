@@ -1,7 +1,5 @@
 from guardrails import Rail
-from guardrails.schema import JsonSchema, Schema, StringSchema
 from lxml import etree
-from lxml.etree import Element, SubElement
 from src.classes.schema_struct import SchemaStruct
 from src.classes.script_struct import ScriptStruct
 from src.utils.pluck import pluck
@@ -162,22 +160,22 @@ class RailSpecStruct:
         # Parse instructions for the LLM. These are optional but if given,
         # LLMs can use them to improve their output. Commonly these are
         # prepended to the prompt.
-        instructions = elem_tree.find("instructions")
-        # if instructions is not None:
-        #     instructions = cls.load_instructions(instructions, output_schema)
+        instructions_elem = elem_tree.find("instructions")
+        instructions = None
+        if instructions_elem is not None:
+            instructions = instructions.text
 
         # Load <prompt />
         prompt = elem_tree.find("prompt")
         if prompt is None:
             raise ValueError("RAIL file must contain a prompt element.")
-        # prompt = cls.load_prompt(prompt, output_schema)
+        prompt = prompt.text
 
         # Execute the script before validating the rest of the RAIL file.
         script = None
         raw_script = elem_tree.find("script")
         if raw_script is not None:
-            script = raw_script
-            # script = cls.load_script(raw_script)
+            script = ScriptStruct.from_xml(raw_script)
 
         return cls(
             input_schema=input_schema,

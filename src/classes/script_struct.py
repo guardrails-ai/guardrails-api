@@ -1,5 +1,5 @@
 from guardrails.rail import Script
-
+from lxml.etree import _Element
 
 class ScriptStruct:
     def __init__(
@@ -42,3 +42,18 @@ class ScriptStruct:
     
     def to_response(self):
         return self.to_dict()
+    
+    @classmethod
+    def from_xml(cls, elem: _Element):
+        if "language" not in elem.attrib:
+            raise ValueError("Script element must have a language attribute.")
+
+        language = elem.get("language")
+        if language != "python":
+            raise ValueError("Only python scripts are supported right now.")
+        
+        return cls(
+          elem.text,
+          language,
+          {}
+        )

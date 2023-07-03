@@ -66,20 +66,20 @@ class SchemaStruct:
       
     def to_response(self):
       dict_schema = {}
-      for key in self.schema["schema"]:
-          schema_element = self.schema[key]
+      inner_schema = self.schema["schema"]
+      for key in inner_schema:
+          schema_element = inner_schema[key]
           dict_schema[key] = schema_element.to_response()
       return { "schema": dict_schema }
     
     @classmethod
     def from_xml(cls, xml: _Element):
       schema = {}
-      #  if "type" in xml.attrib and xml.attrib["type"] == "string":
-      #       return StringSchema(root)
-      #   return JsonSchema(root)
       child: _Element
       for child in xml:
           if isinstance(child, _Comment):
               continue
           name = child.get("name")
           schema[name] = DataTypeStruct.from_xml(child)
+      
+      return cls({ "schema": schema })
