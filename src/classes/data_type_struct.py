@@ -2,8 +2,9 @@ import re
 from typing import Any, Dict, List
 from operator import attrgetter
 from lxml.etree import _Element
-from guardrails.datatypes import DataType
-from src.classes.schema_element_struct import SchemaElementStruct
+from guardrails.datatypes import DataType, registry
+from guardrails.schema import FormatAttr
+from src.classes.schema_element_struct import ElementStub, SchemaElementStruct
 from src.utils.pluck import pluck
 
 class DataTypeStruct:
@@ -46,6 +47,44 @@ class DataTypeStruct:
               model
             )
         )
+    
+    def to_data_type(self) -> DataType:
+      data_type = None
+
+      element = self.element.to_element()
+
+      format = "; ".join(self.formatters)
+      format_attr = FormatAttr(format)
+      format_attr.element = element
+      format_attr.get_validators(self.element.strict)
+      
+      self_is_list = self.element.type == 'list'
+      children = None
+      if self.children:
+        children = {}
+        child_entries = self.children.get("item", {}) if self_is_list else self.children
+        for child_key in child_entries:
+           children[child_key] = child_entries[child_key].to_data_type()
+        # FIXME: For Lists where the item type is not an object
+
+      if self_is_list:
+         object_element = ElementStub('object', {})
+         object_format_attr = FormatAttr(format)
+         object_format_attr.element = object_element
+         object_format_attr.get_validators()
+         object_data_type = registry['object'](children=children, format_attr=object_format_attr, element=object_element)
+         children = { "item": object_data_type }
+
+      data_type_cls = registry[self.element.type]
+      if data_type_cls != None:
+        data_type = data_type_cls(children=children, format_attr=format_attr, element=element)
+        if self.element.type == "date":
+          data_type.date_format = self.element.date_format if self.element.date_format else data_type.date_format
+        elif self.element.type == "time":
+           data_type.time_format = self.element.time_format if self.element.time_format else data_type.time_format
+
+      return data_type
+       
     
     @classmethod
     def from_dict(cls, dataType: dict):

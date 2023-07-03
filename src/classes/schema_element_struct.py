@@ -1,6 +1,15 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 from lxml.etree import _Element
 from src.utils.pluck import pluck
+
+class ElementStub:
+    def __init__(
+            self,
+            tag,
+            attributes: Dict[str, Any]
+            ) -> None:
+        self.attrib = attributes
+        self.tag = tag
 
 class SchemaElementStruct:
     def __init__(
@@ -24,6 +33,14 @@ class SchemaElementStruct:
         self.on_fail = on_fail
         self.on_fail_tag = on_fail_tag
         self.model = model
+
+    def to_element(self) -> _Element:
+        elem_dict = self.to_dict()
+        elem_dict["date-format"] = self.date_format
+        elem_dict["time-format"] = self.time_format
+        if self.on_fail_tag:
+          elem_dict[self.on_fail_tag] = self.on_fail
+        return ElementStub(self.type, elem_dict)
 
     @classmethod
     def from_dict(cls, schema_element: dict):

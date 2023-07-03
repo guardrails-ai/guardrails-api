@@ -1,4 +1,4 @@
-from guardrails import Rail
+from guardrails import Instructions, Prompt, Rail
 from lxml import etree
 from src.classes.schema_struct import SchemaStruct
 from src.classes.script_struct import ScriptStruct
@@ -32,16 +32,20 @@ class RailSpecStruct:
           rail.version
        )
 
-    # def to_rail(self) -> Rail:
-    #     output_schema = self.output_schema.to_schema() if self.output_schema else None
-    #     return Rail(
-    #         self.input_schema.to_schema() if self.input_schema else None,
-    #         output_schema,
-    #         Instructions(self.instructions, output_schema) if self.instructions else None,
-    #         Prompt(self.prompt, output_schema) if self.prompt else None,
-    #         self.script.to_script() if self.script else None,
-    #         self.version
-    #     )
+    def to_rail(self) -> Rail:
+        input_schema = self.input_schema.to_schema() if self.input_schema else None
+        output_schema = self.output_schema.to_schema() if self.output_schema else None
+        instructions = Instructions(self.instructions, output_schema) if self.instructions else None
+        prompt = Prompt(self.prompt, output_schema) if self.prompt else None
+        script = self.script.to_script() if self.script else None
+        return Rail(
+            input_schema,
+            output_schema,
+            instructions,
+            prompt,
+            script,
+            self.version
+        )
 
     @classmethod
     def from_dict(cls, rail: dict):
