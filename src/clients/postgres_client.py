@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from sqlalchemy import text
-from src.models.base import db
+from src.models.base import db, INIT_EXTENSIONS
 
 class PostgresClient:
     _instance = None
@@ -28,6 +28,7 @@ class PostgresClient:
         from src.models.guard_item import GuardItem
         from src.models.guard_item_audit import GuardItemAudit, AUDIT_FUNCTION, AUDIT_TRIGGER
         with self.app.app_context():
+          self.db.session.execute(text(INIT_EXTENSIONS))
           self.db.create_all()
           self.db.session.execute(text(AUDIT_FUNCTION))
           self.db.session.execute(text(AUDIT_TRIGGER))

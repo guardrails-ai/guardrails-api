@@ -23,11 +23,16 @@ def guards():
     else:
         raise HttpError(405, 'Method Not Allowed', '/guards only supports the GET and POST methods. You specified %s'.format(request.method))
 
-@guardsBp.route("/<guard_name>", methods = ['PUT', 'DELETE'])
+@guardsBp.route("/<guard_name>", methods = ['GET', 'PUT', 'DELETE'])
 @handle_error
 def guard(guard_name: str):
     guard_client = GuardClient()
-    if request.method == 'PUT':
+    if request.method == 'GET':
+        guard = guard_client.get_guard(guard_name)
+        as_of_query = request.args.get('asOf')
+        print('as_of_query: ', as_of_query)
+        return guard.to_response()
+    elif request.method == 'PUT':
         payload = request.json
         guard = GuardStruct.from_request(payload)
         updated_guard = guard_client.update_guard(guard_name, guard)
@@ -36,7 +41,7 @@ def guard(guard_name: str):
         guard = guard_client.delete_guard(guard_name)
         return guard.to_response()
     else:
-        raise HttpError(405, 'Method Not Allowed', '/guard/<guard_name> only supports the PUT and DELETE methods. You specified %s'.format(request.method))
+        raise HttpError(405, 'Method Not Allowed', '/guard/<guard_name> only supports the GET, PUT, and DELETE methods. You specified %s'.format(request.method))
 
 @guardsBp.route("/<guard_name>/validate", methods = ['POST'])
 @handle_error

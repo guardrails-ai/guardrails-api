@@ -5,7 +5,8 @@ from src.models.base import db
 class GuardItemAudit(db.Model):
     __tablename__ = "guards_audit"
     # TODO: Make primary key a composite between guard.name and the guard owner's userId from w/e auth system is implemented
-    name = Column(String, primary_key=True)
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False, index=True)
     railspec = Column(JSONB, nullable=False)
     num_reasks = Column(Integer, nullable=True)
     # owner = Column(String, nullable=False)
@@ -15,6 +16,7 @@ class GuardItemAudit(db.Model):
 
     def __init__(
             self,
+            id,
             name,
             railspec,
             num_reasks,
@@ -23,6 +25,7 @@ class GuardItemAudit(db.Model):
             # replaced_by
             operation
     ):
+        self.id = id
         self.name = name
         self.railspec = railspec
         self.num_reasks = num_reasks
@@ -34,11 +37,11 @@ AUDIT_FUNCTION = """
 CREATE OR REPLACE FUNCTION guard_audit_function() RETURNS TRIGGER AS $guard_audit$
 BEGIN
     IF (TG_OP = 'DELETE') THEN
-    INSERT INTO guards_audit SELECT OLD.*, now(), 'D';
+    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'D';
     ELSIF (TG_OP = 'UPDATE') THEN
-    INSERT INTO guards_audit SELECT  OLD.*, now(), 'U';
+    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'U';
     ELSIF (TG_OP = 'INSERT') THEN
-    INSERT INTO guards_audit SELECT  NEW.*, now(), 'I';
+    INSERT INTO guards_audit SELECT uuid_generate_v4(), NEW.*, now(), 'I';
     END IF;
     RETURN null;
 END;
@@ -47,6 +50,8 @@ LANGUAGE plpgsql;
 """
 
 AUDIT_TRIGGER="""
+DROP TRIGGER IF EXISTS guard_audit_trigger
+  ON guards;
 CREATE TRIGGER guard_audit_trigger
     AFTER INSERT OR UPDATE OR DELETE ON guards
     FOR EACH ROW 

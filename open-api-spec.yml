@@ -64,6 +64,26 @@ paths:
         default:
           $ref: '#/components/schemas/HttpError'
   /guards/{guardName}:
+    get:
+      operationId: getGuard
+      tags:
+        - guard
+      summary: Fetches a specific Guard
+      parameters:
+        - $ref: '#/components/parameters/GuardName'
+        - $ref: '#/components/parameters/AsOf'
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: the fetched Guard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guard'
+        default:
+          $ref: '#/components/schemas/HttpError'
     put:
       operationId: updateGuard
       tags:
@@ -154,6 +174,14 @@ components:
       required: true
       schema:
         type: string
+    AsOf:
+      name: asOf
+      in: query
+      description: Used to query for data as it existed at this date and time
+      required: false
+      schema: 
+        type: string
+        format: date
   schemas:
     HttpError:
       type: object

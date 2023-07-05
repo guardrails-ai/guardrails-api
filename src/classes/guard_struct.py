@@ -74,7 +74,7 @@ class GuardStruct:
        return {
           "name": self.name,
           "railspec": self.railspec.to_response(),
-          "num_reasks": self.num_reasks
+          "numReasks": self.num_reasks
        }
     
     @classmethod
