@@ -1,6 +1,29 @@
 # guardrails-poc
 Docker compose stub of Guardrails as a Service
 
+## Setting Up
+We strongly encourage you to use a virtual environment when developing in python.
+To set one up for this project run the following:
+```bash
+pip install venv
+python3 -m venv ./.venv
+source ./.venv/bin/activate
+```
+Your terminal should now show that you are working from within the virtual environment.
+Now you can install the dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+And start the dev server:
+```bash
+bash dev.sh
+```
+
+Once all servces listed in the docker-compose configuration have launched you should be able to navigate to the following:
+1. Swagger documenation for the guardrails-api at http://localhost:8000
+2. PgAdmin console at http://localhost:8888
+
 ## Diagrams
 Two diagrams for two different approaches to the infrastructure for this project.
 
