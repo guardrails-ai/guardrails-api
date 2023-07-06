@@ -7,6 +7,15 @@ from src.classes.http_error import HttpError
 from flask_sqlalchemy import SQLAlchemy
 from src.classes.validation_output import ValidationOutput
 from swagger_ui import api_doc
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SimpleSpanProcessor
+)
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
 
 from src.clients.guard_client import GuardClient
 app = Flask(__name__)
@@ -25,10 +34,28 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'secret'
 db = SQLAlchemy(app)
 
+resource = Resource(attributes={
+   'service.name': 'validation-loop'
+})
+trace.set_tracer_provider(TracerProvider(resource=resource))
+otlp_exporter = OTLPSpanExporter(endpoint='otel-collector:4317', insecure=True)
+span_processor = SimpleSpanProcessor(otlp_exporter)
+trace.get_tracer_provider().add_span_processor(span_processor)
+tracer = trace.get_tracer(__name__)
 
 @app.route("/")
 def home():
-    return "Hello, Flask!"
+   # hostname = "http://localhost:55680" #example
+   # response = os.system("ping -c 1 " + hostname)
+   # #and then check the response...
+   # if response == 0:
+   #    print(f"{hostname} is up!")
+   # else:
+   #    print(f"{hostname} is down!")
+   print('here')
+   with tracer.start_as_current_span('foo'):
+      print('Hello world!')
+   return "Hello, World!"
 
 @app.route("/health-check")
 def healthCheck():

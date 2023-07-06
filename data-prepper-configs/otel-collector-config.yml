@@ -2,25 +2,35 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: 0.0.0.0:55680
   # prometheus:
   #   config:
   #     scrape_configs:
   #       - job_name: guardrails
 
 exporters:
-  otlp/2:
-    endpoint: http://data-prepper:21890
+  otlp/traces:
+    endpoint: data-prepper:21890
     tls:
       insecure: true
       insecure_skip_verify: true
+  otlp/data-prepper:
+    endpoint: data-prepper:21891
+    tls:
+      insecure: true
+  otlp/logs:
+    endpoint: data-prepper:21892
+    tls:
+      insecure: true
   logging:
 
 service:
+  telemetry:
+    logs:
+      level: 'debug'
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [logging, otlp/2]
+      exporters: [otlp/traces, logging]
     # metrics:
     #   receivers: [otlp]
     #   exporters: [otlp/2]
