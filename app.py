@@ -16,6 +16,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource
+from opensearchpy import OpenSearch
 
 from src.clients.guard_client import GuardClient
 app = Flask(__name__)
@@ -42,6 +43,13 @@ otlp_exporter = OTLPSpanExporter(endpoint='otel-collector:4317', insecure=True)
 span_processor = SimpleSpanProcessor(otlp_exporter)
 trace.get_tracer_provider().add_span_processor(span_processor)
 tracer = trace.get_tracer(__name__)
+
+client = OpenSearch(
+   hosts = [{'host': 'opensearch-node1', 'port': '9200'}, {'host': 'opensearch-node2', 'port': '9200'}],
+   http_compress = True,
+   http_auth = ('admin', 'admin'),
+   use_ssl = False,
+)
 
 @app.route("/")
 def home():
