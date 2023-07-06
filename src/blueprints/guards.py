@@ -28,9 +28,8 @@ def guards():
 def guard(guard_name: str):
     guard_client = GuardClient()
     if request.method == 'GET':
-        guard = guard_client.get_guard(guard_name)
         as_of_query = request.args.get('asOf')
-        print('as_of_query: ', as_of_query)
+        guard = guard_client.get_guard(guard_name, as_of_query)
         return guard.to_response()
     elif request.method == 'PUT':
         payload = request.json

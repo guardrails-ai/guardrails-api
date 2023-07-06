@@ -4,7 +4,6 @@ from src.models.base import db
 
 class GuardItemAudit(db.Model):
     __tablename__ = "guards_audit"
-    # TODO: Make primary key a composite between guard.name and the guard owner's userId from w/e auth system is implemented
     id = Column(String, primary_key=True)
     name = Column(String, nullable=False, index=True)
     railspec = Column(JSONB, nullable=False)
