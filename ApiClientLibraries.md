@@ -2,7 +2,8 @@
 Comparing our options for auto-generating client libraries from our OpenAPI Spec.
 
 ## Auto-rest
-See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/autorest-sdk
+See setup here: https://github.com/tinystacks/guardrails-poc/blob/autorest-sdk/build-sdk.sh
+and usage here: https://github.com/tinystacks/guardrails-poc/blob/autorest-sdk/sdk-test.py
 ### Summary
   - Open source (MIT License)
   - Developed by Microsoft
@@ -20,10 +21,11 @@ See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/auto
   - Forces use of Azure credential classes for setting auth headers
   - Requires custom property on parameters to prevent them from being considered global
   - Does not generate pyproject.toml
-  - Responses are generic JSON, not explicit models
+  - Responses are generic JSON, not strongly typed models
 
 ## OpenAPITools openapi-generator
-See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/open-api-generator
+See setup here: https://github.com/tinystacks/guardrails-poc/blob/open-api-generator/build-sdk.sh
+and usage here: https://github.com/tinystacks/guardrails-poc/blob/open-api-generator/sdk-test.py
 ### Summary
   - Open source (Apache License)
   - Fork of Swagger Codegen
@@ -58,7 +60,8 @@ This might be resolvable by downgrading to a previous version but that is not a 
 
 
 ## openapi-python-client
-See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/openapi-python-client
+See setup here: https://github.com/tinystacks/guardrails-poc/blob/openapi-python-client/build-sdk.sh
+and usage here: https://github.com/tinystacks/guardrails-poc/blob/openapi-python-client/sdk-test.py
 ### Summary
   - Open source (MIT License)
   - Runs in Python
