@@ -17,10 +17,12 @@ exporters:
     endpoint: data-prepper:21891
     tls:
       insecure: true
+      insecure_skip_verify: true
   otlp/logs:
     endpoint: data-prepper:21892
     tls:
       insecure: true
+      insecure_skip_verify: true
   logging:
 
 service:
@@ -31,6 +33,9 @@ service:
     traces:
       receivers: [otlp]
       exporters: [otlp/traces, logging]
-    # metrics:
-    #   receivers: [otlp]
-    #   exporters: [otlp/2]
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp/data-prepper, logging]
+    logs:
+      receivers: [otlp]
+      exporters: [otlp/logs, logging]

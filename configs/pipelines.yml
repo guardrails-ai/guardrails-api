@@ -10,17 +10,21 @@ log-pipeline:
     #       password: "mys3cret"
     otel_logs_source:
       ssl: false
-  processor:
-    - grok:
-        match:
-          log: [ "%{COMMONAPACHELOG}" ]
+  buffer:
+    bounded_blocking:
+  # processor:
+  #   - grok:
+  #       match:
+  #         log: [ "%{COMMONAPACHELOG}" ]
   sink:
     - opensearch:
         hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
         insecure: true
         username: "admin"
         password: "admin"
-        index: apache_logs
+        # this can be indexed by smaller time increments
+        index_type: custom
+        index: events-%{yyyy.MM.dd}
 entry-pipeline:
   delay: "100"
   source:
@@ -51,7 +55,7 @@ raw-pipeline:
         insecure: true
         username: admin
         password: admin
-        index_type: trace-analytics-raw
+        index_type: 'trace-analytics-raw'
 service-map-pipeline:
   delay: "100"
   source:

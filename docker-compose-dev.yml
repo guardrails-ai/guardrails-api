@@ -29,8 +29,13 @@ services:
       PGPASSWORD: ${PGPASSWORD:-changeme}
       PYTHONUNBUFFERED: 1
       LOGLEVEL: DEBUG
+      OTLP_ENDPOINT: 'http://otel-collector:4317'
     depends_on:
       - postgres
+      - opensearch-node1
+      - opensearch-node2
+      - data-prepper
+      - otel-collector
   opensearch-node1:
     image: opensearchproject/opensearch:latest
     container_name: opensearch-node1
@@ -93,12 +98,16 @@ services:
     container_name: data-prepper
     image: opensearchproject/data-prepper:latest
     volumes:
-      - ./data-prepper-configs/pipelines.yml:/usr/share/data-prepper/pipelines/pipelines.yaml
-      - ./data-prepper-configs/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yaml
+      - ./configs/pipelines.yml:/usr/share/data-prepper/pipelines/pipelines.yaml
+      - ./configs/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yaml
     ports:
       - 21890:21890
+      - 21891:21891
+      - 21892:21892
     expose:
       - "21890"
+      - "21891"
+      - "21892"
     # networks:
     #   - opensearch-net
     depends_on:
@@ -110,7 +119,7 @@ services:
     image: otel/opentelemetry-collector:latest
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
-      - ./data-prepper-configs/otel-collector-config.yml:/etc/otel-collector-config.yml
+      - ./configs/otel-collector-config.yml:/etc/otel-collector-config.yml
     ports:
       - "4317:4317"
     depends_on:
