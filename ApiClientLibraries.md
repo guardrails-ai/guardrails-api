@@ -2,6 +2,8 @@
 Comparing our options for auto-generating client libraries from our OpenAPI Spec.
 
 ## Auto-rest
+Homepage: https://github.com/Azure/autorest/blob/main/docs/readme.md
+
 See setup here: https://github.com/tinystacks/guardrails-poc/blob/autorest-sdk/build-sdk.sh
 and usage here: https://github.com/tinystacks/guardrails-poc/blob/autorest-sdk/sdk-test.py
 ### Summary
@@ -24,6 +26,8 @@ and usage here: https://github.com/tinystacks/guardrails-poc/blob/autorest-sdk/s
   - Responses are generic JSON, not strongly typed models
 
 ## OpenAPITools openapi-generator
+Homepage: https://openapi-generator.tech/
+
 See setup here: https://github.com/tinystacks/guardrails-poc/blob/open-api-generator/build-sdk.sh
 and usage here: https://github.com/tinystacks/guardrails-poc/blob/open-api-generator/sdk-test.py
 ### Summary
@@ -60,6 +64,8 @@ This might be resolvable by downgrading to a previous version but that is not a 
 
 
 ## openapi-python-client
+Homepage: https://github.com/openapi-generators/openapi-python-client#openapi-python-client
+
 See setup here: https://github.com/tinystacks/guardrails-poc/blob/openapi-python-client/build-sdk.sh
 and usage here: https://github.com/tinystacks/guardrails-poc/blob/openapi-python-client/sdk-test.py
 ### Summary
