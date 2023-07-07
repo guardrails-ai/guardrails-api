@@ -19,7 +19,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthCheck'
         default:
-          $ref: '#/components/schemas/HttpError'
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
   /guards:
     get:
       operationId: getGuards
@@ -39,7 +43,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/Guard'
         default:
-          $ref: '#/components/schemas/HttpError'
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
     post:
       operationId: createGuard
       tags:
@@ -62,7 +70,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Guard'
         default:
-          $ref: '#/components/schemas/HttpError'
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
   /guards/{guardName}:
     get:
       operationId: getGuard
@@ -83,7 +95,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Guard'
         default:
-          $ref: '#/components/schemas/HttpError'
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
     put:
       operationId: updateGuard
       tags:
@@ -108,7 +124,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Guard'
         default:
-          $ref: '#/components/schemas/HttpError'
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
     delete:
       operationId: deleteGuard
       tags:
@@ -127,7 +147,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Guard'
         default:
-          $ref: '#/components/schemas/HttpError'
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
   /guards/{guardName}/validate:
     post:
       operationId: validate
@@ -154,7 +178,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationOutput'
         default:
-          $ref: '#/components/schemas/HttpError'
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
 components:
   securitySchemes:
     bearerAuth:
