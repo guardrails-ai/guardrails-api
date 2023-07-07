@@ -130,13 +130,13 @@ class SchemaElementStruct:
         }
         if self.strict is not None:
           response["strict"] = self.strict
-        if self.dateFormat is not None:
+        if self.date_format is not None:
           response["dateFormat"] = self.date_format
-        if self.timeFormat is not None:
+        if self.time_format is not None:
           response["timeFormat"] = self.time_format
-        if self.onFail is not None:
+        if self.on_fail is not None:
           response["onFail"] = self.on_fail
-        if self.onFailTag is not None:
+        if self.on_fail_tag is not None:
           response["onFailTag"] = self.on_fail_tag
         if self.model is not None:
           response["model"] = self.model
