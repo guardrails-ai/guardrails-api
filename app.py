@@ -72,10 +72,13 @@ client = OpenSearch(
 
 @app.route("/")
 def home():
-   otel_logger.info('Guardrails is cool!')
-   # with tracer.start_as_current_span('foo'):
-   #    print('Hello world!')
-   return "Hello, World!"
+   return "Hello, Flask!"
+
+@app.route("/ingest")
+def ingest():
+   with otel_tracer.start_as_current_span('foo'):
+      otel_logger.info('Guardrails is cool!')
+   return 'Done!'
 
 @app.route("/get-trace")
 def getTrace():
