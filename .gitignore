@@ -5,4 +5,4 @@ guardrails-sdk
 scratch.py
 pgadmin-data
 __pycache__/
-sdk
+guard-rails-api-client

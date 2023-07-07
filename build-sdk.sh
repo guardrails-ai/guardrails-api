@@ -1,10 +1,5 @@
 #!/bin/bash
-version=$(cat .version)
-rm -rf ./sdk
-npx autorest \
-  --input-file=./open-api-spec.yml \
-  --output-folder=./sdk \
-  --namespace=guardrails-api-client \
-  --package-version=$version \
-  --python \
-  --basic-setup-py
+pip install openapi-python-client;
+version=$(yq '.info.version' open-api-spec.yml);
+rm -rf ./guard-rails-api-client;
+openapi-python-client generate --path ./open-api-spec.yml;
