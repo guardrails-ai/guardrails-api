@@ -71,11 +71,13 @@ class GuardStruct:
        )
     
     def to_response(self) -> dict:
-       return {
+       response = {
           "name": self.name,
-          "railspec": self.railspec.to_response(),
-          "numReasks": self.num_reasks
+          "railspec": self.railspec.to_response()
        }
+       if self.num_reasks is not None:
+          response["numReasks"] = self.num_reasks
+       return response
     
     @classmethod
     def from_guard_item(cls, guard_item: GuardItem):

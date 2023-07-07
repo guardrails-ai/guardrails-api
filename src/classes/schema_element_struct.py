@@ -72,17 +72,26 @@ class SchemaElementStruct:
             )
     
     def to_dict(self):
-        return {
+        response = {
           "type": self.type,
           "name": self.name,
           "description": self.description,
-          "strict": self.strict,
-          "date_format": self.date_format,
-          "time_format": self.time_format,
-          "on_fail": self.on_fail,
-          "on_fail_tag": self.on_fail_tag,
-          "model": self.model   
         }
+
+        if self.strict is not None:
+          response["strict"] = self.strict
+        if self.date_format is not None:
+          response["date_format"] = self.date_format
+        if self.time_format is not None:
+          response["time_format"] = self.time_format
+        if self.on_fail is not None:
+          response["on_fail"] = self.on_fail
+        if self.on_fail_tag is not None:
+          response["on_fail_tag"] = self.on_fail_tag
+        if self.model is not None:
+          response["model"] = self.model
+
+        return response
     
     @classmethod
     def from_request(cls, schema_element: dict):
@@ -114,17 +123,25 @@ class SchemaElementStruct:
             )
         
     def to_response(self):
-        return {
+        response = {
           "type": self.type,
           "name": self.name,
           "description": self.description,
-          "strict": self.strict,
-          "dateFormat": self.date_format,
-          "timeFormat": self.time_format,
-          "onFail": self.on_fail,
-          "onFailTag": self.on_fail_tag,
-          "model": self.model   
         }
+        if self.strict is not None:
+          response["strict"] = self.strict
+        if self.dateFormat is not None:
+          response["dateFormat"] = self.date_format
+        if self.timeFormat is not None:
+          response["timeFormat"] = self.time_format
+        if self.onFail is not None:
+          response["onFail"] = self.on_fail
+        if self.onFailTag is not None:
+          response["onFailTag"] = self.on_fail_tag
+        if self.model is not None:
+          response["model"] = self.model
+
+        return response
     
     @classmethod
     def from_xml(cls, xml: _Element):
