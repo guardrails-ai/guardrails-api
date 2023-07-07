@@ -71,23 +71,18 @@ class RailSpecStruct:
   
     def to_dict(self):
         rail = {
-            "input_schema": None,
-            "output_schema": None,
-            "instructions": None,
-            "prompt": None,
-            "script": None,
             "version": self.version
         }
 
-        if self.input_schema != None:
+        if self.input_schema is not None:
             rail["input_schema"] = self.input_schema.to_dict()
-        if self.output_schema != None:
+        if self.output_schema is not None:
             rail["output_schema"] = self.output_schema.to_dict()
-        if self.instructions != None:
+        if self.instructions is not None:
             rail["instructions"] = self.instructions
-        if self.prompt != None:
+        if self.prompt is not None:
             rail["prompt"] = self.prompt
-        if self.script != None:
+        if self.script is not None:
             rail["script"] = self.script.to_dict()
 
         return rail
@@ -116,23 +111,18 @@ class RailSpecStruct:
     
     def to_response(self):
         rail = {
-            "inputSchema": None,
-            "outputSchema": None,
-            "instructions": None,
-            "prompt": None,
-            "script": None,
             "version": self.version
         }
 
-        if self.input_schema != None:
+        if self.input_schema is not None:
             rail["inputSchema"] = self.input_schema.to_response()
-        if self.output_schema != None:
+        if self.output_schema is not None:
             rail["outputSchema"] = self.output_schema.to_response()
-        if self.instructions != None:
+        if self.instructions is not None:
             rail["instructions"] = self.instructions
-        if self.prompt != None:
+        if self.prompt is not None:
             rail["prompt"] = self.prompt
-        if self.script != None:
+        if self.script is not None:
             rail["script"] = self.script.to_response()
 
         return rail
