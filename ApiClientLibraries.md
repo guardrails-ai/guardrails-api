@@ -23,6 +23,7 @@ See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/auto
   - Responses are generic JSON, not explicit models
 
 ## OpenAPITools openapi-generator
+See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/open-api-generator
 ### Summary
   - Open source (Apache License)
   - Fork of Swagger Codegen
