@@ -23,6 +23,7 @@ See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/auto
   - Responses are generic JSON, not explicit models
 
 ## OpenAPITools openapi-generator
+See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/open-api-generator
 ### Summary
   - Open source (Apache License)
   - Fork of Swagger Codegen
@@ -64,10 +65,20 @@ See setup and usage here: https://github.com/tinystacks/guardrails-poc/tree/open
 
 ### Pros
   - Python native
-  - Uses Poetry to package
+  - Can use Poetry or Setuptools to package
   - Generates pyproject.toml
   - Generates Models along with client
+  - Models have builtin `to_dict` methods
 
 ### Cons
-  - Doesn't support default responses (generates build time warning)
+  - Doesn't support "default" responses key (expects an HTTP Code/number and therefore generates build time warning)
   - Strict about schema contract (i.e. not required !== nullable)
+
+
+## Conclusion
+Given the options above, I would currently suggest using `openapi-python-client` for the following reasons:
+  - Python native and doesn't require other runtimes to perform code generation
+  - Output is packageable by default
+  - Non-opinionated auth setup
+  - Models can be easily converted to dictionaries and therefore json serializeable
+  - Can be installed adjacent to the existing guardrails-ai package
