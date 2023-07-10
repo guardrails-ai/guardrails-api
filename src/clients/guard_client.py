@@ -11,7 +11,7 @@ class GuardClient:
         self.initialized = True
         self.pgClient = PostgresClient()
     
-    def get_guard(self, guard_name: str, as_of_date: str) -> GuardStruct:
+    def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
         latest_guard_item = self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
         audit_item = None
         if as_of_date != None:
