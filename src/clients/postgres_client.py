@@ -33,3 +33,4 @@ class PostgresClient:
           self.db.session.execute(text(AUDIT_FUNCTION))
           self.db.session.execute(text(AUDIT_TRIGGER))
           self.db.session.commit()
+          

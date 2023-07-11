@@ -44,3 +44,14 @@ services:
       LOGLEVEL: DEBUG
     depends_on:
       - postgres
+  postgrespgvector: 
+    image: postgrespgvector
+    environment:
+      PGPORT: 5432
+      PGHOST: localhost
+      PGDATABASE: postgrespgvector
+      POSTGRES_USER: ${PGUSER:-postgres}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-changeme}
+      
+    ports:
+      - "5432:5432"
