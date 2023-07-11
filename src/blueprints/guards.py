@@ -47,9 +47,14 @@ def guard(guard_name: str):
 def validate(guard_name: str):
     if request.method != 'POST':
         raise HttpError(405, 'Method Not Allowed', '/guards/<guard_name>/validate only supports the POST method. You specified %s'.format(request.method))
-    payload = request.data.decode()
+    payload = request.json
     guard_client = GuardClient()
     guard_struct = guard_client.get_guard(guard_name)
     guard: Guard = guard_struct.to_guard()
-    result = guard.parse(payload)
+    reasks = payload.numReasks if payload.numReasks else guard_struct.num_reasks
+    result = guard.parse(
+        llm_output=payload.llmOutput,
+        num_reasks=reasks,
+        prompt_params=payload.promptParams
+    )
     return ValidationOutput(True, result, guard.state.all_histories).to_response()

@@ -167,7 +167,7 @@ paths:
       requestBody:
         required: true
         content:
-          text/plain:
+          application/json:
             schema:
               $ref: '#/components/schemas/ValidatePayload'
       responses:
@@ -215,7 +215,7 @@ components:
       type: object
       properties:
         status:
-          type: number
+          type: integer
           description: A valid http status code
         message:
           type: string
@@ -238,7 +238,7 @@ components:
       type: object
       properties:
         status:
-          type: number
+          type: integer
           description: A valid http status code
         message:
           type: string
@@ -255,7 +255,7 @@ components:
         railspec:
           $ref: '#/components/schemas/RailSpec'
         numReasks:
-          type: number
+          type: integer
           description: The number of re-asks to perform during validation when a validation fails.
         # The below might belong in the /validate endpoint payload
         guardConfig:
@@ -361,6 +361,17 @@ components:
           type: boolean
         additionalProperties: {}
     ValidatePayload:
-      type: string
-      description: The LLM output as a string or the input prompts for the LLM
-      example: stubbed llm output
+      type: object
+      properties:
+        llmOutput:
+          type: string
+          description: The LLM output as a string or the input prompts for the LLM
+          example: stubbed llm output
+        numReasks:
+          type: integer
+          description: An override for the number of re-asks to perform
+        promptParams:
+          type: object
+          description: additional params for llm prompts
+          properties: {}
+          additionalProperties: {}
