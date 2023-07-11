@@ -34,7 +34,7 @@ def guard(guard_name: str):
     elif request.method == 'PUT':
         payload = request.json
         guard = GuardStruct.from_request(payload)
-        updated_guard = guard_client.update_guard(guard_name, guard)
+        updated_guard = guard_client.upsert_guard(guard_name, guard)
         return updated_guard.to_response()
     elif request.method == 'DELETE':
         guard = guard_client.delete_guard(guard_name)
@@ -47,9 +47,15 @@ def guard(guard_name: str):
 def validate(guard_name: str):
     if request.method != 'POST':
         raise HttpError(405, 'Method Not Allowed', '/guards/<guard_name>/validate only supports the POST method. You specified %s'.format(request.method))
-    payload = request.data.decode()
+    payload = request.json
     guard_client = GuardClient()
     guard_struct = guard_client.get_guard(guard_name)
     guard: Guard = guard_struct.to_guard()
-    result = guard.parse(payload)
+    request_reasks = payload.get("numReasks")
+    reasks = request_reasks if request_reasks else guard_struct.num_reasks
+    result = guard.parse(
+        llm_output=payload.get("llmOutput"),
+        num_reasks=reasks,
+        prompt_params=payload.get("promptParams")
+    )
     return ValidationOutput(True, result, guard.state.all_histories).to_response()

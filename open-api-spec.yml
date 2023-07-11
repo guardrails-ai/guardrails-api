@@ -1,8 +1,8 @@
 openapi: '3.0.0'
 info:
   title: GuardRails API
-  version: '1.0'
-  description: Hello!
+  version: '0.0.0'
+  description: GuardRails CRUD API
 paths:
   /health-check:
     get:
@@ -167,7 +167,7 @@ paths:
       requestBody:
         required: true
         content:
-          text/plain:
+          application/json:
             schema:
               $ref: '#/components/schemas/ValidatePayload'
       responses:
@@ -215,7 +215,7 @@ components:
       type: object
       properties:
         status:
-          type: number
+          type: integer
           description: A valid http status code
         message:
           type: string
@@ -238,7 +238,7 @@ components:
       type: object
       properties:
         status:
-          type: number
+          type: integer
           description: A valid http status code
         message:
           type: string
@@ -255,7 +255,7 @@ components:
         railspec:
           $ref: '#/components/schemas/RailSpec'
         numReasks:
-          type: number
+          type: integer
           description: The number of re-asks to perform during validation when a validation fails.
         # The below might belong in the /validate endpoint payload
         guardConfig:
@@ -346,21 +346,93 @@ components:
         sessionHistory:
           type: array
           items:
-            $ref: '#/components/schemas/HistoryEvent'
-        additionalProperties: {}
+            $ref: '#/components/schemas/History'
+      additionalProperties: {}
       required:
         - result
+    History:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryEvent'
     HistoryEvent:
       type: object
       properties:
-        input:
-          type: string
-        validationId:
+        instructions:
           type: string
         output:
-          type: boolean
-        additionalProperties: {}
+          type: string
+        parsedOutput:
+          type: object
+          properties: {}
+          additionalProperties: {}
+        prompt:
+          type: string
+        reasks:
+          type: array
+          items:
+            type: object
+            properties: {}
+            additionalProperties: {}
+        validatedOutput:
+          type: object
+          properties: {}
+          additionalProperties: {}
+      additionalProperties: {}
+    Reask:
+      type: object
+      properties:
+        incorrect_value:
+          $ref: '#/components/schemas/Any'
+        error_message:
+          type: string
+        fix_value:
+          $ref: '#/components/schemas/Any'
+        path:
+          type: array
+          items:
+            $ref: '#/components/schemas/Any'
+    Any:
+      oneOf:
+        - $ref: '#/components/schemas/AnyArray'
+        - $ref: '#/components/schemas/AnyObject'
+        - $ref: '#/components/schemas/AnyPrimitive'
+    AnyPrimitive:
+      oneOf:
+        - type: boolean
+        - type: integer
+        - type: number
+        - type: string
+    AnyObject:
+      type: object
+      properties: {}
+      additionalProperties: {}
+    # Cannot generate clients for recursive references
+    AnyArray:
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/AnyObject'
+          - $ref: '#/components/schemas/AnyPrimitive'
+          - type: array
+            items:
+              oneOf:
+                - $ref: '#/components/schemas/AnyObject'
+                - $ref: '#/components/schemas/AnyPrimitive'
     ValidatePayload:
-      type: string
-      description: The LLM output as a string or the input prompts for the LLM
-      example: stubbed llm output
+      type: object
+      properties:
+        llmOutput:
+          type: string
+          description: The LLM output as a string or the input prompts for the LLM
+          example: stubbed llm output
+        numReasks:
+          type: integer
+          description: An override for the number of re-asks to perform
+        promptParams:
+          type: object
+          description: additional params for llm prompts
+          properties: {}
+          additionalProperties: {}
