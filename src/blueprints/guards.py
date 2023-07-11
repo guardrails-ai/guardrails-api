@@ -51,10 +51,11 @@ def validate(guard_name: str):
     guard_client = GuardClient()
     guard_struct = guard_client.get_guard(guard_name)
     guard: Guard = guard_struct.to_guard()
-    reasks = payload.numReasks if payload.numReasks else guard_struct.num_reasks
+    request_reasks = payload.get("numReasks")
+    reasks = request_reasks if request_reasks else guard_struct.num_reasks
     result = guard.parse(
-        llm_output=payload.llmOutput,
+        llm_output=payload.get("llmOutput"),
         num_reasks=reasks,
-        prompt_params=payload.promptParams
+        prompt_params=payload.get("promptParams")
     )
     return ValidationOutput(True, result, guard.state.all_histories).to_response()
