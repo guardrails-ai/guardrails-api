@@ -34,7 +34,7 @@ def guard(guard_name: str):
     elif request.method == 'PUT':
         payload = request.json
         guard = GuardStruct.from_request(payload)
-        updated_guard = guard_client.update_guard(guard_name, guard)
+        updated_guard = guard_client.upsert_guard(guard_name, guard)
         return updated_guard.to_response()
     elif request.method == 'DELETE':
         guard = guard_client.delete_guard(guard_name)

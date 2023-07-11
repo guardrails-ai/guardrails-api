@@ -59,6 +59,20 @@ class GuardClient:
         self.pgClient.db.session.commit()
         return GuardStruct.from_guard_item(guard_item)
 
+    def upsert_guard(
+        self,
+        guard_name: str,
+        guard: GuardStruct
+    ) -> GuardStruct:
+        guard_item = self.get_guard_item(guard_name)
+        if guard_item is not None:
+          guard_item.railspec = guard.railspec.to_dict()
+          guard_item.num_reasks = guard.num_reasks
+          self.pgClient.db.session.commit()
+          return GuardStruct.from_guard_item(guard_item)
+        else:
+            return self.create_guard(guard)
+
     def delete_guard(
         self,
         guard_name: str
