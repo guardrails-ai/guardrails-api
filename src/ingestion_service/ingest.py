@@ -1,11 +1,11 @@
 from flask import Flask, request
-from ingestion_client import IngestionClient
+from clients.ingestion_client import IngestionClient
 
 app = Flask(__name__)
 
 def create_database(): 
     app = Flask(__name__)
-    from database import PostgresPGClient
+    from clients.postgrespg_client import PostgresPGClient
     client = PostgresPGClient()
     client.initialize(app)
 
@@ -16,9 +16,10 @@ def create_database():
         return "Hello, Flask!"
 
     @app.route("/ingest")
-    def ingest(articles: list, metadata: dict, validatorId: str, guardId: str, embeddingModel: str):
+    def ingest():
+        payload = request.json
         ingestionClient = IngestionClient()
-        return ingestionClient.ingest(articles, metadata, validatorId, guardId, embeddingModel)
+        return ingestionClient.ingest(**payload)
     
     @app.route("/embeddings/<uuid>", methods = ['POST', 'GET', 'DELETE'])
     def embeddings(uuid: str):

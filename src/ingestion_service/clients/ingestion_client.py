@@ -2,7 +2,7 @@
 import openai
 import uuid
 from models.ingestion_item import IngestionItem
-from database import PostgresPGClient
+from clients.postgrespg_client import PostgresPGClient
 
 class IngestionClient: 
      def __init__(self):
@@ -24,7 +24,8 @@ class IngestionClient:
         self.client.db.session.commit()
 
      def getEmbeddings(self, uuid: str): 
-      return self.getIngestionItem(uuid)
+        item = self.getIngestionItem(uuid)
+        return self.ingestionItemToDict(item)
      
      def updateEmbeddings(self, uuid: str, articles: list, metadata: dict, validatorId: str, guardId: str, embeddingModel: str): 
         
@@ -44,14 +45,21 @@ class IngestionClient:
         ingestionItem = self.getIngestionItem(uuid)
         self.client.db.session.delete(ingestionItem)
         self.client.db.session.commit()
-        return ingestionItem
+        return self.ingestionItemToDict(ingestionItem)
      
      def getOpenAPIEmbeddings(articles, embeddingModel='text-embedding-ada-002'): 
       return openai.Embedding.create(input = articles, model=embeddingModel)['data'][0]['embedding']
     
      def getIngestionItem(self, uuid): 
-        return self.client.db.session.query(IngestionItem).filter_by(uuid=uuid).first()
-     
+        return self.client.db.session.query(IngestionItem).filter_by(id=uuid).first()
+
      def generateIngestionUUID():
         return uuid.uuid1()
-        
+     
+     def ingestionItemToDict(seld, ingestionItem: IngestionItem): 
+        return { 
+           'id': ingestionItem.id, 
+           'guardId': ingestionItem.guardId, 
+           'embeddings': ingestionItem.embedding.tolist(), 
+           'validatorId': ingestionItem.validatorId, 
+           'metadata': ingestionItem.data }

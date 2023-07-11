@@ -3,10 +3,6 @@ import os
 from flask import Flask
 from models.base import db
 from sqlalchemy import text
-import numpy as np
-
-embedding_dim = 1536
-embedding_array = np.random.rand(embedding_dim)
 
 class PostgresPGClient:
   
