@@ -74,7 +74,7 @@ Itchy, flaky, slightly scaly. Moderate response to OTC steroid cream"""
    guard = gd.Guard.from_rail('getting_started.rail')
 
    # Set your OpenAI API key
-   os.environ["OPENAI_API_KEY"] = "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"
+   os.environ["OPENAI_API_KEY"] = "INSERT"
    
    with otel_tracer.start_as_current_span('guard'):
       # Wrap the OpenAI API call with the `guard` object
