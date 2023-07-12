@@ -9,7 +9,7 @@ class IngestionClient:
           self.initialized = True
           self.client = PostgresPGClient()
 
-     def ingest(self, articles: list, metadata: dict, validatorId: str, guardId: str, embeddingModel: str):
+     def ingest(self, articles: list, metadata: str, validatorId: str, guardId: str, articleId: str, chunkId: str, embeddingModel: str):
         embeddings = self.getOpenAPIEmbeddings(articles, embeddingModel)
 
         ingestion = IngestionItem(
@@ -17,49 +17,65 @@ class IngestionClient:
               embedding=embeddings, 
               data=metadata, 
               guardId=guardId, 
-              validatorId=validatorId
+              validatorId=validatorId,
+              articleId=articleId, 
+              chunkId=chunkId
+
           )
         
         self.client.db.session.add(ingestion)
         self.client.db.session.commit()
 
+        return self.ingestionItemToDict(ingestion)
+
      def getEmbeddings(self, uuid: str): 
         item = self.getIngestionItem(uuid)
         return self.ingestionItemToDict(item)
      
-     def updateEmbeddings(self, uuid: str, articles: list, metadata: dict, validatorId: str, guardId: str, embeddingModel: str): 
+     def getEmbeddingsForGaurd(self, gaurdId: str): 
+        #to-do 
+        pass
+     
+     def updateEmbeddings(self, uuid: str, articles: list, metadata: str, validatorId: str, guardId: str, articleId: str, chunkId: str, embeddingModel: str): 
         
         ingestionItem = self.getIngestionItem(uuid)
-        embeddings = self.getOpenAPIEmbeddings(articles, embeddingModel)
+        openai_embeddings = self.getOpenAPIEmbeddings(articles, embeddingModel)
+        
+   
         ingestionItem.data = metadata
-        ingestionItem.embedding = embeddings
+        ingestionItem.embedding = openai_embeddings
         ingestionItem.guardId = guardId
-        ingestionItem.validatorId = validatorId
+        ingestionItem.validatorId = validatorId 
+        ingestionItem.articleId = articleId
+        ingestionItem.chunkId = chunkId
 
-        
+
         self.client.db.session.commit()
-        return ingestionItem
+        return self.ingestionItemToDict(ingestionItem)
         
-    
      def deleteEmbeddings(self, uuid): 
         ingestionItem = self.getIngestionItem(uuid)
         self.client.db.session.delete(ingestionItem)
         self.client.db.session.commit()
         return self.ingestionItemToDict(ingestionItem)
      
-     def getOpenAPIEmbeddings(articles, embeddingModel='text-embedding-ada-002'): 
+     def getOpenAPIEmbeddings(self, articles, embeddingModel='text-embedding-ada-002'): 
+      openai.api_key = ''
       return openai.Embedding.create(input = articles, model=embeddingModel)['data'][0]['embedding']
     
      def getIngestionItem(self, uuid): 
         return self.client.db.session.query(IngestionItem).filter_by(id=uuid).first()
 
-     def generateIngestionUUID():
-        return uuid.uuid1()
+     def generateIngestionUUID(self):
+        return str(uuid.uuid1())
      
-     def ingestionItemToDict(seld, ingestionItem: IngestionItem): 
+     def ingestionItemToDict(self, ingestionItem: IngestionItem): 
         return { 
            'id': ingestionItem.id, 
            'guardId': ingestionItem.guardId, 
            'embeddings': ingestionItem.embedding.tolist(), 
            'validatorId': ingestionItem.validatorId, 
-           'metadata': ingestionItem.data }
+           'metadata': ingestionItem.data, 
+           'articleId': ingestionItem.articleId, 
+           'chunkId': ingestionItem.chunkId
+           }

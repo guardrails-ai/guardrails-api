@@ -11,11 +11,12 @@ class IngestionItem(db.Model):
      __tablename__ = "embeddings"
      
      id = Column(String, primary_key=True)
-     #embedding = Column(Vector(1536), nullable=False)
-     embedding = Column(Vector(1536), nullable=True)
+     embedding = Column(Vector(1536), nullable=False)
      data = Column(String, nullable=False)
      guardId = Column(String, nullable=False)
      validatorId = Column(String, nullable=True)
+     articleId = Column(String, nullable=True)
+     chunkId = Column(String, nullable=True)
      
 
      def __init__(
@@ -24,10 +25,14 @@ class IngestionItem(db.Model):
              embedding,
              data, 
              guardId,
-             validatorId
+             validatorId, 
+             articleId, 
+             chunkId
      ):
          self.id = id
          self.embedding = embedding
          self.data = data
          self.guardId = guardId
          self.validatorId = validatorId
+         self.articleId = articleId
+         self.chunkId = chunkId

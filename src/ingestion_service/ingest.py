@@ -15,13 +15,16 @@ def create_database():
     def home():
         return "Hello, Flask!"
 
-    @app.route("/ingest")
+    @app.route("/ingest", methods = ['POST'])
     def ingest():
-        payload = request.json
-        ingestionClient = IngestionClient()
-        return ingestionClient.ingest(**payload)
+        if(request.method == 'POST'):
+            payload = request.json
+            ingestionClient = IngestionClient()
+            return ingestionClient.ingest(**payload)
+        else: 
+           pass
     
-    @app.route("/embeddings/<uuid>", methods = ['POST', 'GET', 'DELETE'])
+    @app.route("/embeddings/<uuid>", methods = ['PUT', 'GET', 'DELETE'])
     def embeddings(uuid: str):
        print(uuid)
        ingestionClient = IngestionClient()
@@ -33,7 +36,7 @@ def create_database():
        elif request.method == 'DELETE': 
           return ingestionClient.deleteEmbeddings(uuid)
        else: 
-          pass #raise an error later
+          pass #to-do raise an error
         
 
     return app
