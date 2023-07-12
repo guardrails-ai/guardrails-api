@@ -1,6 +1,5 @@
 import os
 import traceback
-import logging
 from flask import Flask, request
 from sqlalchemy import text
 from src.classes.health_check import HealthCheck
@@ -66,6 +65,7 @@ ingest_counter = otel_meter.create_counter('ingest')
 def home():
    return "Hello, Flask!"
 
+# DELETE ME: test route and function
 @app.route("/ingest")
 def ingest():
 
@@ -86,21 +86,12 @@ Itchy, flaky, slightly scaly. Moderate response to OTC steroid cream"""
          temperature=0.3,
       )
       
-      # Not perfect, it is nested in the parent span, not in the span of each step 
-      for logs in guard.state.most_recent_call.history:
-         otel_logger.info(f"Prompt: {logs.prompt.source}")
-         if logs.instructions is not None:
-            otel_logger.info(f"Instructions: {logs.instructions.source}")
-         otel_logger.info(f"Output: {logs.output}")
-         otel_logger.info(f"Validated Output: {logs.validated_output}")
+      # Example log
+      otel_logger.info('Guardrails is cool!')
 
-   
-   # ingest_counter.add(1)
-
-   # with otel_tracer.start_as_current_span('foo'):
-   #    otel_logger.info('Guardrails is cool!')
-   #    ingest_counter.add(1)
-   #    reader.collect()
+      # Example metric, this doesn't reset
+      ingest_counter.add(1)
+      reader.collect()
 
 
    return 'Done!'
