@@ -20,11 +20,18 @@ from opensearchpy import OpenSearch
 
 import guardrails as gd
 import openai
+# For integration with otel-instrumentors package
+# from otel_instrumentors import (
+#    otel_logger, 
+#    otel_meter, 
+#    metric_reader,
+#    otel_tracer
+# ) 
 
 from src.clients.guard_client import GuardClient
 from src.modules.otel_tracer import otel_tracer
 from src.modules.otel_logger import otel_logger
-from src.modules.otel_meter import otel_meter, reader
+from src.modules.otel_meter import otel_meter, metric_reader
 
 app = Flask(__name__)
 api_doc(app, config_path='./open-api-spec.yml', url_prefix='/docs', title='GuardRails API Docs')
@@ -42,6 +49,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'secret'
 db = SQLAlchemy(app)
 
+# DELETE ME: OpenSearch client example for telemetry api
 client = OpenSearch(
    ['opensearch-node1', 'opensearch-node2'],
    use_ssl=True,
@@ -57,7 +65,6 @@ client = OpenSearch(
 # can we add metadata?
 # one counter per user id and one global
 ingest_counter = otel_meter.create_counter('ingest')
-# use histogram
 
 # t-SNE for vector projections
 
@@ -78,7 +85,7 @@ Itchy, flaky, slightly scaly. Moderate response to OTC steroid cream"""
    
    with otel_tracer.start_as_current_span('guard'):
       # Wrap the OpenAI API call with the `guard` object
-      raw_llm_output, validated_output = guard(
+      guard(
          openai.Completion.create,
          prompt_params={"doctors_notes": doctors_notes},
          engine="text-davinci-003",
@@ -91,11 +98,11 @@ Itchy, flaky, slightly scaly. Moderate response to OTC steroid cream"""
 
       # Example metric, this doesn't reset
       ingest_counter.add(1)
-      reader.collect()
-
+      metric_reader.collect()
 
    return 'Done!'
 
+# DELETE ME: example query for telemetry api
 @app.route("/get-trace")
 def getTrace():
    query = {

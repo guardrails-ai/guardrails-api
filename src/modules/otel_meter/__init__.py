@@ -15,8 +15,8 @@ from src.modules.resource import resource
 OTLP_ENDPOINT = os.environ.get('OTLP_ENDPOINT', 'http://localhost:4317')
 
 __exporter = OTLPMetricExporter(endpoint=OTLP_ENDPOINT, insecure=True)
-reader = PeriodicExportingMetricReader(__exporter, export_interval_millis=math.inf)
-__provider = MeterProvider(resource=resource, metric_readers=[reader])
+metric_reader = PeriodicExportingMetricReader(__exporter, export_interval_millis=math.inf)
+__provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
 set_meter_provider(__provider)
 
 otel_meter = get_meter_provider().get_meter(__name__)
