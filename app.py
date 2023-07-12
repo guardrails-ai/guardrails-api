@@ -19,9 +19,13 @@ from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from opensearchpy import OpenSearch
 
+import guardrails as gd
+import openai
+
 from src.clients.guard_client import GuardClient
 from src.modules.otel_tracer import otel_tracer
 from src.modules.otel_logger import otel_logger
+from src.modules.otel_meter import otel_meter, reader
 
 app = Flask(__name__)
 api_doc(app, config_path='./open-api-spec.yml', url_prefix='/docs', title='GuardRails API Docs')
@@ -39,25 +43,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'secret'
 db = SQLAlchemy(app)
 
-# resource = Resource(attributes={
-#    'service.name': 'validation-loop'
-# })
-# trace.set_tracer_provider(TracerProvider(resource=resource))
-# otlp_span_exporter = OTLPSpanExporter(endpoint='otel-collector:4317', insecure=True)
-# span_processor = SimpleSpanProcessor(otlp_span_exporter)
-# trace.get_tracer_provider().add_span_processor(span_processor)
-# tracer = trace.get_tracer(__name__)
-
-# logger_provider = LoggerProvider(resource=resource)
-# set_logger_provider(logger_provider)
-# otlp_logs_exporter = OTLPLogExporter(endpoint='otel-collector:4317', insecure=True)
-# logger_provider.add_log_record_processor(SimpleLogRecordProcessor(otlp_logs_exporter))
-# handler = LoggingHandler(level=logging.NOTSET, logger_provider=logger_provider)
-# logging.root.setLevel(logging.NOTSET)
-# # can remove namespace 'open-search' if we want all root logs to go to OpenSearch
-# otel_logger = logging.getLogger('otel')
-# otel_logger.addHandler(handler)
-
 client = OpenSearch(
    ['opensearch-node1', 'opensearch-node2'],
    use_ssl=True,
@@ -70,14 +55,54 @@ client = OpenSearch(
    # ssl_assert_hostname = False,
 )
 
+# can we add metadata?
+# one counter per user id and one global
+ingest_counter = otel_meter.create_counter('ingest')
+# use histogram
+
+# t-SNE for vector projections
+
 @app.route("/")
 def home():
    return "Hello, Flask!"
 
 @app.route("/ingest")
 def ingest():
-   with otel_tracer.start_as_current_span('foo'):
-      otel_logger.info('Guardrails is cool!')
+
+   doctors_notes = """49 y/o Male with chronic macular rash to face & hair, worse in beard, eyebrows & nares.
+Itchy, flaky, slightly scaly. Moderate response to OTC steroid cream"""
+   guard = gd.Guard.from_rail('getting_started.rail')
+
+   # Set your OpenAI API key
+   os.environ["OPENAI_API_KEY"] = "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"
+   
+   with otel_tracer.start_as_current_span('guard'):
+      # Wrap the OpenAI API call with the `guard` object
+      raw_llm_output, validated_output = guard(
+         openai.Completion.create,
+         prompt_params={"doctors_notes": doctors_notes},
+         engine="text-davinci-003",
+         max_tokens=1024,
+         temperature=0.3,
+      )
+      
+      # Not perfect, it is nested in the parent span, not in the span of each step 
+      for logs in guard.state.most_recent_call.history:
+         otel_logger.info(f"Prompt: {logs.prompt.source}")
+         if logs.instructions is not None:
+            otel_logger.info(f"Instructions: {logs.instructions.source}")
+         otel_logger.info(f"Output: {logs.output}")
+         otel_logger.info(f"Validated Output: {logs.validated_output}")
+
+   
+   # ingest_counter.add(1)
+
+   # with otel_tracer.start_as_current_span('foo'):
+   #    otel_logger.info('Guardrails is cool!')
+   #    ingest_counter.add(1)
+   #    reader.collect()
+
+
    return 'Done!'
 
 @app.route("/get-trace")
