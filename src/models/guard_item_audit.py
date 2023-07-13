@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, CHAR
 from src.models.base import db
 
+
 class GuardItemAudit(db.Model):
     __tablename__ = "guards_audit"
     id = Column(String, primary_key=True)
@@ -14,15 +15,15 @@ class GuardItemAudit(db.Model):
     operation = Column(CHAR, nullable=False)
 
     def __init__(
-            self,
-            id,
-            name,
-            railspec,
-            num_reasks,
-            # owner = None
-            replaced_on,
-            # replaced_by
-            operation
+        self,
+        id,
+        name,
+        railspec,
+        num_reasks,
+        # owner = None
+        replaced_on,
+        # replaced_by
+        operation,
     ):
         self.id = id
         self.name = name
@@ -31,6 +32,7 @@ class GuardItemAudit(db.Model):
         self.replaced_on = replaced_on
         self.operation = operation
         # self.owner = owner
+
 
 AUDIT_FUNCTION = """
 CREATE OR REPLACE FUNCTION guard_audit_function() RETURNS TRIGGER AS $guard_audit$
@@ -48,7 +50,7 @@ $guard_audit$
 LANGUAGE plpgsql;
 """
 
-AUDIT_TRIGGER="""
+AUDIT_TRIGGER = """
 DROP TRIGGER IF EXISTS guard_audit_trigger
   ON guards;
 CREATE TRIGGER guard_audit_trigger

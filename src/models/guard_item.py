@@ -3,7 +3,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 from src.models.base import db
 
 
-
 class GuardItem(db.Model):
     __tablename__ = "guards"
     # TODO: Make primary key a composite between guard.name and the guard owner's userId from w/e auth system is implemented
@@ -13,11 +12,11 @@ class GuardItem(db.Model):
     # owner = Column(String, nullable=False)
 
     def __init__(
-            self,
-            name,
-            railspec,
-            num_reasks
-            # owner = None
+        self,
+        name,
+        railspec,
+        num_reasks
+        # owner = None
     ):
         self.name = name
         self.railspec = railspec

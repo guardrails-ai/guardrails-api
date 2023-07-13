@@ -2,14 +2,12 @@ from typing import Any, Dict, Optional
 from lxml.etree import _Element
 from src.utils.pluck import pluck
 
+
 class ElementStub:
-    def __init__(
-            self,
-            tag,
-            attributes: Dict[str, Any]
-            ) -> None:
+    def __init__(self, tag, attributes: Dict[str, Any]) -> None:
         self.attrib = attributes
         self.tag = tag
+
 
 class SchemaElementStruct:
     def __init__(
@@ -39,110 +37,130 @@ class SchemaElementStruct:
         elem_dict["date-format"] = self.date_format
         elem_dict["time-format"] = self.time_format
         if self.on_fail_tag:
-          elem_dict[self.on_fail_tag] = self.on_fail
+            elem_dict[self.on_fail_tag] = self.on_fail
         return ElementStub(self.type, elem_dict)
 
     @classmethod
     def from_dict(cls, schema_element: dict):
         if schema_element != None:
-          type, name, description, strict, date_format, time_format, on_fail, on_fail_tag, model = pluck(
-              schema_element,
-              [      
-                "type",
-                "name",
-                "description",
-                "strict",
-                "date_format",
-                "time_format",
-                "on_fail",
-                "on_fail_tag",
-                "model"
-              ]
-          )
-          return cls(
-              type,
-              name,
-              description,
-              strict,
-              date_format,
-              time_format,
-              on_fail,
-              on_fail_tag,
-              model
+            (
+                type,
+                name,
+                description,
+                strict,
+                date_format,
+                time_format,
+                on_fail,
+                on_fail_tag,
+                model,
+            ) = pluck(
+                schema_element,
+                [
+                    "type",
+                    "name",
+                    "description",
+                    "strict",
+                    "date_format",
+                    "time_format",
+                    "on_fail",
+                    "on_fail_tag",
+                    "model",
+                ],
             )
-    
+            return cls(
+                type,
+                name,
+                description,
+                strict,
+                date_format,
+                time_format,
+                on_fail,
+                on_fail_tag,
+                model,
+            )
+
     def to_dict(self):
         response = {
-          "type": self.type,
-          "name": self.name,
-          "description": self.description,
+            "type": self.type,
+            "name": self.name,
+            "description": self.description,
         }
 
         if self.strict is not None:
-          response["strict"] = self.strict
+            response["strict"] = self.strict
         if self.date_format is not None:
-          response["date_format"] = self.date_format
+            response["date_format"] = self.date_format
         if self.time_format is not None:
-          response["time_format"] = self.time_format
+            response["time_format"] = self.time_format
         if self.on_fail is not None:
-          response["on_fail"] = self.on_fail
+            response["on_fail"] = self.on_fail
         if self.on_fail_tag is not None:
-          response["on_fail_tag"] = self.on_fail_tag
+            response["on_fail_tag"] = self.on_fail_tag
         if self.model is not None:
-          response["model"] = self.model
+            response["model"] = self.model
 
         return response
-    
+
     @classmethod
     def from_request(cls, schema_element: dict):
         if schema_element != None:
-          type, name, description, strict, date_format, time_format, on_fail, on_fail_tag, model = pluck(
-              schema_element,
-              [      
-                "type",
-                "name",
-                "description",
-                "strict",
-                "dateFormat",
-                "timeFormat",
-                "onFail",
-                "onFailTag",
-                "model"
-              ]
-          )
-          return cls(
-              type,
-              name,
-              description,
-              strict,
-              date_format,
-              time_format,
-              on_fail,
-              on_fail_tag,
-              model
+            (
+                type,
+                name,
+                description,
+                strict,
+                date_format,
+                time_format,
+                on_fail,
+                on_fail_tag,
+                model,
+            ) = pluck(
+                schema_element,
+                [
+                    "type",
+                    "name",
+                    "description",
+                    "strict",
+                    "dateFormat",
+                    "timeFormat",
+                    "onFail",
+                    "onFailTag",
+                    "model",
+                ],
             )
-        
+            return cls(
+                type,
+                name,
+                description,
+                strict,
+                date_format,
+                time_format,
+                on_fail,
+                on_fail_tag,
+                model,
+            )
+
     def to_response(self):
         response = {
-          "type": self.type,
-          "name": self.name,
-          "description": self.description,
+            "type": self.type,
+            "name": self.name,
+            "description": self.description,
         }
         if self.strict is not None:
-          response["strict"] = self.strict
+            response["strict"] = self.strict
         if self.date_format is not None:
-          response["dateFormat"] = self.date_format
+            response["dateFormat"] = self.date_format
         if self.time_format is not None:
-          response["timeFormat"] = self.time_format
+            response["timeFormat"] = self.time_format
         if self.on_fail is not None:
-          response["onFail"] = self.on_fail
+            response["onFail"] = self.on_fail
         if self.on_fail_tag is not None:
-          response["onFailTag"] = self.on_fail_tag
+            response["onFailTag"] = self.on_fail_tag
         if self.model is not None:
-          response["model"] = self.model
+            response["model"] = self.model
 
         return response
-    
+
     @classmethod
     def from_xml(cls, xml: _Element):
         type = xml.tag
@@ -153,7 +171,7 @@ class SchemaElementStruct:
         if strict_tag:
             strict = True if strict_tag == "true" else False
         date_format = xml.get("date-format")
-        time_format  = xml.get("time-format")
+        time_format = xml.get("time-format")
         on_fail = None
         on_fail_tag = None
         attr_keys = xml.keys()
@@ -171,5 +189,5 @@ class SchemaElementStruct:
             time_format,
             on_fail,
             on_fail_tag,
-            model
+            model,
         )

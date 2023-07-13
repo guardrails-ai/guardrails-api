@@ -5,6 +5,7 @@ from src.classes.script_struct import ScriptStruct
 from src.utils.pluck import pluck
 from src.utils.escape_curlys import escape_curlys, descape_curlys
 
+
 class RailSpecStruct:
     def __init__(
         self,
@@ -21,61 +22,58 @@ class RailSpecStruct:
         self.prompt = prompt
         self.script = script
         self.version = version
-    
+
     @classmethod
     def from_rail(cls, rail: Rail):
         return cls(
-          SchemaStruct.from_schema(rail.input_schema),
-          SchemaStruct.from_schema(rail.output_schema),
-          rail.instructions.source,
-          rail.prompt.source,
-          ScriptStruct.from_script(rail.script),
-          rail.version
-       )
+            SchemaStruct.from_schema(rail.input_schema),
+            SchemaStruct.from_schema(rail.output_schema),
+            rail.instructions.source,
+            rail.prompt.source,
+            ScriptStruct.from_script(rail.script),
+            rail.version,
+        )
 
     def to_rail(self) -> Rail:
         input_schema = self.input_schema.to_schema() if self.input_schema else None
         output_schema = self.output_schema.to_schema() if self.output_schema else None
-        instructions = Instructions(self.instructions, output_schema) if self.instructions else None
+        instructions = (
+            Instructions(self.instructions, output_schema)
+            if self.instructions
+            else None
+        )
         escaped_prompt = escape_curlys(self.prompt)
         prompt = Prompt(escaped_prompt, output_schema) if escaped_prompt else None
         prompt.source = descape_curlys(prompt.source)
         script = self.script.to_script() if self.script else None
         return Rail(
-            input_schema,
-            output_schema,
-            instructions,
-            prompt,
-            script,
-            self.version
+            input_schema, output_schema, instructions, prompt, script, self.version
         )
 
     @classmethod
     def from_dict(cls, rail: dict):
         input_schema, output_schema, instructions, prompt, script, version = pluck(
             rail,
-            [   
-              "input_schema",
-              "output_schema",
-              "instructions",
-              "prompt",
-              "script",
-              "version"
-            ]
+            [
+                "input_schema",
+                "output_schema",
+                "instructions",
+                "prompt",
+                "script",
+                "version",
+            ],
         )
         return cls(
-          SchemaStruct.from_dict(input_schema),
-          SchemaStruct.from_dict(output_schema),
-          instructions,
-          prompt,
-          ScriptStruct.from_dict(script),
-          version
-       )
-  
+            SchemaStruct.from_dict(input_schema),
+            SchemaStruct.from_dict(output_schema),
+            instructions,
+            prompt,
+            ScriptStruct.from_dict(script),
+            version,
+        )
+
     def to_dict(self):
-        rail = {
-            "version": self.version
-        }
+        rail = {"version": self.version}
 
         if self.input_schema is not None:
             rail["input_schema"] = self.input_schema.to_dict()
@@ -89,33 +87,31 @@ class RailSpecStruct:
             rail["script"] = self.script.to_dict()
 
         return rail
-    
+
     @classmethod
     def from_request(cls, rail: dict):
         input_schema, output_schema, instructions, prompt, script, version = pluck(
             rail,
-            [   
-              "inputSchema",
-              "outputSchema",
-              "instructions",
-              "prompt",
-              "script",
-              "version"
-            ]
+            [
+                "inputSchema",
+                "outputSchema",
+                "instructions",
+                "prompt",
+                "script",
+                "version",
+            ],
         )
         return cls(
-          SchemaStruct.from_request(input_schema),
-          SchemaStruct.from_request(output_schema),
-          instructions,
-          prompt,
-          ScriptStruct.from_request(script),
-          version
-       )
-    
+            SchemaStruct.from_request(input_schema),
+            SchemaStruct.from_request(output_schema),
+            instructions,
+            prompt,
+            ScriptStruct.from_request(script),
+            version,
+        )
+
     def to_response(self):
-        rail = {
-            "version": self.version
-        }
+        rail = {"version": self.version}
 
         if self.input_schema is not None:
             rail["inputSchema"] = self.input_schema.to_response()
@@ -129,7 +125,7 @@ class RailSpecStruct:
             rail["script"] = self.script.to_response()
 
         return rail
-    
+
     @classmethod
     def from_xml(cls, railspec: str):
         XMLPARSER = etree.XMLParser(encoding="utf-8")
@@ -152,8 +148,7 @@ class RailSpecStruct:
         raw_output_schema = elem_tree.find("output")
         if raw_output_schema is not None:
             output_schema = SchemaStruct.from_xml(raw_output_schema)
-        
-        
+
         # Parse instructions for the LLM. These are optional but if given,
         # LLMs can use them to improve their output. Commonly these are
         # prepended to the prompt.
@@ -180,5 +175,5 @@ class RailSpecStruct:
             instructions=instructions,
             prompt=prompt,
             script=script,
-            version=elem_tree.attrib["version"]
+            version=elem_tree.attrib["version"],
         )
