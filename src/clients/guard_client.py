@@ -1,5 +1,6 @@
 from typing import List
 from src.classes.guard_struct import GuardStruct
+from src.classes.http_error import HttpError
 from src.models.guard_item import GuardItem
 from src.clients.postgres_client import PostgresClient
 from src.models.guard_item_audit import GuardItemAudit
@@ -26,6 +27,12 @@ class GuardClient:
                 .first()
             )
         guard_item = audit_item if audit_item is not None else latest_guard_item
+        if guard_item is None:
+            raise HttpError(
+                status=404,
+                message="NotFound",
+                cause="A Guard with the name {guard_name} does not exist!".format(guard_name=guard_name)
+            )
         return GuardStruct.from_guard_item(guard_item)
 
     def get_guard_item(self, guard_name: str) -> GuardItem:
@@ -52,6 +59,12 @@ class GuardClient:
 
     def update_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
         guard_item = self.get_guard_item(guard_name)
+        if guard_item is None:
+            raise HttpError(
+                status=404,
+                message="NotFound",
+                cause="A Guard with the name {guard_name} does not exist!".format(guard_name=guard_name)
+            )
         guard_item.railspec = guard.railspec.to_dict()
         guard_item.num_reasks = guard.num_reasks
         self.pgClient.db.session.commit()
@@ -69,6 +82,12 @@ class GuardClient:
 
     def delete_guard(self, guard_name: str) -> GuardStruct:
         guard_item = self.get_guard_item(guard_name)
+        if guard_item is None:
+            raise HttpError(
+                status=404,
+                message="NotFound",
+                cause="A Guard with the name {guard_name} does not exist!".format(guard_name=guard_name)
+            )
         self.pgClient.db.session.delete(guard_item)
         self.pgClient.db.session.commit()
         guard = GuardStruct.from_guard_item(guard_item)
