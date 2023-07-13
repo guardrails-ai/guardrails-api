@@ -20,8 +20,8 @@ class DataTypeStruct:
         self.element = element
 
     @classmethod
-    def from_data_type(cls, dataType: DataType):
-        xmlement = dataType.element
+    def from_data_type(cls, data_type: DataType):
+        xmlement = data_type.element
         name, description, strict, date_format, time_format, model = attrgetter(
             "name",
             "description",
@@ -35,8 +35,8 @@ class DataTypeStruct:
             if attr.startswith("on-fail"):
                 on_fail = attr
         return cls(
-            dataType.children,
-            dataType.format_attr.tokens,
+            data_type.children,
+            data_type.format_attr.tokens,
             SchemaElementStruct(
                 xmlement.tag,
                 name,
@@ -83,7 +83,7 @@ class DataTypeStruct:
             children = {"item": object_data_type}
 
         data_type_cls = registry[self.element.type]
-        if data_type_cls != None:
+        if data_type_cls is not None:
             data_type = data_type_cls(
                 children=children, format_attr=format_attr, element=element
             )
@@ -103,15 +103,15 @@ class DataTypeStruct:
         return data_type
 
     @classmethod
-    def from_dict(cls, dataType: dict):
-        if dataType != None:
+    def from_dict(cls, data_type: dict):
+        if data_type is not None:
             children, formatters, element = pluck(
-                dataType, ["children", "formatters", "element"]
+                data_type, ["children", "formatters", "element"]
             )
             children_data_types = None
-            if children != None:
+            if children is not None:
                 class_children = {}
-                elem_type = element["type"] if element != None else None
+                elem_type = element["type"] if element is not None else None
                 elem_is_list = elem_type == "list"
                 child_entries = (
                     children.get("item", {}) if elem_is_list else children
@@ -134,9 +134,9 @@ class DataTypeStruct:
             "formatters": self.formatters,
             "element": self.element.to_dict(),
         }
-        if self.children != None:
+        if self.children is not None:
             serialized_children = {}
-            elem_type = self.element.type if self.element != None else None
+            elem_type = self.element.type if self.element is not None else None
             elem_is_list = elem_type == "list"
             child_entries = (
                 self.children.get("item", {}) if elem_is_list else self.children
@@ -153,15 +153,15 @@ class DataTypeStruct:
         return response
 
     @classmethod
-    def from_request(cls, dataType: dict):
-        if dataType != None:
+    def from_request(cls, data_type: dict):
+        if data_type is not None:
             children, formatters, element = pluck(
-                dataType, ["children", "formatters", "element"]
+                data_type, ["children", "formatters", "element"]
             )
             children_data_types = None
-            if children != None:
+            if children is not None:
                 class_children = {}
-                elem_type = element["type"] if element != None else None
+                elem_type = element["type"] if element is not None else None
                 elem_is_list = elem_type == "list"
                 child_entries = (
                     children.get("item", {}) if element["type"] else children
@@ -185,9 +185,9 @@ class DataTypeStruct:
             "formatters": self.formatters,
             "element": self.element.to_response(),
         }
-        if self.children != None:
+        if self.children is not None:
             serialized_children = {}
-            elem_type = self.element.type if self.element != None else None
+            elem_type = self.element.type if self.element is not None else None
             elem_is_list = elem_type == "list"
             child_entries = (
                 self.children.get("item", {}) if elem_is_list else self.children

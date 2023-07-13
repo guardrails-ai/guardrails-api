@@ -42,7 +42,7 @@ class SchemaElementStruct:
 
     @classmethod
     def from_dict(cls, schema_element: dict):
-        if schema_element != None:
+        if schema_element is not None:
             (
                 type,
                 name,
@@ -103,7 +103,7 @@ class SchemaElementStruct:
 
     @classmethod
     def from_request(cls, schema_element: dict):
-        if schema_element != None:
+        if schema_element is not None:
             (
                 type,
                 name,

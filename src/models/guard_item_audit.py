@@ -46,7 +46,7 @@ BEGIN
     END IF;
     RETURN null;
 END;
-$guard_audit$ 
+$guard_audit$
 LANGUAGE plpgsql;
 """
 
@@ -55,6 +55,6 @@ DROP TRIGGER IF EXISTS guard_audit_trigger
   ON guards;
 CREATE TRIGGER guard_audit_trigger
     AFTER INSERT OR UPDATE OR DELETE ON guards
-    FOR EACH ROW 
+    FOR EACH ROW
     EXECUTE PROCEDURE guard_audit_function();
 """

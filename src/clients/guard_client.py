@@ -1,6 +1,4 @@
-import os
 from typing import List
-from guardrails import Guard
 from src.classes.guard_struct import GuardStruct
 from src.models.guard_item import GuardItem
 from src.clients.postgres_client import PostgresClient
@@ -19,7 +17,7 @@ class GuardClient:
             .first()
         )
         audit_item = None
-        if as_of_date != None:
+        if as_of_date is not None:
             audit_item = (
                 self.pgClient.db.session.query(GuardItemAudit)
                 .filter_by(name=guard_name)
@@ -27,7 +25,7 @@ class GuardClient:
                 .order_by(GuardItemAudit.replaced_on.asc())
                 .first()
             )
-        guard_item = audit_item if audit_item != None else latest_guard_item
+        guard_item = audit_item if audit_item is not None else latest_guard_item
         return GuardStruct.from_guard_item(guard_item)
 
     def get_guard_item(self, guard_name: str) -> GuardItem:

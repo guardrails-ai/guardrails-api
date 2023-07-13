@@ -1,14 +1,5 @@
 from flask import Flask
-
-from src.classes.health_check import HealthCheck
-from src.classes.http_error import HttpError
-from flask_sqlalchemy import SQLAlchemy
-from src.classes.validation_output import ValidationOutput
 from swagger_ui import api_doc
-
-from src.clients.postgres_client import PostgresClient
-
-from src.clients.guard_client import GuardClient
 
 app = Flask(__name__)
 
@@ -24,13 +15,13 @@ def create_app():
 
     from src.clients.postgres_client import PostgresClient
 
-    pgClient = PostgresClient()
-    pgClient.initialize(app)
+    pg_client = PostgresClient()
+    pg_client.initialize(app)
 
-    from src.blueprints.root import rootBp
-    from src.blueprints.guards import guardsBp
+    from src.blueprints.root import root_bp
+    from src.blueprints.guards import guards_bp
 
-    app.register_blueprint(rootBp)
-    app.register_blueprint(guardsBp)
+    app.register_blueprint(root_bp)
+    app.register_blueprint(guards_bp)
 
     return app

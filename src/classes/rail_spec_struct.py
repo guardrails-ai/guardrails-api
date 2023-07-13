@@ -153,8 +153,8 @@ class RailSpecStruct:
 
     @classmethod
     def from_xml(cls, railspec: str):
-        XMLPARSER = etree.XMLParser(encoding="utf-8")
-        elem_tree = etree.fromstring(railspec, parser=XMLPARSER)
+        xml_parser = etree.XMLParser(encoding="utf-8")
+        elem_tree = etree.fromstring(railspec, parser=xml_parser)
 
         if (
             "version" not in elem_tree.attrib

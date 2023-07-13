@@ -4,7 +4,8 @@ from guardrails.schema import Schema, StringSchema, JsonSchema
 from src.classes.data_type_struct import DataTypeStruct
 
 
-# TODO: Rather than a custom schema construct like what this is now, consider making this JSONSchema
+# TODO: Rather than a custom schema construct like what this is now
+# consider making this JSONSchema
 # https://json-schema.org/
 class SchemaStruct:
     schema: Dict[str, DataTypeStruct] = None
@@ -43,7 +44,7 @@ class SchemaStruct:
 
     @classmethod
     def from_dict(cls, schema: dict):
-        if schema != None:
+        if schema is not None:
             serialized_schema = {}
             orig_schema = schema["schema"]
             for key in orig_schema:
@@ -63,7 +64,7 @@ class SchemaStruct:
 
     @classmethod
     def from_request(cls, schema: dict):
-        if schema != None:
+        if schema is not None:
             serialized_schema = {}
             inner_schema = schema["schema"]
             for key in inner_schema:

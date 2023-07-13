@@ -11,14 +11,14 @@ class ScriptStruct:
     @classmethod
     def from_script(cls, script: Script):
         return cls(
-            None,  # the script text isn't assigned to the Script class and thereform not accessible
+            None,  # the script text is not accessible from the Script class
             script.language,
             script.variables,
         )
 
     @classmethod
     def from_dict(cls, script: dict):
-        if script != None:
+        if script is not None:
             return cls(script["text"], script["language"], script["variables"])
 
     def to_dict(self):

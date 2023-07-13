@@ -19,8 +19,8 @@ class PostgresClient:
         pg_port = os.environ.get("PGPORT", "5432")
         pg_database = os.environ.get("PGDATABASE", "postgres")
 
-        CONF = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}"
-        app.config["SQLALCHEMY_DATABASE_URI"] = CONF
+        conf = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}"
+        app.config["SQLALCHEMY_DATABASE_URI"] = conf
 
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         app.secret_key = "secret"
