@@ -8,7 +8,7 @@ def handle_error(fn):
         try:
             return fn(*args, **kwargs)
         except HttpError as http_error:
-          print(e)
+          print(http_error)
           traceback.print_exception(http_error)
           return http_error.to_dict(), http_error.status
         except Exception as e:

@@ -25,8 +25,8 @@ class PostgresClient:
         self.app = app
         self.db = db
         db.init_app(app)
-        from src.models.guard_item import GuardItem
-        from src.models.guard_item_audit import GuardItemAudit, AUDIT_FUNCTION, AUDIT_TRIGGER
+        from src.models.guard_item import GuardItem  # NOQA
+        from src.models.guard_item_audit import GuardItemAudit, AUDIT_FUNCTION, AUDIT_TRIGGER  # NOQA
         with self.app.app_context():
           self.db.session.execute(text(INIT_EXTENSIONS))
           self.db.create_all()
