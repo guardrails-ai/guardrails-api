@@ -23,7 +23,12 @@ class DataTypeStruct:
     def from_data_type(cls, dataType: DataType):
         xmlement = dataType.element
         name, description, strict, date_format, time_format, model = attrgetter(
-            "name", "description", "strict", "date-format", "time-format", "model"
+            "name",
+            "description",
+            "strict",
+            "date-format",
+            "time-format",
+            "model",
         )(xmlement)
         on_fail = None
         for attr in xmlement.attrib:
@@ -108,18 +113,27 @@ class DataTypeStruct:
                 class_children = {}
                 elem_type = element["type"] if element != None else None
                 elem_is_list = elem_type == "list"
-                child_entries = children.get("item", {}) if elem_is_list else children
+                child_entries = (
+                    children.get("item", {}) if elem_is_list else children
+                )
                 for child_key in child_entries:
-                    class_children[child_key] = cls.from_dict(child_entries[child_key])
+                    class_children[child_key] = cls.from_dict(
+                        child_entries[child_key]
+                    )
                 children_data_types = (
                     {"item": class_children} if elem_is_list else class_children
                 )
             return cls(
-                children_data_types, formatters, SchemaElementStruct.from_dict(element)
+                children_data_types,
+                formatters,
+                SchemaElementStruct.from_dict(element),
             )
 
     def to_dict(self):
-        response = {"formatters": self.formatters, "element": self.element.to_dict()}
+        response = {
+            "formatters": self.formatters,
+            "element": self.element.to_dict(),
+        }
         if self.children != None:
             serialized_children = {}
             elem_type = self.element.type if self.element != None else None
@@ -128,9 +142,13 @@ class DataTypeStruct:
                 self.children.get("item", {}) if elem_is_list else self.children
             )
             for child_key in child_entries:
-                serialized_children[child_key] = child_entries[child_key].to_dict()
+                serialized_children[child_key] = child_entries[
+                    child_key
+                ].to_dict()
             response["children"] = (
-                {"item": serialized_children} if elem_is_list else serialized_children
+                {"item": serialized_children}
+                if elem_is_list
+                else serialized_children
             )
         return response
 
@@ -175,9 +193,13 @@ class DataTypeStruct:
                 self.children.get("item", {}) if elem_is_list else self.children
             )
             for child_key in child_entries:
-                serialized_children[child_key] = child_entries[child_key].to_response()
+                serialized_children[child_key] = child_entries[
+                    child_key
+                ].to_response()
             response["children"] = (
-                {"item": serialized_children} if elem_is_list else serialized_children
+                {"item": serialized_children}
+                if elem_is_list
+                else serialized_children
             )
         return response
 

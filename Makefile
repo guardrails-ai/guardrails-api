@@ -2,4 +2,4 @@ lint:
 	flake8 --count ./src app.py wsgi.py
 
 format:
-	black ./src app.py wsgi.py
+	black -l 80 ./src app.py wsgi.py

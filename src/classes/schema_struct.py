@@ -17,7 +17,9 @@ class SchemaStruct:
         serialized_schema = {}
         for key in schema._schema:
             schema_element = schema._schema[key]
-            serialized_schema[key] = DataTypeStruct.from_data_type(schema_element)
+            serialized_schema[key] = DataTypeStruct.from_data_type(
+                schema_element
+            )
         return cls({"schema": serialized_schema})
 
     def to_schema(self) -> Schema:
@@ -46,7 +48,9 @@ class SchemaStruct:
             orig_schema = schema["schema"]
             for key in orig_schema:
                 schema_element = orig_schema[key]
-                serialized_schema[key] = DataTypeStruct.from_dict(schema_element)
+                serialized_schema[key] = DataTypeStruct.from_dict(
+                    schema_element
+                )
             return cls({"schema": serialized_schema})
 
     def to_dict(self):
@@ -64,7 +68,9 @@ class SchemaStruct:
             inner_schema = schema["schema"]
             for key in inner_schema:
                 schema_element = inner_schema[key]
-                serialized_schema[key] = DataTypeStruct.from_request(schema_element)
+                serialized_schema[key] = DataTypeStruct.from_request(
+                    schema_element
+                )
             return cls({"schema": serialized_schema})
 
     def to_response(self):

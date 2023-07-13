@@ -7,10 +7,10 @@ from src.clients.guard_client import GuardClient
 from src.utils.handle_error import handle_error
 from src.utils.get_llm_callable import get_llm_callable
 
-guardsBp = Blueprint("guards", __name__, url_prefix="/guards")
+guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 
 
-@guardsBp.route("/", methods=["GET", "POST"])
+@guards_bp.route("/", methods=["GET", "POST"])
 @handle_error
 def guards():
     guard_client = GuardClient()
@@ -26,13 +26,12 @@ def guards():
         raise HttpError(
             405,
             "Method Not Allowed",
-            "/guards only supports the GET and POST methods. You specified %s".format(
-                request.method
-            ),
+            "/guards only supports the GET and POST methods. You specified"
+            " {request_method}".format(request_method=request.method),
         )
 
 
-@guardsBp.route("/<guard_name>", methods=["GET", "PUT", "DELETE"])
+@guards_bp.route("/<guard_name>", methods=["GET", "PUT", "DELETE"])
 @handle_error
 def guard(guard_name: str):
     guard_client = GuardClient()
@@ -52,22 +51,22 @@ def guard(guard_name: str):
         raise HttpError(
             405,
             "Method Not Allowed",
-            "/guard/<guard_name> only supports the GET, PUT, and DELETE methods. You specified %s".format(
-                request.method
+            "/guard/<guard_name> only supports the GET, PUT, and DELETE methods."
+            " You specified {request_method}".format(
+                request_method=request.method
             ),
         )
 
 
-@guardsBp.route("/<guard_name>/validate", methods=["POST"])
+@guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
 def validate(guard_name: str):
     if request.method != "POST":
         raise HttpError(
             405,
             "Method Not Allowed",
-            "/guards/<guard_name>/validate only supports the POST method. You specified %s".format(
-                request.method
-            ),
+            "/guards/<guard_name>/validate only supports the POST method. You specified"
+            " {request_method}".format(request_method=request.method),
         )
     payload = request.json
     openai_api_key = request.headers.get("x-openai-api-key", None)
@@ -87,13 +86,20 @@ def validate(guard_name: str):
             raise HttpError(
                 status=400,
                 message="BadRequest",
-                cause="Cannot perform calls to OpenAI without an api key.  Pass openai_api_key when initializing the Guard or set the OPENAI_API_KEY environment variable.",
+                cause=(
+                    "Cannot perform calls to OpenAI without an api key.  Pass"
+                    " openai_api_key when initializing the Guard or set the"
+                    " OPENAI_API_KEY environment variable."
+                ),
             )
     elif num_reasks > 1:
         raise HttpError(
             status=400,
             message="BadRequest",
-            cause="Cannot perform re-asks without an LLM API.  Specify llm_api when calling guard(...).",
+            cause=(
+                "Cannot perform re-asks without an LLM API.  Specify llm_api when"
+                " calling guard(...)."
+            ),
         )
 
     # TODO: Get result from reduction of validator statuses when available
