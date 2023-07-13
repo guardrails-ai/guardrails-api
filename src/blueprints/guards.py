@@ -5,6 +5,7 @@ from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
 from src.clients.guard_client import GuardClient
 from src.utils.handle_error import handle_error
+from src.utils.get_llm_callable import get_llm_callable
 
 guardsBp = Blueprint('guards', __name__, url_prefix="/guards")
 
@@ -48,14 +49,45 @@ def validate(guard_name: str):
     if request.method != 'POST':
         raise HttpError(405, 'Method Not Allowed', '/guards/<guard_name>/validate only supports the POST method. You specified %s'.format(request.method))
     payload = request.json
+    openai_api_key = request.headers.get("x-openai-api-key", None)
     guard_client = GuardClient()
     guard_struct = guard_client.get_guard(guard_name)
-    guard: Guard = guard_struct.to_guard()
-    request_reasks = payload.get("numReasks")
-    reasks = request_reasks if request_reasks else guard_struct.num_reasks
-    result = guard.parse(
-        llm_output=payload.get("llmOutput"),
-        num_reasks=reasks,
-        prompt_params=payload.get("promptParams")
-    )
-    return ValidationOutput(True, result, guard.state.all_histories).to_response()
+    guard: Guard = guard_struct.to_guard(openai_api_key)
+    
+    llm_output = payload.pop("llmOutput", None)
+    num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
+    prompt_params = payload.pop("promptParams", None)
+    llm_api = payload.pop("llmApi", None)
+    args = payload.pop("args", [])
+
+    if llm_api is not None:
+        llm_api = get_llm_callable(llm_api)
+        if openai_api_key is None:
+            raise HttpError(status=400, message="BadRequest", cause="Cannot perform calls to OpenAI without an api key.  Pass openai_api_key when initializing the Guard or set the OPENAI_API_KEY environment variable.")
+    elif num_reasks > 1:
+        raise HttpError(status=400, message="BadRequest", cause="Cannot perform re-asks without an LLM API.  Specify llm_api when calling guard(...).")
+    
+    # TODO: Get result from reduction of validator statuses when available
+    result: bool = True
+    validated_output: dict = None
+    raw_llm_response: str = None
+
+    if llm_output is not None:
+      validated_output = guard.parse(
+          llm_output=llm_output,
+          num_reasks=num_reasks,
+          prompt_params=prompt_params,
+          llm_api=llm_api,
+          *args,
+          **payload
+      )
+    else:
+      raw_llm_response, validated_output = guard(
+        llm_api=llm_api,
+        prompt_params=prompt_params,
+        num_reasks=num_reasks,
+        *args,
+        **payload
+      )
+
+    return ValidationOutput(result, validated_output, guard.state.all_histories, raw_llm_response).to_response()

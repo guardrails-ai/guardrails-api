@@ -3,6 +3,7 @@ from lxml import etree
 from src.classes.schema_struct import SchemaStruct
 from src.classes.script_struct import ScriptStruct
 from src.utils.pluck import pluck
+from src.utils.escape_curlys import escape_curlys, descape_curlys
 
 class RailSpecStruct:
     def __init__(
@@ -36,7 +37,9 @@ class RailSpecStruct:
         input_schema = self.input_schema.to_schema() if self.input_schema else None
         output_schema = self.output_schema.to_schema() if self.output_schema else None
         instructions = Instructions(self.instructions, output_schema) if self.instructions else None
-        prompt = Prompt(self.prompt, output_schema) if self.prompt else None
+        escaped_prompt = escape_curlys(self.prompt)
+        prompt = Prompt(escaped_prompt, output_schema) if escaped_prompt else None
+        prompt.source = descape_curlys(prompt.source)
         script = self.script.to_script() if self.script else None
         return Rail(
             input_schema,

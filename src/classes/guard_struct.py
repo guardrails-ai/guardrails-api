@@ -1,3 +1,4 @@
+from typing import Optional
 from guardrails import Guard
 from src.classes.rail_spec_struct import RailSpecStruct
 from src.models.guard_item import GuardItem
@@ -25,10 +26,11 @@ class GuardStruct:
           guard.num_reasks
        )
     
-    def to_guard(self) -> Guard:
+    def to_guard(self, openai_api_key: Optional[str] = None) -> Guard:
        return Guard(
           self.railspec.to_rail(),
-          self.num_reasks
+          self.num_reasks,
+          openai_api_key=openai_api_key
        )
 
     @classmethod
