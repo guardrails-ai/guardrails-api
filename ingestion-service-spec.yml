@@ -42,7 +42,7 @@ paths:
       requestBody:
         required: true
         content:
-          text/plain:
+           application/json:
             schema:
               $ref: '#/components/schemas/EmbeddingsPayload'
       responses:
