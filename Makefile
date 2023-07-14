@@ -1,8 +1,18 @@
-lint:
-	flake8 --count ./src app.py wsgi.py
+build-sdk:
+	bash build-sdk.sh
+
+dev:
+	bash ./dev.sh
 
 format:
 	black -l 80 ./src app.py wsgi.py
+
+lint:
+	flake8 --count ./src app.py wsgi.py
+
+qa:
+	make lint
+	make test-cov
 
 test:
 	python3 -m pytest ./tests
@@ -15,7 +25,3 @@ view-test-cov:
 	coverage run --source=./src -m pytest ./tests
 	coverage html
 	open htmlcov/index.html
-
-qa:
-	make lint
-	make test-cov
