@@ -23,14 +23,7 @@ class MockDb:
     def __init__(self) -> None:
         self.session = MockSession()
 
-class MockPostgresClient:
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(MockPostgresClient, cls).__new__(cls)
-        return cls._instance
-    
+class MockPostgresClient:    
     def __init__(self):
         self.db = MockDb()
         
