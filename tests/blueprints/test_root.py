@@ -26,8 +26,6 @@ def test_home(mocker):
     mocker.patch("src.clients.postgres_client.PostgresClient", new=MockPg)
     print_spy = mocker.spy(builtins, "print")
     from src.blueprints.root import health_check, root_bp, text, PostgresClient
-
-    PostgresClient()
     
     response = health_check()
     
