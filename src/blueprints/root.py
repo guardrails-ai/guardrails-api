@@ -6,6 +6,7 @@ from src.utils.handle_error import handle_error
 
 root_bp = Blueprint("root", __name__, url_prefix="/")
 
+
 @root_bp.route("/")
 @handle_error
 def home():
