@@ -7,7 +7,6 @@ pgadmin-data
 __pycache__/
 guard-rails-api-client
 sdk
-.github
 .coverage
 htmlcov
 coverage.json
