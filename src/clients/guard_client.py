@@ -31,7 +31,9 @@ class GuardClient:
             raise HttpError(
                 status=404,
                 message="NotFound",
-                cause="A Guard with the name {guard_name} does not exist!".format(guard_name=guard_name)
+                cause="A Guard with the name {guard_name} does not exist!".format(
+                    guard_name=guard_name
+                ),
             )
         return GuardStruct.from_guard_item(guard_item)
 
@@ -63,7 +65,9 @@ class GuardClient:
             raise HttpError(
                 status=404,
                 message="NotFound",
-                cause="A Guard with the name {guard_name} does not exist!".format(guard_name=guard_name)
+                cause="A Guard with the name {guard_name} does not exist!".format(
+                    guard_name=guard_name
+                ),
             )
         guard_item.railspec = guard.railspec.to_dict()
         guard_item.num_reasks = guard.num_reasks
@@ -86,7 +90,9 @@ class GuardClient:
             raise HttpError(
                 status=404,
                 message="NotFound",
-                cause="A Guard with the name {guard_name} does not exist!".format(guard_name=guard_name)
+                cause="A Guard with the name {guard_name} does not exist!".format(
+                    guard_name=guard_name
+                ),
             )
         self.pgClient.db.session.delete(guard_item)
         self.pgClient.db.session.commit()
