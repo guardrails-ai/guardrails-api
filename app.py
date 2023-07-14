@@ -1,11 +1,11 @@
 from flask import Flask
 from swagger_ui import api_doc
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 
 def create_app():
-    app = Flask(__name__)
     api_doc(
         app,
         config_path="./open-api-spec.yml",
