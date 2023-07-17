@@ -4,8 +4,14 @@ build-sdk:
 dev:
 	bash ./dev.sh
 
+env:
+	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
+
 format:
 	black -l 80 ./src app.py wsgi.py
+
+install:
+	pip install -r requirements.txt
 
 lint:
 	flake8 --count ./src app.py wsgi.py
@@ -13,6 +19,10 @@ lint:
 qa:
 	make lint
 	make test-cov
+
+# This doesn't actually work, but it's nice to be able to just copy/paste instead of typing this out in the terminal.
+source:
+	source ./.venv/bin/activate
 
 test:
 	python3 -m pytest ./tests
