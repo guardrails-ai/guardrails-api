@@ -15,6 +15,8 @@ def test_home(mocker):
     assert root_bp.routes == ["/", "/health-check"]
     assert response == "Hello, Flask!"
 
+    mocker.resetall()
+
 def test_home(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("sqlalchemy.text", new=MagicMock(side_effect=mock_text))
@@ -35,4 +37,6 @@ def test_home(mocker):
     assert mock_pg.db.session.queries == ["SELECT count(datid) FROM pg_stat_activity;"]
     print_spy.assert_called_once_with("response: ", [(1,)])
     assert response == { "status": 200, "message": "Ok" }
+
+    mocker.resetall()
 
