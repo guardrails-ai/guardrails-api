@@ -10,3 +10,5 @@ sdk
 .coverage
 htmlcov
 coverage.json
+.pytest_cache
+.ropeproject
