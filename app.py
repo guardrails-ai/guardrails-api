@@ -5,6 +5,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+
 def create_app():
     api_doc(
         app,
