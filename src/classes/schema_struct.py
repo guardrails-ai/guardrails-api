@@ -26,14 +26,11 @@ class SchemaStruct:
     def to_schema(self) -> Schema:
         schema = {}
         inner_schema = self.schema["schema"]
-        schema_properties = list(inner_schema)
-        first_key: str = schema_properties[0]
-        first_prop: DataTypeStruct = inner_schema[first_key]
 
-        if first_prop.element.type == "string":
+        if hasattr(inner_schema, 'element') and inner_schema.element.type == "string":
             string_schema = StringSchema()
-            string_schema.string_key = first_prop.element.name
-            string_schema[string_schema.string_key] = first_prop.to_data_type()
+            string_schema.string_key = inner_schema.element.name
+            string_schema[string_schema.string_key] = inner_schema.to_data_type()
             return string_schema
 
         for key in inner_schema:
