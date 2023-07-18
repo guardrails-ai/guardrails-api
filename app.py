@@ -1,11 +1,4 @@
-import os
-import traceback
-from flask import Flask, request
-from sqlalchemy import text
-from src.classes.health_check import HealthCheck
-from src.classes.http_error import HttpError
-from flask_sqlalchemy import SQLAlchemy
-from src.classes.validation_output import ValidationOutput
+from flask import Flask
 from swagger_ui import api_doc
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
@@ -34,20 +27,27 @@ from src.modules.otel_logger import otel_logger
 from src.modules.otel_meter import otel_meter, metric_reader
 
 app = Flask(__name__)
-api_doc(app, config_path='./open-api-spec.yml', url_prefix='/docs', title='GuardRails API Docs')
 
-pg_user = os.environ.get('PGUSER', 'postgres')
-pg_password = os.environ.get('PGPASSWORD','undefined')
-pg_host = os.environ.get('PGHOST','localhost')
-pg_port = os.environ.get('PGPORT','5432')
-pg_database = os.environ.get('PGDATABASE','postgres')
+def create_app():
+    app = Flask(__name__)
+    api_doc(
+        app,
+        config_path="./open-api-spec.yml",
+        url_prefix="/docs",
+        title="GuardRails API Docs",
+    )
 
-CONF = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}"
-app.config['SQLALCHEMY_DATABASE_URI'] = CONF
+    from src.clients.postgres_client import PostgresClient
+    pg_client = PostgresClient()
+    pg_client.initialize(app)
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = 'secret'
-db = SQLAlchemy(app)
+    from src.blueprints.root import root_bp
+    from src.blueprints.guards import guards_bp
+
+    app.register_blueprint(root_bp)
+    app.register_blueprint(guards_bp)
+
+    return app
 
 # DELETE ME: OpenSearch client example for telemetry api
 client = OpenSearch(
@@ -115,19 +115,6 @@ def getTrace():
    }
    response = client.search(body=query, index='')
    return response
-
-@app.route("/health-check")
-def healthCheck():
-    try:
-      # Make sure we're connected to the database and can run queries
-      query = text("SELECT count(datid) FROM pg_stat_activity;")
-      response = db.session.execute(query).all()
-      print('response: ', response)
-      # There's probably a better way to serialize these classes built into Flask
-      return HealthCheck(200, 'Ok').to_dict()
-    except Exception as e:
-       print(e)
-       return HttpError(500, 'Internal Server Error').to_dict()
 
 @app.route("/guards/<guard_id>/validate", methods = ['POST'])
 def validate(guard_id: str):

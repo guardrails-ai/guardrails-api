@@ -1,5 +1,10 @@
 **/__pycache__
+.venv
 postgres
 venv
 guardrails-sdk
 scratch.py
+pgadmin-data
+__pycache__/
+guard-rails-api-client
+sdk

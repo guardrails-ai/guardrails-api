@@ -11,10 +11,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY ./guardrails-sdk ./guardrails-sdk
 
+COPY ./guard-rails-api-client ./guard-rails-api-client
+
 # Copy the requirements file
 COPY requirements.txt .
 
 RUN pip install ./guardrails-sdk
+RUN pip install ./guard-rails-api-client
 
 # Install app dependencies
 RUN pip install -r requirements.txt
@@ -27,4 +30,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 --reload wsgi:app
+CMD gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
