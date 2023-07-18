@@ -27,10 +27,15 @@ class SchemaStruct:
         schema = {}
         inner_schema = self.schema["schema"]
 
-        if hasattr(inner_schema, 'element') and inner_schema.element.type == "string":
+        if (
+            hasattr(inner_schema, "element")
+            and inner_schema.element.type == "string"
+        ):
             string_schema = StringSchema()
             string_schema.string_key = inner_schema.element.name
-            string_schema[string_schema.string_key] = inner_schema.to_data_type()
+            string_schema[
+                string_schema.string_key
+            ] = inner_schema.to_data_type()
             return string_schema
 
         for key in inner_schema:

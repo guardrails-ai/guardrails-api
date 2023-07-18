@@ -17,7 +17,9 @@ class ValidationOutput:
             {
                 "history": [
                     {
-                        "instructions": h.instructions.source if isinstance(h.instructions, Instructions) else h.instructions,
+                        "instructions": h.instructions.source
+                        if isinstance(h.instructions, Instructions)
+                        else h.instructions,
                         "output": h.output,
                         "parsedOutput": h.parsed_output,
                         "prompt": {
