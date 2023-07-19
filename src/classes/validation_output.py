@@ -1,4 +1,5 @@
 from typing import List
+from guardrails import Instructions
 from guardrails.utils.logs_utils import GuardHistory
 
 
@@ -16,7 +17,9 @@ class ValidationOutput:
             {
                 "history": [
                     {
-                        "instructions": h.instructions,
+                        "instructions": h.instructions.source
+                        if isinstance(h.instructions, Instructions)
+                        else h.instructions,
                         "output": h.output,
                         "parsedOutput": h.parsed_output,
                         "prompt": {

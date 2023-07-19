@@ -8,3 +8,8 @@ pgadmin-data
 __pycache__/
 guard-rails-api-client
 sdk
+.coverage
+htmlcov
+coverage.json
+.pytest_cache
+.ropeproject
