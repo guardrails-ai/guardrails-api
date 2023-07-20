@@ -312,6 +312,10 @@ components:
           type: array
           items:
             type: string
+        plugins:
+          type: array
+          items:
+            type: string
         element:
           $ref: '#/components/schemas/SchemaElement'
     Script:

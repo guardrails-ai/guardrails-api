@@ -29,7 +29,6 @@ flake8==6.0.0
 Flask==2.3.2
 Flask-Cors==4.0.0
 Flask-SQLAlchemy==3.0.5
-flask-cors
 frozenlist==1.3.3
 griffe==0.29.1
 # guard-rails-api-client @ file:///Users/calebcourier/Projects/guardrails-poc/guard-rails-api-client

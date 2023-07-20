@@ -6,9 +6,11 @@ scratch.py
 pgadmin-data
 __pycache__/
 guard-rails-api-client
+guardrails-custom-validators
 sdk
 .coverage
 htmlcov
 coverage.json
 .pytest_cache
 .ropeproject
+install*.sh

@@ -1,8 +1,7 @@
 from typing import Optional
-from guardrails import Guard
+from guardrails import Guard, Rail
 from src.classes.rail_spec_struct import RailSpecStruct
 from src.models.guard_item import GuardItem
-
 from src.utils.pluck import pluck
 
 
@@ -26,8 +25,9 @@ class GuardStruct:
         )
 
     def to_guard(self, openai_api_key: Optional[str] = None) -> Guard:
+        rail_xml = self.railspec.to_xml()
         return Guard(
-            self.railspec.to_rail(),
+            Rail.from_xml(rail_xml),
             self.num_reasks,
             openai_api_key=openai_api_key,
         )
