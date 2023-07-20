@@ -2,6 +2,7 @@ import os
 from logging import Logger, INFO
 
 def getLogger():
-    return Logger(os.environ["LOGLEVEL", INFO])
+    log_level = os.environ.get("LOGLEVEL", INFO)
+    return Logger(log_level)
 
 logger = getLogger()
