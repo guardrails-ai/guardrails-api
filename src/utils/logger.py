@@ -1,8 +1,9 @@
 import os
-from logging import Logger, INFO
+import logging
 
 def getLogger():
-    log_level = os.environ.get("LOGLEVEL", INFO)
-    return Logger(log_level)
+    log_level = os.environ.get("LOGLEVEL", logging.INFO)
+    logging.basicConfig(level=log_level)
+    return logging.getLogger("guardrails-api")
 
 logger = getLogger()

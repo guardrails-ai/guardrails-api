@@ -22,13 +22,16 @@ def pip_process(action: str, package: str, flags: Optional[List[str]] = []):
        
 
 def install(package):
-  return pip_process("install", package)
+  install_output = pip_process("install", package)
+  logger.debug(install_output)
 
 def uninstall(package):
-    return pip_process("uninstall", package, ["-y"])
+    uninstall_output = pip_process("uninstall", package, ["-y"])
+    logger.debug(uninstall_output)
 
 def show(package):
-   return pip_process("show", package)
+   show_output = pip_process("show", package)
+   logger.debug(show_output)
 
 def is_installed(package):
    show_output = pip_process("show", package)
