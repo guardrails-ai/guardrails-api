@@ -28,7 +28,7 @@ paths:
     get:
       operationId: getGuards
       tags:
-        - guard
+        - Guards
       summary: Fetches the configuration for all Guards the user has access to.
       security:
         - apiKeyAuth: []
@@ -51,7 +51,7 @@ paths:
     post:
       operationId: createGuard
       tags:
-        - guard
+        - Guards
       summary: Creates a Guard
       security:
         - apiKeyAuth: []
@@ -79,7 +79,7 @@ paths:
     get:
       operationId: getGuard
       tags:
-        - guard
+        - Guards
       summary: Fetches a specific Guard
       parameters:
         - $ref: '#/components/parameters/GuardName'
@@ -103,7 +103,7 @@ paths:
     put:
       operationId: updateGuard
       tags:
-        - guard
+        - Guards
       summary: Updates a Guard
       parameters:
         - $ref: '#/components/parameters/GuardName'
@@ -132,7 +132,7 @@ paths:
     delete:
       operationId: deleteGuard
       tags:
-        - guard
+        - Guards
       summary: Deletes a Guard
       parameters:
         - $ref: '#/components/parameters/GuardName'
@@ -156,8 +156,8 @@ paths:
     post:
       operationId: validate
       tags:
-        - guard
-        - validate
+        - Guards
+        - Validate
       summary: Runs the validations specified in a Guard
       security:
         - apiKeyAuth: []
@@ -184,6 +184,134 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
+  /railspec-templates:
+    get:
+      operationId: getRailspecTemplates
+      tags:
+        - Templates
+      summary: Fetches all railspec templates the user has access to.
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of railspec templates.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RailspecTemplate'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+    post:
+      operationId: createRailspecTemplate
+      tags:
+        - Templates
+      summary: Creates a railspec template
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RailspecTemplate'
+      responses:
+        '200':
+          description: the new railspec template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RailspecTemplate'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+  /railspec-templates/{railspecName}:
+    get:
+      operationId: getRailspecTemplate
+      tags:
+        - Templates
+      summary: Fetches a specific railspec template
+      parameters:
+        - $ref: '#/components/parameters/RailspecName'
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: the fetched railspec template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RailspecTemplate'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+    put:
+      operationId: updateRailspecTemplate
+      tags:
+        - Templates
+      summary: Updates a railspec template
+      parameters:
+        - $ref: '#/components/parameters/RailspecName'
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RailspecTemplate'
+      responses:
+        '200':
+          description: the updated railspec template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RailspecTemplate'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+    delete:
+      operationId: deleteRailspecTemplate
+      tags:
+        - Templates
+      summary: Deletes a railspec template
+      parameters:
+        - $ref: '#/components/parameters/RailspecName'
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: the deleted railspec template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RailspecTemplate'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+  
 components:
   securitySchemes:
     bearerAuth:
@@ -217,6 +345,13 @@ components:
       description: A valid OpenAI API Key for calling LLM's on your behalf
       required: false
       schema: 
+        type: string
+    RailspecName:
+      name: railspecName
+      in: path
+      description: Railspec template name
+      required: true
+      schema:
         type: string
   schemas:
     HttpError:
@@ -462,3 +597,14 @@ components:
             'openai.ChatCompletion.acreate'
           ]
       additionalProperties: {}
+    RailspecTemplate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: A unique name for this railspec template.
+        railspec:
+          $ref: '#/components/schemas/RailSpec'
+      required:
+        - name
+        - railspec

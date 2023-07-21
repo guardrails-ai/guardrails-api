@@ -28,6 +28,7 @@ class PostgresClient:
         self.db = db
         db.init_app(app)
         from src.models.guard_item import GuardItem  # NOQA
+        from src.models.railspec_template_item import RailspecTemplateItem  # NOQA
         from src.models.guard_item_audit import (  # NOQA
             GuardItemAudit,
             AUDIT_FUNCTION,
