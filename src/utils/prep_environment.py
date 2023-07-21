@@ -19,12 +19,12 @@ def dynamic_import(package: str):
         logger.error(f"Failed to import {module_name}!", e)
 
 def prep_environment(guard: GuardStruct):
-    plugins: List[str] = guard.railspec.get_all_plugins() # Assume this method exists and returns a list of strings that are the module names of the custom validators
+    plugins: List[str] = guard.railspec.get_all_plugins()
     for p in plugins:
       dynamic_import(p)
 
 def cleanup_environment(guard: GuardStruct):
-    plugins: List[str] = guard.railspec.get_all_plugins() # Assume this method exists and returns a list of strings that are the module names of the custom validators
+    plugins: List[str] = guard.railspec.get_all_plugins()
     for p in plugins:
       # Only uninstall packages that we did not already have installed.
       logger.debug(f"checking if {p} is in requirements.txt")
