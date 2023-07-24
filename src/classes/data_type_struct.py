@@ -1,12 +1,11 @@
 import re
 from typing import Any, Dict, List
 from operator import attrgetter
-from lxml.etree import _Element, Element, SubElement
+from lxml.etree import _Element, SubElement
 from guardrails.datatypes import DataType, registry
 from guardrails.schema import FormatAttr
-from src.classes.schema_element_struct import SchemaElementStruct
-from src.classes.element_stub import ElementStub
-from src.utils.pluck import pluck
+from src.classes import SchemaElementStruct, ElementStub
+from src.utils import pluck
 
 
 class DataTypeStruct:
@@ -15,7 +14,7 @@ class DataTypeStruct:
         children: Dict[str, Any] = None,
         formatters: List[str] = [],
         element: SchemaElementStruct = None,
-        plugins: List[str] = None
+        plugins: List[str] = None,
     ):
         self.children = children
         self.formatters = formatters
@@ -50,7 +49,7 @@ class DataTypeStruct:
                 on_fail,
                 model,
             ),
-            plugins=data_type.format_attr.namespaces
+            plugins=data_type.format_attr.namespaces,
         )
 
     def to_data_type(self) -> DataType:
@@ -118,13 +117,9 @@ class DataTypeStruct:
                 class_children = {}
                 elem_type = element["type"] if element is not None else None
                 elem_is_list = elem_type == "list"
-                child_entries = (
-                    children.get("item", {}) if elem_is_list else children
-                )
+                child_entries = children.get("item", {}) if elem_is_list else children
                 for child_key in child_entries:
-                    class_children[child_key] = cls.from_dict(
-                        child_entries[child_key]
-                    )
+                    class_children[child_key] = cls.from_dict(child_entries[child_key])
                 children_data_types = (
                     {"item": class_children} if elem_is_list else class_children
                 )
@@ -132,7 +127,7 @@ class DataTypeStruct:
                 children_data_types,
                 formatters,
                 SchemaElementStruct.from_dict(element),
-                plugins
+                plugins,
             )
 
     def to_dict(self):
@@ -148,15 +143,11 @@ class DataTypeStruct:
                 self.children.get("item", {}) if elem_is_list else self.children
             )
             for child_key in child_entries:
-                serialized_children[child_key] = child_entries[
-                    child_key
-                ].to_dict()
+                serialized_children[child_key] = child_entries[child_key].to_dict()
             response["children"] = (
-                {"item": serialized_children}
-                if elem_is_list
-                else serialized_children
+                {"item": serialized_children} if elem_is_list else serialized_children
             )
-        
+
         if self.plugins is not None:
             response["plugins"] = self.plugins
 
@@ -173,9 +164,7 @@ class DataTypeStruct:
                 class_children = {}
                 elem_type = element["type"] if element is not None else None
                 elem_is_list = elem_type == "list"
-                child_entries = (
-                    children.get("item", {}) if elem_is_list else children
-                )
+                child_entries = children.get("item", {}) if elem_is_list else children
                 for child_key in child_entries:
                     class_children[child_key] = cls.from_request(
                         child_entries[child_key]
@@ -188,7 +177,7 @@ class DataTypeStruct:
                 children_data_types,
                 formatters,
                 SchemaElementStruct.from_request(element),
-                plugins
+                plugins,
             )
 
     def to_response(self):
@@ -204,13 +193,9 @@ class DataTypeStruct:
                 self.children.get("item", {}) if elem_is_list else self.children
             )
             for child_key in child_entries:
-                serialized_children[child_key] = child_entries[
-                    child_key
-                ].to_response()
+                serialized_children[child_key] = child_entries[child_key].to_response()
             response["children"] = (
-                {"item": serialized_children}
-                if elem_is_list
-                else serialized_children
+                {"item": serialized_children} if elem_is_list else serialized_children
             )
 
         if self.plugins is not None:
@@ -247,7 +232,7 @@ class DataTypeStruct:
         plugins = list(filter(None, plugin_tokens))
 
         return cls(children, formatters, element, plugins)
-    
+
     def to_xml(self, parent: _Element) -> _Element:
         element = self.element.to_element()
 
@@ -268,13 +253,15 @@ class DataTypeStruct:
                 self.children.get("item", {}) if self_is_list else self.children
             )
             _parent = xml_data_type
-            if self_is_list and (len(child_entries) > 0 or child_entries[0].element.name is not None):
+            if self_is_list and (
+                len(child_entries) > 0 or child_entries[0].element.name is not None
+            ):
                 _parent = SubElement(xml_data_type, "object")
             for child_key in child_entries:
                 child_entries[child_key].to_xml(_parent)
-        
+
         return xml_data_type
-    
+
     def get_all_plugins(self) -> List[str]:
         plugins = self.plugins if self.plugins is not None else []
 

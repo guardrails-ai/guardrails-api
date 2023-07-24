@@ -1,4 +1,8 @@
 [flake8]
 count = True
 statistics = True
-max-line-length = 88
+
+# This is because flake8 includes indentation in its character count.
+# We set black to format at 88 characters
+# This allows 8 indentations before hitting the 120 limit in flake8
+max-line-length = 120

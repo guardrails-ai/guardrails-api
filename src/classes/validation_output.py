@@ -23,9 +23,7 @@ class ValidationOutput:
                         "output": h.output,
                         "parsedOutput": h.parsed_output,
                         "prompt": {
-                            "source": h.prompt.source
-                            if h.prompt is not None
-                            else None
+                            "source": h.prompt.source if h.prompt is not None else None
                         },
                         "reasks": h.reasks,
                         "validatedOutput": h.validated_output,

@@ -2,10 +2,8 @@ from typing import List
 from lxml.etree import _Element, Element, SubElement
 from guardrails import Instructions, Prompt, Rail
 from lxml import etree
-from src.classes.schema_struct import SchemaStruct
-from src.classes.script_struct import ScriptStruct
-from src.utils.pluck import pluck
-from src.utils.escape_curlys import escape_curlys, descape_curlys
+from src.classes import SchemaStruct, ScriptStruct
+from src.utils import pluck, escape_curlys, descape_curlys
 
 
 class RailSpecStruct:
@@ -37,12 +35,8 @@ class RailSpecStruct:
         )
 
     def to_rail(self) -> Rail:
-        input_schema = (
-            self.input_schema.to_schema() if self.input_schema else None
-        )
-        output_schema = (
-            self.output_schema.to_schema() if self.output_schema else None
-        )
+        input_schema = self.input_schema.to_schema() if self.input_schema else None
+        output_schema = self.output_schema.to_schema() if self.output_schema else None
         # TODO: This might not be necessary anymore since we stopped BasePrompt from formatting on init
         escaped_instructions = escape_curlys(self.instructions)
         instructions = (
@@ -53,9 +47,7 @@ class RailSpecStruct:
         instructions.source = descape_curlys(instructions.source)
         # TODO: This might not be necessary anymore since we stopped BasePrompt from formatting on init
         escaped_prompt = escape_curlys(self.prompt)
-        prompt = (
-            Prompt(escaped_prompt, output_schema) if escaped_prompt else None
-        )
+        prompt = Prompt(escaped_prompt, output_schema) if escaped_prompt else None
         prompt.source = descape_curlys(prompt.source)
         script = self.script.to_script() if self.script else None
         return Rail(
@@ -162,10 +154,7 @@ class RailSpecStruct:
         xml_parser = etree.XMLParser(encoding="utf-8")
         elem_tree = etree.fromstring(railspec, parser=xml_parser)
 
-        if (
-            "version" not in elem_tree.attrib
-            or elem_tree.attrib["version"] != "0.1"
-        ):
+        if "version" not in elem_tree.attrib or elem_tree.attrib["version"] != "0.1":
             raise ValueError(
                 "RAIL file must have a version attribute set to 0.1."
                 "Change the opening <rail> element to: <rail version='0.1'>."
@@ -211,9 +200,12 @@ class RailSpecStruct:
             script=script,
             version=elem_tree.attrib["version"],
         )
-    
+
     def to_xml(self) -> _Element:
-        xml_rail = Element("rail", { "version": self.version if self.version is not None else "0.1" })
+        xml_rail = Element(
+            "rail",
+            {"version": self.version if self.version is not None else "0.1"},
+        )
 
         # Attach <input /> schema
         if self.input_schema is not None:
@@ -238,7 +230,7 @@ class RailSpecStruct:
             ScriptStruct.to_xml(self.script)
 
         return xml_rail
-    
+
     def get_all_plugins(self) -> List[str]:
         plugins = []
         if self.input_schema is not None:

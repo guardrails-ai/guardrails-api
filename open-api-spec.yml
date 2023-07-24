@@ -605,6 +605,10 @@ components:
           description: A unique name for this railspec template.
         railspec:
           $ref: '#/components/schemas/RailSpec'
+        owner:
+          type: string
+        isPublic:
+          type: boolean
       required:
         - name
         - railspec

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, CHAR
-from src.models.base import db
+from src.models import db
 
 
 class GuardItemAudit(db.Model):

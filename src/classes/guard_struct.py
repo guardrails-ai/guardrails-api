@@ -1,8 +1,8 @@
 from typing import Optional
 from guardrails import Guard, Rail
-from src.classes.rail_spec_struct import RailSpecStruct
-from src.models.guard_item import GuardItem
-from src.utils.pluck import pluck
+from src.classes import RailSpecStruct
+from src.models import GuardItem
+from src.utils import pluck
 
 
 class GuardStruct:
@@ -20,9 +20,7 @@ class GuardStruct:
 
     @classmethod
     def from_guard(cls, guard: Guard):
-        return cls(
-            "guard-1", RailSpecStruct.from_rail(guard.rail), guard.num_reasks
-        )
+        return cls("guard-1", RailSpecStruct.from_rail(guard.rail), guard.num_reasks)
 
     def to_guard(self, openai_api_key: Optional[str] = None) -> Guard:
         rail_xml = self.railspec.to_xml()
@@ -34,9 +32,7 @@ class GuardStruct:
 
     @classmethod
     def from_dict(cls, guard: dict):
-        name, railspec, num_reasks = pluck(
-            guard, ["name", "railspec", "num_reasks"]
-        )
+        name, railspec, num_reasks = pluck(guard, ["name", "railspec", "num_reasks"])
         return cls(name, RailSpecStruct.from_dict(railspec), num_reasks)
 
     def to_dict(self) -> dict:
@@ -48,9 +44,7 @@ class GuardStruct:
 
     @classmethod
     def from_request(cls, guard: dict):
-        name, railspec, num_reasks = pluck(
-            guard, ["name", "railspec", "numReasks"]
-        )
+        name, railspec, num_reasks = pluck(guard, ["name", "railspec", "numReasks"])
         return cls(name, RailSpecStruct.from_request(railspec), num_reasks)
 
     def to_response(self) -> dict:

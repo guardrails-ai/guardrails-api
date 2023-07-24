@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from sqlalchemy import text
-from src.models.base import db, INIT_EXTENSIONS
+from src.models import db, INIT_EXTENSIONS
 
 
 class PostgresClient:
@@ -28,7 +28,9 @@ class PostgresClient:
         self.db = db
         db.init_app(app)
         from src.models.guard_item import GuardItem  # NOQA
-        from src.models.railspec_template_item import RailspecTemplateItem  # NOQA
+        from src.models.railspec_template_item import (  # NOQA
+            RailspecTemplateItem,
+        )
         from src.models.guard_item_audit import (  # NOQA
             GuardItemAudit,
             AUDIT_FUNCTION,

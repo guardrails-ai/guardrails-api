@@ -1,9 +1,7 @@
 from typing import List
-from src.classes.guard_struct import GuardStruct
-from src.classes.http_error import HttpError
-from src.models.guard_item import GuardItem
-from src.clients.postgres_client import PostgresClient
-from src.models.guard_item_audit import GuardItemAudit
+from src.classes import GuardStruct, HttpError
+from src.models import GuardItem, GuardItemAudit
+from src.clients import PostgresClient
 
 
 class GuardClient:
@@ -13,9 +11,7 @@ class GuardClient:
 
     def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
         latest_guard_item = (
-            self.pgClient.db.session.query(GuardItem)
-            .filter_by(name=guard_name)
-            .first()
+            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
         )
         audit_item = None
         if as_of_date is not None:
@@ -39,9 +35,7 @@ class GuardClient:
 
     def get_guard_item(self, guard_name: str) -> GuardItem:
         return (
-            self.pgClient.db.session.query(GuardItem)
-            .filter_by(name=guard_name)
-            .first()
+            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
         )
 
     def get_guards(self) -> List[GuardStruct]:

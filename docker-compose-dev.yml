@@ -41,6 +41,6 @@ services:
       PGUSER: ${PGUSER:-postgres}
       PGPASSWORD: ${PGPASSWORD:-changeme}
       PYTHONUNBUFFERED: 1
-      LOGLEVEL: DEBUG
+      LOGLEVEL: DEV
     depends_on:
       - postgres

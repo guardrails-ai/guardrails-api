@@ -8,7 +8,7 @@ env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
 
 format:
-	black -l 80 ./src app.py wsgi.py
+	black -l 88 ./src app.py wsgi.py
 
 install:
 	pip install -r requirements.txt

@@ -1,7 +1,7 @@
 from functools import wraps
 import traceback
-from src.classes.http_error import HttpError
-from src.utils.logger import logger
+from src.classes import HttpError
+from src.utils import logger
 
 
 def handle_error(fn):
