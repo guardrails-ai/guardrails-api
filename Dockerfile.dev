@@ -13,6 +13,8 @@ COPY ./guardrails-sdk ./guardrails-sdk
 
 COPY ./guard-rails-api-client ./guard-rails-api-client
 
+COPY ./guardrails-custom-validators ./guardrails-custom-validators
+
 # Copy the requirements file
 COPY requirements.txt .
 

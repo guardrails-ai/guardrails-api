@@ -1,3 +1,5 @@
+from typing import List
+from lxml.etree import _Element, Element, SubElement
 from guardrails import Instructions, Prompt, Rail
 from lxml import etree
 from src.classes.schema_struct import SchemaStruct
@@ -41,11 +43,15 @@ class RailSpecStruct:
         output_schema = (
             self.output_schema.to_schema() if self.output_schema else None
         )
+        # TODO: This might not be necessary anymore since we stopped BasePrompt from formatting on init
+        escaped_instructions = escape_curlys(self.instructions)
         instructions = (
-            Instructions(self.instructions, output_schema)
+            Instructions(escaped_instructions, output_schema)
             if self.instructions
             else None
         )
+        instructions.source = descape_curlys(instructions.source)
+        # TODO: This might not be necessary anymore since we stopped BasePrompt from formatting on init
         escaped_prompt = escape_curlys(self.prompt)
         prompt = (
             Prompt(escaped_prompt, output_schema) if escaped_prompt else None
@@ -205,3 +211,38 @@ class RailSpecStruct:
             script=script,
             version=elem_tree.attrib["version"],
         )
+    
+    def to_xml(self) -> _Element:
+        xml_rail = Element("rail", { "version": self.version if self.version is not None else "0.1" })
+
+        # Attach <input /> schema
+        if self.input_schema is not None:
+            self.input_schema.to_xml(xml_rail, "input")
+
+        # Attach <output /> schema
+        if self.output_schema is not None:
+            self.output_schema.to_xml(xml_rail, "output")
+
+        # Attach <instructions />
+        if self.instructions is not None:
+            instructions = SubElement(xml_rail, "instruction")
+            instructions.text = self.instructions
+
+        # Attach <prompt />
+        if self.prompt is not None:
+            prompt = SubElement(xml_rail, "prompt")
+            prompt.text = self.prompt
+
+        # Attach <script />
+        if self.script is not None:
+            ScriptStruct.to_xml(self.script)
+
+        return xml_rail
+    
+    def get_all_plugins(self) -> List[str]:
+        plugins = []
+        if self.input_schema is not None:
+            plugins.extend(self.input_schema.get_all_plugins())
+        if self.output_schema is not None:
+            plugins.extend(self.output_schema.get_all_plugins())
+        return list(set(plugins))

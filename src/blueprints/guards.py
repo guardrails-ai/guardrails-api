@@ -6,6 +6,7 @@ from src.classes.validation_output import ValidationOutput
 from src.clients.guard_client import GuardClient
 from src.utils.handle_error import handle_error
 from src.utils.get_llm_callable import get_llm_callable
+from src.utils.prep_environment import cleanup_environment, prep_environment
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 
@@ -72,6 +73,7 @@ def validate(guard_name: str):
     openai_api_key = request.headers.get("x-openai-api-key", None)
     guard_client = GuardClient()
     guard_struct = guard_client.get_guard(guard_name)
+    prep_environment(guard_struct)
     guard: Guard = guard_struct.to_guard(openai_api_key)
 
     llm_output = payload.pop("llmOutput", None)
@@ -124,7 +126,8 @@ def validate(guard_name: str):
             *args,
             **payload
         )
-
+    
+    cleanup_environment(guard_struct)
     return ValidationOutput(
         result, validated_output, guard.state.all_histories, raw_llm_response
     ).to_response()

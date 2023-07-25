@@ -1,10 +1,11 @@
 import re
 from typing import Any, Dict, List
 from operator import attrgetter
-from lxml.etree import _Element
+from lxml.etree import _Element, Element, SubElement
 from guardrails.datatypes import DataType, registry
 from guardrails.schema import FormatAttr
-from src.classes.schema_element_struct import ElementStub, SchemaElementStruct
+from src.classes.schema_element_struct import SchemaElementStruct
+from src.classes.element_stub import ElementStub
 from src.utils.pluck import pluck
 
 
@@ -14,10 +15,12 @@ class DataTypeStruct:
         children: Dict[str, Any] = None,
         formatters: List[str] = [],
         element: SchemaElementStruct = None,
+        plugins: List[str] = None
     ):
         self.children = children
         self.formatters = formatters
         self.element = element
+        self.plugins = plugins
 
     @classmethod
     def from_data_type(cls, data_type: DataType):
@@ -35,9 +38,9 @@ class DataTypeStruct:
             if attr.startswith("on-fail"):
                 on_fail = attr
         return cls(
-            data_type.children,
-            data_type.format_attr.tokens,
-            SchemaElementStruct(
+            children=data_type.children,
+            formatters=data_type.format_attr.tokens,
+            element=SchemaElementStruct(
                 xmlement.tag,
                 name,
                 description,
@@ -47,6 +50,7 @@ class DataTypeStruct:
                 on_fail,
                 model,
             ),
+            plugins=data_type.format_attr.namespaces
         )
 
     def to_data_type(self) -> DataType:
@@ -55,8 +59,8 @@ class DataTypeStruct:
         element = self.element.to_element()
 
         format = "; ".join(self.formatters)
-        format_attr = FormatAttr(format)
-        format_attr.element = element
+        plugins = "; ".join(self.plugins) if self.plugins is not None else None
+        format_attr = FormatAttr(format, element, plugins)
         format_attr.get_validators(self.element.strict)
 
         self_is_list = self.element.type == "list"
@@ -71,8 +75,9 @@ class DataTypeStruct:
             # FIXME: For Lists where the item type is not an object
 
         if self_is_list:
+            # TODO: When to stop this assumption?  What if List[str]?
             object_element = ElementStub("object", {})
-            object_format_attr = FormatAttr(format)
+            object_format_attr = format_attr
             object_format_attr.element = object_element
             object_format_attr.get_validators()
             object_data_type = registry["object"](
@@ -105,8 +110,8 @@ class DataTypeStruct:
     @classmethod
     def from_dict(cls, data_type: dict):
         if data_type is not None:
-            children, formatters, element = pluck(
-                data_type, ["children", "formatters", "element"]
+            children, formatters, element, plugins = pluck(
+                data_type, ["children", "formatters", "element", "plugins"]
             )
             children_data_types = None
             if children is not None:
@@ -127,6 +132,7 @@ class DataTypeStruct:
                 children_data_types,
                 formatters,
                 SchemaElementStruct.from_dict(element),
+                plugins
             )
 
     def to_dict(self):
@@ -150,13 +156,17 @@ class DataTypeStruct:
                 if elem_is_list
                 else serialized_children
             )
+        
+        if self.plugins is not None:
+            response["plugins"] = self.plugins
+
         return response
 
     @classmethod
     def from_request(cls, data_type: dict):
         if data_type is not None:
-            children, formatters, element = pluck(
-                data_type, ["children", "formatters", "element"]
+            children, formatters, element, plugins = pluck(
+                data_type, ["children", "formatters", "element", "plugins"]
             )
             children_data_types = None
             if children is not None:
@@ -164,7 +174,7 @@ class DataTypeStruct:
                 elem_type = element["type"] if element is not None else None
                 elem_is_list = elem_type == "list"
                 child_entries = (
-                    children.get("item", {}) if element["type"] else children
+                    children.get("item", {}) if elem_is_list else children
                 )
                 for child_key in child_entries:
                     class_children[child_key] = cls.from_request(
@@ -178,6 +188,7 @@ class DataTypeStruct:
                 children_data_types,
                 formatters,
                 SchemaElementStruct.from_request(element),
+                plugins
             )
 
     def to_response(self):
@@ -201,14 +212,18 @@ class DataTypeStruct:
                 if elem_is_list
                 else serialized_children
             )
+
+        if self.plugins is not None:
+            response["plugins"] = self.plugins
+
         return response
 
     @classmethod
     def from_xml(cls, elem: _Element):
         elem_format = elem.get("format", "")
-        pattern = re.compile(r";(?![^{}]*})")
-        tokens = re.split(pattern, elem_format)
-        formatters = list(filter(None, tokens))
+        format_pattern = re.compile(r";(?![^{}]*})")
+        format_tokens = re.split(format_pattern, elem_format)
+        formatters = list(filter(None, format_tokens))
 
         element = SchemaElementStruct.from_xml(elem)
 
@@ -226,4 +241,46 @@ class DataTypeStruct:
                     child_key = child.get("name")
                     children[child_key] = cls.from_xml(child)
 
-        return cls(children, formatters, element)
+        elem_plugins = elem.get("plugins", "")
+        plugin_pattern = re.compile(r";(?![^{}]*})")
+        plugin_tokens = re.split(plugin_pattern, elem_plugins)
+        plugins = list(filter(None, plugin_tokens))
+
+        return cls(children, formatters, element, plugins)
+    
+    def to_xml(self, parent: _Element) -> _Element:
+        element = self.element.to_element()
+
+        format = "; ".join(self.formatters) if len(self.formatters) > 0 else None
+        if format is not None:
+            element.attrib["format"] = format
+
+        plugins = self.plugins if self.plugins is not None else []
+        plugins = "; ".join(plugins) if len(plugins) > 0 else None
+        if plugins is not None:
+            element.attrib["plugins"] = plugins
+
+        xml_data_type = SubElement(parent, element.tag, element.attrib)
+
+        self_is_list = self.element.type == "list"
+        if self.children is not None:
+            child_entries: Dict[str, DataTypeStruct] = (
+                self.children.get("item", {}) if self_is_list else self.children
+            )
+            _parent = xml_data_type
+            if self_is_list and (len(child_entries) > 0 or child_entries[0].element.name is not None):
+                _parent = SubElement(xml_data_type, "object")
+            for child_key in child_entries:
+                child_entries[child_key].to_xml(_parent)
+        
+        return xml_data_type
+    
+    def get_all_plugins(self) -> List[str]:
+        plugins = self.plugins if self.plugins is not None else []
+
+        self_is_list = self.element.type == "list"
+        if self.children is not None:
+            children = self.children.get("item", {}) if self_is_list else self.children
+            for child_key in children:
+                plugins.extend(children[child_key].get_all_plugins())
+        return plugins
