@@ -1,0 +1,117 @@
+openapi: 3.0.0
+info:
+  title: Ingestion Service API
+  description: Ingestion and Retrieval APIs for Ingestion Service 
+  version: 0.1.9
+paths:
+  /ingest:
+    post:
+      operationId: ingest
+      summary: Creates and ingests embeddings
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              $ref: '#/components/schemas/IngestionPayload'
+      responses:
+        '200':    # status code
+          description: uniqie id for the created ingestion object
+          content:
+            application/json:
+              schema: 
+                type: string
+  /embeddings/{uuid}:
+    get:
+      operationId: getEmbeddings
+      summary: Returns a ingestion object for given uuid
+      parameters:
+        - $ref: '#/components/parameters/uuid'
+      responses:
+        '200':    # status code
+          description: the ingestion object
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Ingestion'
+    put:
+      operationId: updateEmbeddings
+      summary: Updates embeddings for a given uuid
+      parameters:
+        - $ref: '#/components/parameters/uuid'
+      requestBody:
+        required: true
+        content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/EmbeddingsPayload'
+      responses:
+        '200':    # status code
+          description: The updated ingestion object
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Ingestion'
+    delete:
+      operationId: deleteEmbeddings
+      summary: Deletes embeddings for a given uuid
+      parameters:
+        - $ref: '#/components/parameters/uuid'
+      responses:
+        '200':    # status code
+          description: The deleted ingestion
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Ingestion'
+components: 
+  parameters:
+    uuid:
+      name: uuid
+      in: path
+      description: unqiue id for embeddings
+      required: true
+      schema:
+        type: string
+  schemas: 
+    Ingestion: 
+      type: object 
+      properties: 
+        uuid: 
+          type: string
+        gaurdId: 
+          type: string
+        embeddings:
+          type: array       
+          items:
+            type: array
+            items: 
+              type: number 
+        metadata: 
+          type: object
+        ingestionStatus:
+          type: string
+        validatorId: 
+          type: string
+    IngestionPayload: 
+      type: object
+      properties: 
+        articles: 
+          type: array 
+          items: 
+            type: string
+        gaurdId: 
+          type: string
+        metadata: 
+          type: object
+        validatorId: 
+          type: string
+    EmbeddingsPayload: 
+      allOf: 
+        - $ref: '#/components/schemas/IngestionPayload'
+        - type: object
+          properties:
+            uuid: 
+              type: string
+
+        
