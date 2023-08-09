@@ -54,6 +54,7 @@ class GuardClient:
             name=guard.name,
             railspec=guard.railspec.to_dict(),
             num_reasks=guard.num_reasks,
+            description=guard.description
         )
         self.pgClient.db.session.add(guard_item)
         self.pgClient.db.session.commit()
