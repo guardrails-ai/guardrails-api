@@ -1,29 +1,29 @@
-openapi: '3.0.0'
+openapi: "3.0.0"
 info:
   title: GuardRails API
-  version: '0.0.0'
+  version: "0.0.0"
   description: GuardRails CRUD API
 paths:
   /health-check:
     get:
       tags:
-        - Service Health 
+        - Service Health
       security:
         - apiKeyAuth: []
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Returns the status of the server
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthCheck'
+                $ref: "#/components/schemas/HealthCheck"
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
+                $ref: "#/components/schemas/HttpError"
   /guards:
     get:
       operationId: getGuards
@@ -34,20 +34,20 @@ paths:
         - apiKeyAuth: []
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: A list of Guards.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Guard'
+                  $ref: "#/components/schemas/Guard"
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
+                $ref: "#/components/schemas/HttpError"
     post:
       operationId: createGuard
       tags:
@@ -61,20 +61,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Guard'
+              $ref: "#/components/schemas/Guard"
       responses:
-        '200':
+        "200":
           description: the new Guard
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Guard'
+                $ref: "#/components/schemas/Guard"
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
+                $ref: "#/components/schemas/HttpError"
   /guards/{guardName}:
     get:
       operationId: getGuard
@@ -82,31 +82,31 @@ paths:
         - guard
       summary: Fetches a specific Guard
       parameters:
-        - $ref: '#/components/parameters/GuardName'
-        - $ref: '#/components/parameters/AsOf'
+        - $ref: "#/components/parameters/GuardName"
+        - $ref: "#/components/parameters/AsOf"
       security:
         - apiKeyAuth: []
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: the fetched Guard
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Guard'
+                $ref: "#/components/schemas/Guard"
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
+                $ref: "#/components/schemas/HttpError"
     put:
       operationId: updateGuard
       tags:
         - guard
       summary: Updates a Guard
       parameters:
-        - $ref: '#/components/parameters/GuardName'
+        - $ref: "#/components/parameters/GuardName"
       security:
         - apiKeyAuth: []
         - bearerAuth: []
@@ -115,43 +115,43 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Guard'
+              $ref: "#/components/schemas/Guard"
       responses:
-        '200':
+        "200":
           description: the updated Guard
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Guard'
+                $ref: "#/components/schemas/Guard"
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
+                $ref: "#/components/schemas/HttpError"
     delete:
       operationId: deleteGuard
       tags:
         - guard
       summary: Deletes a Guard
       parameters:
-        - $ref: '#/components/parameters/GuardName'
+        - $ref: "#/components/parameters/GuardName"
       security:
         - apiKeyAuth: []
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: the deleted Guard
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Guard'
+                $ref: "#/components/schemas/Guard"
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
+                $ref: "#/components/schemas/HttpError"
   /guards/{guardName}/validate:
     post:
       operationId: validate
@@ -163,89 +163,27 @@ paths:
         - apiKeyAuth: []
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/GuardName'
-        - $ref: '#/components/parameters/OpenAiApiKey'
+        - $ref: "#/components/parameters/GuardName"
+        - $ref: "#/components/parameters/OpenAiApiKey"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidatePayload'
+              $ref: "#/components/schemas/ValidatePayload"
       responses:
-        '200':
+        "200":
           description: The output of the validation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationOutput'
+                $ref: "#/components/schemas/ValidationOutput"
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
-  /ingest:
-    post:
-      operationId: ingest
-      summary: Creates and ingests embeddings
-      parameters:
-        - $ref: '#/components/parameters/OpenAiApiKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/IngestionPayload'
-      responses:
-        '200':    # status code
-          description: uniqie id for the created ingestion object
-          content:
-            application/json:
-              schema: 
-                type: string
-  /embeddings/{uuid}:
-    get:
-      operationId: getEmbeddings
-      summary: Returns a ingestion object for given uuid
-      parameters:
-        - $ref: '#/components/parameters/uuid'
-      responses:
-        '200':    # status code
-          description: the ingestion object
-          content:
-            application/json:
-              schema: 
-                $ref: '#/components/schemas/Ingestion'
-    put:
-      operationId: updateEmbeddings
-      summary: Updates embeddings for a given uuid
-      parameters:
-        - $ref: '#/components/parameters/uuid'
-      requestBody:
-        required: true
-        content:
-           application/json:
-            schema:
-              $ref: '#/components/schemas/EmbeddingsPayload'
-      responses:
-        '200':    # status code
-          description: The updated ingestion object
-          content:
-            application/json:
-              schema: 
-                $ref: '#/components/schemas/Ingestion'
-    delete:
-      operationId: deleteEmbeddings
-      summary: Deletes embeddings for a given uuid
-      parameters:
-        - $ref: '#/components/parameters/uuid'
-      responses:
-        '200':    # status code
-          description: The deleted ingestion
-          content:
-            application/json:
-              schema: 
-                $ref: '#/components/schemas/Ingestion'
+                $ref: "#/components/schemas/HttpError"
 components:
   securitySchemes:
     bearerAuth:
@@ -270,7 +208,7 @@ components:
       in: query
       description: Used to query for data as it existed at this date and time
       required: false
-      schema: 
+      schema:
         type: string
         format: date
     OpenAiApiKey:
@@ -278,13 +216,6 @@ components:
       in: header
       description: A valid OpenAI API Key for calling LLM's on your behalf
       required: false
-      schema: 
-        type: string
-    uuid:
-      name: uuid
-      in: path
-      description: unqiue id for embeddings
-      required: true
       schema:
         type: string
   schemas:
@@ -328,9 +259,12 @@ components:
       properties:
         name:
           type: string
-          description: A unique name for this guard configuration.
+          description: A unique name for this guard.
+        description:
+          type: string
+          description: A description of this guard.
         railspec:
-          $ref: '#/components/schemas/RailSpec'
+          $ref: "#/components/schemas/RailSpec"
         numReasks:
           type: integer
           description: The number of re-asks to perform during validation when a validation fails.
@@ -350,15 +284,15 @@ components:
       description: A JSONified version of the user provided railspec.
       properties:
         inputSchema:
-          $ref: '#/components/schemas/Schema'
+          $ref: "#/components/schemas/Schema"
         outputSchema:
-          $ref: '#/components/schemas/Schema'
+          $ref: "#/components/schemas/Schema"
         instructions:
           type: string
         prompt:
           type: string
         script:
-          $ref: '#/components/schemas/Script'
+          $ref: "#/components/schemas/Script"
         version:
           type: string
           default: "0.1"
@@ -370,7 +304,7 @@ components:
         schema:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/DataType'
+            $ref: "#/components/schemas/DataType"
     DataType:
       type: object
       properties:
@@ -386,7 +320,7 @@ components:
           items:
             type: string
         element:
-          $ref: '#/components/schemas/SchemaElement'
+          $ref: "#/components/schemas/SchemaElement"
     Script:
       type: object
       properties:
@@ -414,8 +348,30 @@ components:
           type: string
         onFail:
           type: string
+        onFails:
+          type: array
+          items:
+            $ref: "#/components/schemas/OnFail"
         model:
           type: string
+    OnFail:
+      type: object
+      properties:
+        validatorTag:
+          type: string
+        method:
+          $ref: "#/components/schemas/OnFailOptions"
+    OnFailOptions:
+      type: string
+      enum: [
+        "exception",
+        "filter",
+        "fix",
+        "fix_reask",
+        "noop",
+        "reask",
+        "refrain"
+      ]
     ValidationOutput:
       type: object
       properties:
@@ -427,7 +383,7 @@ components:
         sessionHistory:
           type: array
           items:
-            $ref: '#/components/schemas/History'
+            $ref: "#/components/schemas/History"
         rawLlmResponse:
           type: string
       additionalProperties: {}
@@ -439,7 +395,7 @@ components:
         history:
           type: array
           items:
-            $ref: '#/components/schemas/HistoryEvent'
+            $ref: "#/components/schemas/HistoryEvent"
     HistoryEvent:
       type: object
       properties:
@@ -471,20 +427,20 @@ components:
       type: object
       properties:
         incorrect_value:
-          $ref: '#/components/schemas/Any'
+          $ref: "#/components/schemas/Any"
         error_message:
           type: string
         fix_value:
-          $ref: '#/components/schemas/Any'
+          $ref: "#/components/schemas/Any"
         path:
           type: array
           items:
-            $ref: '#/components/schemas/Any'
+            $ref: "#/components/schemas/Any"
     Any:
       oneOf:
-        - $ref: '#/components/schemas/AnyArray'
-        - $ref: '#/components/schemas/AnyObject'
-        - $ref: '#/components/schemas/AnyPrimitive'
+        - $ref: "#/components/schemas/AnyArray"
+        - $ref: "#/components/schemas/AnyObject"
+        - $ref: "#/components/schemas/AnyPrimitive"
     AnyPrimitive:
       oneOf:
         - type: boolean
@@ -500,13 +456,13 @@ components:
       type: array
       items:
         oneOf:
-          - $ref: '#/components/schemas/AnyObject'
-          - $ref: '#/components/schemas/AnyPrimitive'
+          - $ref: "#/components/schemas/AnyObject"
+          - $ref: "#/components/schemas/AnyPrimitive"
           - type: array
             items:
               oneOf:
-                - $ref: '#/components/schemas/AnyObject'
-                - $ref: '#/components/schemas/AnyPrimitive'
+                - $ref: "#/components/schemas/AnyObject"
+                - $ref: "#/components/schemas/AnyPrimitive"
     ValidatePayload:
       type: object
       properties:
@@ -524,49 +480,11 @@ components:
           additionalProperties: {}
         llmApi:
           type: string
-          enum: [
-            'openai.Completion.create',
-            'openai.ChatCompletion.create',
-            'openai.Completion.acreate',
-            'openai.ChatCompletion.acreate'
-          ]
+          enum:
+            [
+              "openai.Completion.create",
+              "openai.ChatCompletion.create",
+              "openai.Completion.acreate",
+              "openai.ChatCompletion.acreate",
+            ]
       additionalProperties: {}
-    Ingestion: 
-      type: object 
-      properties: 
-        uuid: 
-          type: string
-        gaurdId: 
-          type: string
-        embeddings:
-          type: array       
-          items:
-            type: array
-            items: 
-              type: number 
-        metadata: 
-          type: object
-        ingestionStatus:
-          type: string
-        validatorId: 
-          type: string
-    IngestionPayload: 
-      type: object
-      properties: 
-        articles: 
-          type: array 
-          items: 
-            type: string
-        guardId: 
-          type: string
-        metadata: 
-          type: object
-        validatorId: 
-          type: string
-    EmbeddingsPayload: 
-      allOf: 
-        - $ref: '#/components/schemas/IngestionPayload'
-        - type: object
-          properties:
-            uuid: 
-              type: string

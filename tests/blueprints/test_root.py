@@ -1,4 +1,4 @@
-import builtins
+from src.utils.logger import logger
 from unittest.mock import MagicMock
 from tests.mocks.mock_blueprint import MockBlueprint
 from tests.mocks.mock_postgres_client import MockPostgresClient
@@ -26,7 +26,7 @@ def test_home(mocker):
         def __init__(self):
           self.db = mock_pg.db
     mocker.patch("src.clients.postgres_client.PostgresClient", new=MockPg)
-    print_spy = mocker.spy(builtins, "print")
+    info_spy = mocker.spy(logger, "info")
     from src.blueprints.root import health_check, root_bp, text, PostgresClient
     
     response = health_check()
@@ -35,7 +35,7 @@ def test_home(mocker):
     assert root_bp.routes == ["/", "/health-check"]
     text.assert_called_once_with("SELECT count(datid) FROM pg_stat_activity;")
     assert mock_pg.db.session.queries == ["SELECT count(datid) FROM pg_stat_activity;"]
-    print_spy.assert_called_once_with("response: ", [(1,)])
+    info_spy.assert_called_once_with("response: ", [(1,)])
     assert response == { "status": 200, "message": "Ok" }
 
     mocker.resetall()
