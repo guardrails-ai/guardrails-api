@@ -126,7 +126,7 @@ def validate(guard_name: str):
             *args,
             **payload
         )
-    
+
     cleanup_environment(guard_struct)
     return ValidationOutput(
         result, validated_output, guard.state.all_histories, raw_llm_response

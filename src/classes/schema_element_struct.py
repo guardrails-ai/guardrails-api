@@ -1,5 +1,5 @@
-from typing import Any, Dict, List, Optional
-from lxml.etree import Element, _Element
+from typing import List, Optional
+from lxml.etree import _Element
 from src.utils.pluck import pluck
 from src.classes.element_stub import ElementStub
 
@@ -16,7 +16,7 @@ class SchemaElementStruct:
         on_fail: Optional[str],
         on_fails: Optional[List[dict]],
         model: Optional[str],
-        **kwargs
+        **kwargs,
     ):
         self.type = type
         self.name = name
@@ -32,29 +32,31 @@ class SchemaElementStruct:
     def to_element(self) -> ElementStub:
         elem_dict = self.to_dict()
         if self.date_format is not None:
-          elem_dict["date-format"] = self.date_format
+            elem_dict["date-format"] = self.date_format
         if self.time_format is not None:
-          elem_dict["time-format"] = self.time_format
+            elem_dict["time-format"] = self.time_format
         if self.on_fail is not None:
-          elem_dict["on-fail"] = self.on_fail
+            elem_dict["on-fail"] = self.on_fail
         if len(self.on_fails) > 0:
             for validator_on_fail in self.on_fails:
-                elem_dict[validator_on_fail.get("validatorTag")] = validator_on_fail.get("method")
+                elem_dict[
+                    validator_on_fail.get("validatorTag")
+                ] = validator_on_fail.get("method")
         return ElementStub(self.type, elem_dict)
 
     @classmethod
     def from_dict(cls, schema_element: dict):
         handled_keys = [
-                    "type",
-                    "name",
-                    "description",
-                    "strict",
-                    "date_format",
-                    "time_format",
-                    "on_fail",
-                    "on_fails",
-                    "model",
-                ]
+            "type",
+            "name",
+            "description",
+            "strict",
+            "date_format",
+            "time_format",
+            "on_fail",
+            "on_fails",
+            "model",
+        ]
         if schema_element is not None:
             (
                 type,
@@ -66,10 +68,7 @@ class SchemaElementStruct:
                 on_fail,
                 on_fails,
                 model,
-            ) = pluck(
-                schema_element,
-                handled_keys
-            )
+            ) = pluck(schema_element, handled_keys)
             kwargs = {}
             for key in schema_element:
                 if key not in handled_keys:
@@ -84,14 +83,11 @@ class SchemaElementStruct:
                 on_fail,
                 on_fails,
                 model,
-                **kwargs
+                **kwargs,
             )
 
     def to_dict(self):
-        response = {
-            "type": self.type,
-            **self.attribs
-        }
+        response = {"type": self.type, **self.attribs}
 
         if self.name is not None:
             response["name"] = self.name
@@ -115,16 +111,16 @@ class SchemaElementStruct:
     @classmethod
     def from_request(cls, schema_element: dict):
         handled_keys = [
-                    "type",
-                    "name",
-                    "description",
-                    "strict",
-                    "dateFormat",
-                    "timeFormat",
-                    "onFail",
-                    "onFails",
-                    "model"
-                ]
+            "type",
+            "name",
+            "description",
+            "strict",
+            "dateFormat",
+            "timeFormat",
+            "onFail",
+            "onFails",
+            "model",
+        ]
         if schema_element is not None:
             (
                 type,
@@ -136,10 +132,7 @@ class SchemaElementStruct:
                 on_fail,
                 on_fails,
                 model,
-            ) = pluck(
-                schema_element,
-                handled_keys
-            )
+            ) = pluck(schema_element, handled_keys)
             kwargs = {}
             for key in schema_element:
                 if key not in handled_keys:
@@ -154,14 +147,11 @@ class SchemaElementStruct:
                 on_fail,
                 on_fails,
                 model,
-                **kwargs
+                **kwargs,
             )
 
     def to_response(self):
-        response = {
-            "type": self.type,
-            **self.attribs
-        }
+        response = {"type": self.type, **self.attribs}
         if self.name is not None:
             response["name"] = self.name
         if self.description is not None:
@@ -174,7 +164,7 @@ class SchemaElementStruct:
             response["timeFormat"] = self.time_format
         if self.on_fail is not None:
             response["onFail"] = self.on_fail
-        if len(self.on_fails)  > 0:
+        if len(self.on_fails) > 0:
             response["onFails"] = self.on_fails
         if self.model is not None:
             response["model"] = self.model
@@ -196,17 +186,26 @@ class SchemaElementStruct:
         on_fails = []
 
         kwargs = {}
-        handled_keys = ["name", "description", "strict", "date-format", "time-format", "model", "on-fail"]
+        handled_keys = [
+            "name",
+            "description",
+            "strict",
+            "date-format",
+            "time-format",
+            "model",
+            "on-fail",
+        ]
         attr_keys = xml.keys()
         for attr_key in attr_keys:
             if attr_key.startswith("on-fail") and attr_key != "on-fail":
                 on_fail_method = xml.get(attr_key)
                 on_fail_tag = attr_key
-                print(f"appending to on_fails - ${on_fail_tag} ${on_fail_method}")
-                on_fails.append({
-                    "validatorTag": on_fail_tag,
-                    "method": on_fail_method
-                })
+                print(
+                    f"appending to on_fails - ${on_fail_tag} ${on_fail_method}"
+                )
+                on_fails.append(
+                    {"validatorTag": on_fail_tag, "method": on_fail_method}
+                )
             elif attr_key not in handled_keys:
                 kwargs[attr_key] = xml.get(attr_key)
         model = xml.get("model")
@@ -220,5 +219,5 @@ class SchemaElementStruct:
             on_fail,
             on_fails,
             model,
-            **kwargs
+            **kwargs,
         )

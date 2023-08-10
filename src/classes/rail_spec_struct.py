@@ -43,7 +43,8 @@ class RailSpecStruct:
         output_schema = (
             self.output_schema.to_schema() if self.output_schema else None
         )
-        # TODO: This might not be necessary anymore since we stopped BasePrompt from formatting on init
+        # TODO: This might not be necessary anymore since we stopped
+        #       BasePrompt from formatting on init
         escaped_instructions = escape_curlys(self.instructions)
         instructions = (
             Instructions(escaped_instructions, output_schema)
@@ -51,7 +52,8 @@ class RailSpecStruct:
             else None
         )
         instructions.source = descape_curlys(instructions.source)
-        # TODO: This might not be necessary anymore since we stopped BasePrompt from formatting on init
+        # TODO: This might not be necessary anymore since we stopped
+        #       BasePrompt from formatting on init
         escaped_prompt = escape_curlys(self.prompt)
         prompt = (
             Prompt(escaped_prompt, output_schema) if escaped_prompt else None
@@ -211,9 +213,12 @@ class RailSpecStruct:
             script=script,
             version=elem_tree.attrib["version"],
         )
-    
+
     def to_xml(self) -> _Element:
-        xml_rail = Element("rail", { "version": self.version if self.version is not None else "0.1" })
+        xml_rail = Element(
+            "rail",
+            {"version": self.version if self.version is not None else "0.1"},
+        )
 
         # Attach <input /> schema
         if self.input_schema is not None:
@@ -238,7 +243,7 @@ class RailSpecStruct:
             ScriptStruct.to_xml(self.script)
 
         return xml_rail
-    
+
     def get_all_plugins(self) -> List[str]:
         plugins = []
         if self.input_schema is not None:

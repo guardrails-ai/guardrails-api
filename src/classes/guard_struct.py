@@ -23,7 +23,10 @@ class GuardStruct:
     @classmethod
     def from_guard(cls, guard: Guard):
         return cls(
-            "guard-1", RailSpecStruct.from_rail(guard.rail), guard.num_reasks, guard.description
+            "guard-1",
+            RailSpecStruct.from_rail(guard.rail),
+            guard.num_reasks,
+            guard.description,
         )
 
     def to_guard(self, openai_api_key: Optional[str] = None) -> Guard:
@@ -33,7 +36,7 @@ class GuardStruct:
             self.num_reasks,
             openai_api_key=openai_api_key,
             description=self.description,
-            name=self.name
+            name=self.name,
         )
 
     @classmethod
@@ -41,14 +44,16 @@ class GuardStruct:
         name, railspec, num_reasks, description = pluck(
             guard, ["name", "railspec", "num_reasks", "description"]
         )
-        return cls(name, RailSpecStruct.from_dict(railspec), num_reasks, description)
+        return cls(
+            name, RailSpecStruct.from_dict(railspec), num_reasks, description
+        )
 
     def to_dict(self) -> dict:
         return {
             "name": self.name,
             "railspec": self.railspec.to_dict(),
             "num_reasks": self.num_reasks,
-            "description": self.description
+            "description": self.description,
         }
 
     @classmethod
@@ -56,7 +61,9 @@ class GuardStruct:
         name, railspec, num_reasks, description = pluck(
             guard, ["name", "railspec", "numReasks", "description"]
         )
-        return cls(name, RailSpecStruct.from_request(railspec), num_reasks, description)
+        return cls(
+            name, RailSpecStruct.from_request(railspec), num_reasks, description
+        )
 
     def to_response(self) -> dict:
         response = {"name": self.name, "railspec": self.railspec.to_response()}
@@ -72,9 +79,17 @@ class GuardStruct:
             guard_item.name,
             RailSpecStruct.from_dict(guard_item.railspec),
             guard_item.num_reasks,
-            guard_item.description
+            guard_item.description,
         )
 
     @classmethod
-    def from_railspec(cls, name: str, railspec: str, num_reasks: int = None, description: str = None):
-        return cls(name, RailSpecStruct.from_xml(railspec), num_reasks, description)
+    def from_railspec(
+        cls,
+        name: str,
+        railspec: str,
+        num_reasks: int = None,
+        description: str = None,
+    ):
+        return cls(
+            name, RailSpecStruct.from_xml(railspec), num_reasks, description
+        )
