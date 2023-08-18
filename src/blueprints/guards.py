@@ -9,12 +9,12 @@ from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
+guard_client = GuardClient()
 
 
 @guards_bp.route("/", methods=["GET", "POST"])
 @handle_error
 def guards():
-    guard_client = GuardClient()
     if request.method == "GET":
         guards = guard_client.get_guards()
         return [g.to_response() for g in guards]
@@ -35,7 +35,6 @@ def guards():
 @guards_bp.route("/<guard_name>", methods=["GET", "PUT", "DELETE"])
 @handle_error
 def guard(guard_name: str):
-    guard_client = GuardClient()
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
         guard = guard_client.get_guard(guard_name, as_of_query)
@@ -71,7 +70,6 @@ def validate(guard_name: str):
         )
     payload = request.json
     openai_api_key = request.headers.get("x-openai-api-key", None)
-    guard_client = GuardClient()
     guard_struct = guard_client.get_guard(guard_name)
     prep_environment(guard_struct)
     guard: Guard = guard_struct.to_guard(openai_api_key)
