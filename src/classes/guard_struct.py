@@ -68,7 +68,6 @@ class GuardStruct:
         )
         return guard_struct
 
-
     def to_response(self) -> dict:
         response = {"name": self.name, "railspec": self.railspec.to_response()}
         if self.num_reasks is not None:

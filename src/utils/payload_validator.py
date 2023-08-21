@@ -1,4 +1,3 @@
-import os
 import yaml
 from typing import Dict
 from jsonschema import Draft202012Validator, ValidationError
@@ -22,13 +21,14 @@ guard_validator = Draft202012Validator(
     registry=registry
 )
 
+
 def validate_payload(payload: dict):
     fields = {}
     error: ValidationError
     for error in guard_validator.iter_errors(payload):
         fields[error.json_path] = fields.get(error.json_path, [])
         fields[error.json_path].append(error.message)
-        
+
     if fields:
         raise HttpError(
             400,
