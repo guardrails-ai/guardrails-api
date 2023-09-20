@@ -3,6 +3,7 @@ from guardrails import Guard, Rail
 from src.classes.rail_spec_struct import RailSpecStruct
 from src.models.guard_item import GuardItem
 from src.utils.pluck import pluck
+from src.utils.payload_validator import validate_payload
 
 
 class GuardStruct:
@@ -58,12 +59,14 @@ class GuardStruct:
 
     @classmethod
     def from_request(cls, guard: dict):
+        validate_payload(guard)
         name, railspec, num_reasks, description = pluck(
             guard, ["name", "railspec", "numReasks", "description"]
         )
-        return cls(
+        guard_struct = cls(
             name, RailSpecStruct.from_request(railspec), num_reasks, description
         )
+        return guard_struct
 
     def to_response(self) -> dict:
         response = {"name": self.name, "railspec": self.railspec.to_response()}
