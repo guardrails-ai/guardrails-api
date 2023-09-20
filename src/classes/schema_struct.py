@@ -1,5 +1,5 @@
-from typing import Dict
-from lxml.etree import _Element, _Comment
+from typing import Dict, List
+from lxml.etree import _Element, _Comment, SubElement
 from guardrails.schema import Schema, StringSchema, JsonSchema
 from src.classes.data_type_struct import DataTypeStruct
 
@@ -95,3 +95,27 @@ class SchemaStruct:
             schema[name] = DataTypeStruct.from_xml(child)
 
         return cls({"schema": schema})
+
+    def to_xml(self, parent: _Element, tag: str) -> _Element:
+        xml_schema = SubElement(parent, tag)
+        inner_schema = self.schema["schema"]
+        for key in inner_schema:
+            child: DataTypeStruct = inner_schema[key]
+            child.to_xml(xml_schema)
+
+        return xml_schema
+
+    def get_all_plugins(self) -> List[str]:
+        plugins = []
+        inner_schema = self.schema["schema"]
+
+        if (
+            hasattr(inner_schema, "element")
+            and inner_schema.element.type == "string"
+        ):
+            plugins.extend(inner_schema.get_all_plugins())
+        else:
+            for key in inner_schema:
+                schema_element: DataTypeStruct = inner_schema[key]
+                plugins.extend(schema_element.get_all_plugins())
+        return plugins

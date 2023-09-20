@@ -1,5 +1,6 @@
 from guardrails.rail import Script
-from lxml.etree import _Element
+from lxml.etree import _Element, SubElement
+from src.classes.element_stub import ElementStub
 
 
 class ScriptStruct:
@@ -15,6 +16,11 @@ class ScriptStruct:
             script.language,
             script.variables,
         )
+
+    def to_script(self):
+        attributes = {"language": self.language, "text": self.text}
+        xml_stub = ElementStub("script", attributes)
+        return Script.from_xml(xml_stub)
 
     @classmethod
     def from_dict(cls, script: dict):
@@ -45,3 +51,7 @@ class ScriptStruct:
             raise ValueError("Only python scripts are supported right now.")
 
         return cls(elem.text, language, {})
+
+    def to_xml(self, parent: _Element) -> _Element:
+        attribs = self.to_dict()
+        return SubElement(parent, "script", attribs)

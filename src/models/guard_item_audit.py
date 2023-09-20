@@ -9,6 +9,7 @@ class GuardItemAudit(db.Model):
     name = Column(String, nullable=False, index=True)
     railspec = Column(JSONB, nullable=False)
     num_reasks = Column(Integer, nullable=True)
+    description = Column(String, nullable=True)
     # owner = Column(String, nullable=False)
     replaced_on = Column(TIMESTAMP, nullable=False)
     # replaced_by = Column(String, nullable=False)
@@ -20,6 +21,7 @@ class GuardItemAudit(db.Model):
         name,
         railspec,
         num_reasks,
+        description,
         # owner = None
         replaced_on,
         # replaced_by
@@ -29,6 +31,7 @@ class GuardItemAudit(db.Model):
         self.name = name
         self.railspec = railspec
         self.num_reasks = num_reasks
+        self.description = description
         self.replaced_on = replaced_on
         self.operation = operation
         # self.owner = owner

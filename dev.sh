@@ -4,6 +4,10 @@ rm -rf ./guardrails-sdk
 cp -r ../guardrails ./guardrails-sdk
 pip install ../guardrails
 
+cp -r ../guardrails-custom-validators ./guardrails-custom-validators
+
+bash build-sdk.sh
+
 mkdir -p ./pgadmin-data
 
 cp ./pgadmin-dev-server.json ./pgadmin-data/servers.json
