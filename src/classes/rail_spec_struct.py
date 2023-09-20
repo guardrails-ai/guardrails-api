@@ -3,7 +3,6 @@ from lxml.etree import _Element, Element, SubElement
 from guardrails import Instructions, Prompt, Rail
 from lxml import etree
 from src.classes.schema_struct import SchemaStruct
-from src.classes.script_struct import ScriptStruct
 from src.utils.pluck import pluck
 from src.utils.escape_curlys import escape_curlys, descape_curlys
 
@@ -15,14 +14,12 @@ class RailSpecStruct:
         output_schema: SchemaStruct = None,
         instructions: str = None,
         prompt: str = None,
-        script: ScriptStruct = None,
         version: str = "0.1",
     ):
         self.input_schema = input_schema
         self.output_schema = output_schema
         self.instructions = instructions
         self.prompt = prompt
-        self.script = script
         self.version = version
 
     @classmethod
@@ -32,7 +29,6 @@ class RailSpecStruct:
             SchemaStruct.from_schema(rail.output_schema),
             rail.instructions.source,
             rail.prompt.source,
-            ScriptStruct.from_script(rail.script),
             rail.version,
         )
 
@@ -59,13 +55,11 @@ class RailSpecStruct:
             Prompt(escaped_prompt, output_schema) if escaped_prompt else None
         )
         prompt.source = descape_curlys(prompt.source)
-        script = self.script.to_script() if self.script else None
         return Rail(
             input_schema,
             output_schema,
             instructions,
             prompt,
-            script,
             self.version,
         )
 
@@ -76,7 +70,6 @@ class RailSpecStruct:
             output_schema,
             instructions,
             prompt,
-            script,
             version,
         ) = pluck(
             rail,
@@ -85,7 +78,6 @@ class RailSpecStruct:
                 "output_schema",
                 "instructions",
                 "prompt",
-                "script",
                 "version",
             ],
         )
@@ -94,7 +86,6 @@ class RailSpecStruct:
             SchemaStruct.from_dict(output_schema),
             instructions,
             prompt,
-            ScriptStruct.from_dict(script),
             version,
         )
 
@@ -109,8 +100,6 @@ class RailSpecStruct:
             rail["instructions"] = self.instructions
         if self.prompt is not None:
             rail["prompt"] = self.prompt
-        if self.script is not None:
-            rail["script"] = self.script.to_dict()
 
         return rail
 
@@ -121,7 +110,6 @@ class RailSpecStruct:
             output_schema,
             instructions,
             prompt,
-            script,
             version,
         ) = pluck(
             rail,
@@ -130,7 +118,6 @@ class RailSpecStruct:
                 "outputSchema",
                 "instructions",
                 "prompt",
-                "script",
                 "version",
             ],
         )
@@ -139,7 +126,6 @@ class RailSpecStruct:
             SchemaStruct.from_request(output_schema),
             instructions,
             prompt,
-            ScriptStruct.from_request(script),
             version,
         )
 
@@ -154,8 +140,6 @@ class RailSpecStruct:
             rail["instructions"] = self.instructions
         if self.prompt is not None:
             rail["prompt"] = self.prompt
-        if self.script is not None:
-            rail["script"] = self.script.to_response()
 
         return rail
 
@@ -199,18 +183,11 @@ class RailSpecStruct:
             raise ValueError("RAIL file must contain a prompt element.")
         prompt = prompt.text
 
-        # Execute the script before validating the rest of the RAIL file.
-        script = None
-        raw_script = elem_tree.find("script")
-        if raw_script is not None:
-            script = ScriptStruct.from_xml(raw_script)
-
         return cls(
             input_schema=input_schema,
             output_schema=output_schema,
             instructions=instructions,
             prompt=prompt,
-            script=script,
             version=elem_tree.attrib["version"],
         )
 
@@ -237,10 +214,6 @@ class RailSpecStruct:
         if self.prompt is not None:
             prompt = SubElement(xml_rail, "prompt")
             prompt.text = self.prompt
-
-        # Attach <script />
-        if self.script is not None:
-            ScriptStruct.to_xml(self.script)
 
         return xml_rail
 
