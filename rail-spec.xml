@@ -13,6 +13,6 @@
   <prompt>
     Generate a dataset of fake user orders. Each row of the dataset should be valid.
 
-    @complete_json_suffix
+    ${gr.complete_json_suffix}
   </prompt>
 </rail>

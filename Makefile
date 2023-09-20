@@ -4,6 +4,9 @@ build-sdk:
 dev:
 	bash ./dev.sh
 
+local:
+	python3 ./wsgi.py
+
 env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
 
