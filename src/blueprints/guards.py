@@ -5,6 +5,7 @@ from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
 from src.clients.guard_client import GuardClient
 from src.utils.handle_error import handle_error
+from src.utils.gather_request_metrics import gather_request_metrics
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
 
@@ -16,6 +17,7 @@ guard_client = GuardClient()
 
 @guards_bp.route("/", methods=["GET", "POST"])
 @handle_error
+@gather_request_metrics
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
@@ -36,6 +38,7 @@ def guards():
 
 @guards_bp.route("/<guard_name>", methods=["GET", "PUT", "DELETE"])
 @handle_error
+@gather_request_metrics
 def guard(guard_name: str):
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
@@ -62,8 +65,9 @@ def guard(guard_name: str):
 
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
+@gather_request_metrics
 def validate(guard_name: str):
-    with otel_tracer.start_as_current_span(f"{guard_name}-validate"):
+    with otel_tracer.start_as_current_span(f"validate-{guard_name}"):
         if request.method != "POST":
           raise HttpError(
               405,
@@ -128,7 +132,7 @@ def validate(guard_name: str):
                 **payload
             )
 
-      cleanup_environment(guard_struct)
-      return ValidationOutput(
-          result, validated_output, guard.state.all_histories, raw_llm_response
-      ).to_response()
+        cleanup_environment(guard_struct)
+        return ValidationOutput(
+            result, validated_output, guard.state.all_histories, raw_llm_response
+        ).to_response()

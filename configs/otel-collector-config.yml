@@ -2,40 +2,75 @@ receivers:
   otlp:
     protocols:
       grpc:
-  # prometheus:
-  #   config:
-  #     scrape_configs:
-  #       - job_name: guardrails
+      # http:
+
+processors:
+  batch:
 
 exporters:
-  otlp/traces:
+  otlp/data-prepper:
     endpoint: data-prepper:21890
     tls:
       insecure: true
       insecure_skip_verify: true
-  otlp/data-prepper:
-    endpoint: data-prepper:21891
-    tls:
-      insecure: true
-      insecure_skip_verify: true
-  otlp/logs:
-    endpoint: data-prepper:21892
-    tls:
-      insecure: true
-      insecure_skip_verify: true
+  # otlp/data-prepper:
+  #   endpoint: data-prepper:21891
+  #   tls:
+  #     insecure: true
+  #     insecure_skip_verify: true
+  # otlp/logs:
+  #   endpoint: data-prepper:21892
+  #   tls:
+  #     insecure: true
+  #     insecure_skip_verify: true
+  
+  # Data sources: metrics
+  prometheus:
+    endpoint: otel-collector:8889
+    namespace: guardrails-api
+    send_timestamps: true
+    metric_expiration: 180m
+    resource_to_telemetry_conversion:
+      enabled: true
+    enable_open_metrics: true
+  
+  # Data sources: traces, metrics, logs
   logging:
 
+extensions:
+  health_check:
+
 service:
-  telemetry:
-    logs:
-      level: 'debug'
   pipelines:
     traces:
-      receivers: [otlp]
-      exporters: [otlp/traces, logging]
+      receivers: 
+        - otlp
+      processors: 
+        - batch
+      exporters: 
+        - logging
+        - otlp/data-prepper
+        # - otlp/traces
     metrics:
-      receivers: [otlp]
-      exporters: [otlp/data-prepper, logging]
+      receivers: 
+        - otlp
+      processors: 
+        - batch
+      exporters: 
+        - prometheus
+        - logging
+        # - otlp/data-prepper
     logs:
-      receivers: [otlp]
-      exporters: [otlp/logs, logging]
+      receivers: 
+        - otlp
+      processors: 
+        - batch
+      exporters: 
+        - logging
+        # - otlp/logs
+  # telemetry:
+  #   logs:
+  #     level: 'debug'
+  #   metrics:
+  #     address: otel-collector:8889
+  # extensions: [health_check]

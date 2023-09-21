@@ -8,6 +8,7 @@ from guard_rails_api_client.models.validate_payload_llm_api import (
 def get_llm_callable(
     llm_api: str,
 ) -> Union[Callable, Callable[[Any], Awaitable[Any]]]:
+    # TODO: Add error handling and throw 400
     if (
         ValidatePayloadLlmApi(llm_api)
         is ValidatePayloadLlmApi.OPENAI_COMPLETION_CREATE

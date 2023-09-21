@@ -1,5 +1,7 @@
 import os
 import logging
+# Shouldn't need this with auto-instrumentation
+# from src.modules.otel_logger import handler as otel_handler
 
 
 def get_logger():
@@ -9,3 +11,4 @@ def get_logger():
 
 
 logger = get_logger()
+# logger.addHandler(otel_handler)
