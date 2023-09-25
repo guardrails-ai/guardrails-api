@@ -8,21 +8,21 @@ processors:
   batch:
 
 exporters:
-  otlp/data-prepper:
+  otlp/traces:
     endpoint: data-prepper:21890
     tls:
       insecure: true
       insecure_skip_verify: true
-  # otlp/data-prepper:
-  #   endpoint: data-prepper:21891
-  #   tls:
-  #     insecure: true
-  #     insecure_skip_verify: true
-  # otlp/logs:
-  #   endpoint: data-prepper:21892
-  #   tls:
-  #     insecure: true
-  #     insecure_skip_verify: true
+  otlp/metrics:
+    endpoint: data-prepper:21891
+    tls:
+      insecure: true
+      insecure_skip_verify: true
+  otlp/logs:
+    endpoint: data-prepper:21892
+    tls:
+      insecure: true
+      insecure_skip_verify: true
   
   # Data sources: metrics
   prometheus:
@@ -36,6 +36,7 @@ exporters:
   
   # Data sources: traces, metrics, logs
   logging:
+    loglevel: ${env:OTEL_PYTHON_LOG_LEVEL}
 
 extensions:
   health_check:
@@ -49,17 +50,16 @@ service:
         - batch
       exporters: 
         - logging
-        - otlp/data-prepper
-        # - otlp/traces
+        - otlp/traces
     metrics:
       receivers: 
         - otlp
       processors: 
         - batch
       exporters: 
-        - prometheus
         - logging
-        # - otlp/data-prepper
+        - otlp/metrics
+        - prometheus
     logs:
       receivers: 
         - otlp
@@ -67,10 +67,7 @@ service:
         - batch
       exporters: 
         - logging
-        # - otlp/logs
-  # telemetry:
-  #   logs:
-  #     level: 'debug'
-  #   metrics:
-  #     address: otel-collector:8889
-  # extensions: [health_check]
+        - otlp/logs
+  telemetry:
+    logs:
+      level: info
