@@ -233,9 +233,11 @@ components:
           description: Used to describe the origin of an error if that original error has meaning to the client.  This field should add specificity to 'message'.
         fields:
           type: object
-          description: Used to identify specific fields in a JSON body that caused the error.  Typically only used for 4xx type responses.  The key should be the json path to the invalid property and the value should be an error message specific to that property.
+          description: Used to identify specific fields in a JSON body that caused the error.  Typically only used for 4xx type responses.  The key should be the json path to the invalid property and the value should be a list of error messages specific to that property.
           additionalProperties:
-            type: string
+            type: array
+            items:
+              type: string
         context:
           type: string
           description: Used to identify what part of the request caused the error for non-JSON payloads.
@@ -291,13 +293,15 @@ components:
           type: string
         prompt:
           type: string
-        script:
-          $ref: "#/components/schemas/Script"
         version:
           type: string
           default: "0.1"
           enum:
             - "0.1"
+      required:
+        - outputSchema
+        - prompt
+        - version
     Schema:
       type: object
       properties:
@@ -305,6 +309,8 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/DataType"
+      required:
+        - schema
     DataType:
       type: object
       properties:
@@ -321,16 +327,8 @@ components:
             type: string
         element:
           $ref: "#/components/schemas/SchemaElement"
-    Script:
-      type: object
-      properties:
-        text:
-          type: string
-        language:
-          type: string
-        variables:
-          type: object
-          additionalProperties: {}
+      required:
+        - element
     SchemaElement:
       type: object
       properties:
@@ -354,6 +352,9 @@ components:
             $ref: "#/components/schemas/OnFail"
         model:
           type: string
+      required:
+        - name
+        - type
     OnFail:
       type: object
       properties:
@@ -361,6 +362,9 @@ components:
           type: string
         method:
           $ref: "#/components/schemas/OnFailOptions"
+      required:
+        - validatorTag
+        - method
     OnFailOptions:
       type: string
       enum: [
