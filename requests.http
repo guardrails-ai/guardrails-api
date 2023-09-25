@@ -1,0 +1,16 @@
+@hostname=localhost
+@port=8000
+@host={{hostname}}:{{port}}
+
+GET http://{{host}}/guards
+Content-Type: application/json
+
+###
+
+POST http://{{host}}/guards
+Content-Type: application/json
+
+{
+    "name": "guard-galaxy",
+    "railspec": {}
+}

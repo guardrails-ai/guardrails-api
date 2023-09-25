@@ -5,8 +5,11 @@ from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
 from src.clients.guard_client import GuardClient
 from src.utils.handle_error import handle_error
+from src.utils.gather_request_metrics import gather_request_metrics
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
+
+from src.modules.otel_tracer import otel_tracer
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 guard_client = GuardClient()
@@ -14,6 +17,7 @@ guard_client = GuardClient()
 
 @guards_bp.route("/", methods=["GET", "POST"])
 @handle_error
+@gather_request_metrics
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
@@ -34,6 +38,7 @@ def guards():
 
 @guards_bp.route("/<guard_name>", methods=["GET", "PUT", "DELETE"])
 @handle_error
+@gather_request_metrics
 def guard(guard_name: str):
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
@@ -60,72 +65,74 @@ def guard(guard_name: str):
 
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
+@gather_request_metrics
 def validate(guard_name: str):
-    if request.method != "POST":
-        raise HttpError(
-            405,
-            "Method Not Allowed",
-            "/guards/<guard_name>/validate only supports the POST method. You specified"
-            " {request_method}".format(request_method=request.method),
-        )
-    payload = request.json
-    openai_api_key = request.headers.get("x-openai-api-key", None)
-    guard_struct = guard_client.get_guard(guard_name)
-    prep_environment(guard_struct)
-    guard: Guard = guard_struct.to_guard(openai_api_key)
+    with otel_tracer.start_as_current_span(f"validate-{guard_name}"):
+        if request.method != "POST":
+          raise HttpError(
+              405,
+              "Method Not Allowed",
+              "/guards/<guard_name>/validate only supports the POST method. You specified"
+              " {request_method}".format(request_method=request.method),
+          )
+        payload = request.json
+        openai_api_key = request.headers.get("x-openai-api-key", None)
+        guard_struct = guard_client.get_guard(guard_name)
+        prep_environment(guard_struct)
+        guard: Guard = guard_struct.to_guard(openai_api_key)
 
-    llm_output = payload.pop("llmOutput", None)
-    num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
-    prompt_params = payload.pop("promptParams", None)
-    llm_api = payload.pop("llmApi", None)
-    args = payload.pop("args", [])
+        llm_output = payload.pop("llmOutput", None)
+        num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
+        prompt_params = payload.pop("promptParams", None)
+        llm_api = payload.pop("llmApi", None)
+        args = payload.pop("args", [])
 
-    if llm_api is not None:
-        llm_api = get_llm_callable(llm_api)
-        if openai_api_key is None:
+        if llm_api is not None:
+            llm_api = get_llm_callable(llm_api)
+            if openai_api_key is None:
+                raise HttpError(
+                    status=400,
+                    message="BadRequest",
+                    cause=(
+                        "Cannot perform calls to OpenAI without an api key.  Pass"
+                        " openai_api_key when initializing the Guard or set the"
+                        " OPENAI_API_KEY environment variable."
+                    ),
+                )
+        elif num_reasks > 1:
             raise HttpError(
                 status=400,
                 message="BadRequest",
                 cause=(
-                    "Cannot perform calls to OpenAI without an api key.  Pass"
-                    " openai_api_key when initializing the Guard or set the"
-                    " OPENAI_API_KEY environment variable."
+                    "Cannot perform re-asks without an LLM API.  Specify llm_api when"
+                    " calling guard(...)."
                 ),
             )
-    elif num_reasks > 1:
-        raise HttpError(
-            status=400,
-            message="BadRequest",
-            cause=(
-                "Cannot perform re-asks without an LLM API.  Specify llm_api when"
-                " calling guard(...)."
-            ),
-        )
 
-    # TODO: Get result from reduction of validator statuses when available
-    result: bool = True
-    validated_output: dict = None
-    raw_llm_response: str = None
+        # TODO: Get result from reduction of validator statuses when available
+        result: bool = True
+        validated_output: dict = None
+        raw_llm_response: str = None
 
-    if llm_output is not None:
-        validated_output = guard.parse(
-            llm_output=llm_output,
-            num_reasks=num_reasks,
-            prompt_params=prompt_params,
-            llm_api=llm_api,
-            *args,
-            **payload
-        )
-    else:
-        raw_llm_response, validated_output = guard(
-            llm_api=llm_api,
-            prompt_params=prompt_params,
-            num_reasks=num_reasks,
-            *args,
-            **payload
-        )
+        if llm_output is not None:
+            validated_output = guard.parse(
+                llm_output=llm_output,
+                num_reasks=num_reasks,
+                prompt_params=prompt_params,
+                llm_api=llm_api,
+                *args,
+                **payload
+            )
+        else:
+            raw_llm_response, validated_output = guard(
+                llm_api=llm_api,
+                prompt_params=prompt_params,
+                num_reasks=num_reasks,
+                *args,
+                **payload
+            )
 
-    cleanup_environment(guard_struct)
-    return ValidationOutput(
-        result, validated_output, guard.state.all_histories, raw_llm_response
-    ).to_response()
+        cleanup_environment(guard_struct)
+        return ValidationOutput(
+            result, validated_output, guard.state.all_histories, raw_llm_response
+        ).to_response()
