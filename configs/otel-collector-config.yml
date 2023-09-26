@@ -59,7 +59,7 @@ service:
       exporters: 
         - logging
         - otlp/metrics
-        - prometheus
+        # - prometheus
     logs:
       receivers: 
         - otlp
