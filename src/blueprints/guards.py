@@ -87,7 +87,7 @@ def validate(guard_name: str):
         openai_api_key = request.headers.get("x-openai-api-key", None)
         guard_struct = guard_client.get_guard(guard_name)
         prep_environment(guard_struct)
-        guard: Guard = guard_struct.to_guard(openai_api_key)
+        guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
 
         llm_output = payload.pop("llmOutput", None)
         num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
