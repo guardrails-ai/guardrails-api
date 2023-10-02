@@ -1,7 +1,5 @@
 from flask import Blueprint, request
 from guardrails import Guard
-from opentelemetry.trace import Status, StatusCode
-from uuid import uuid4
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
@@ -93,9 +91,8 @@ def validate(guard_name: str):
     args = payload.pop("args", [])
 
     with otel_tracer.start_as_current_span(f"validate-{guard_name}") as validate_span:
-        # TODO: Can we get the request id from the existing span?
-        guard_run_id = uuid4()
-        validate_span.set_attribute("guard_run_id", str(guard_run_id))
+        # Don't use this; just use the trace id
+        # validate_span.set_attribute("guard_run_id", str(guard_run_id))
         if llm_api is not None:
             llm_api = get_llm_callable(llm_api)
             if openai_api_key is None:
