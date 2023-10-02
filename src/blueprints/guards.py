@@ -81,6 +81,7 @@ def validate(guard_name: str):
               "/guards/<guard_name>/validate only supports the POST method. You specified"
               " {request_method}".format(request_method=request.method),
           )
+        # TODO: Can we get the request id from the existing span?
         guard_run_id = uuid4()
         validate_span.set_attribute("guard_run_id", str(guard_run_id))
         payload = request.json
