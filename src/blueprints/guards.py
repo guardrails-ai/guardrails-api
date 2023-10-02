@@ -73,29 +73,29 @@ def validate(guard_name: str):
     # Do we actually need a child span here?
     # We could probably use the existing span from the request unless we forsee
     #   capturing the same attributes on non-GaaS Guard runs.
+    if request.method != "POST":
+        raise HttpError(
+            405,
+            "Method Not Allowed",
+            "/guards/<guard_name>/validate only supports the POST method. You specified"
+            " {request_method}".format(request_method=request.method),
+        )
+    payload = request.json
+    openai_api_key = request.headers.get("x-openai-api-key", None)
+    guard_struct = guard_client.get_guard(guard_name)
+    prep_environment(guard_struct)
+    guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
+
+    llm_output = payload.pop("llmOutput", None)
+    num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
+    prompt_params = payload.pop("promptParams", None)
+    llm_api = payload.pop("llmApi", None)
+    args = payload.pop("args", [])
+
     with otel_tracer.start_as_current_span(f"validate-{guard_name}") as validate_span:
-        if request.method != "POST":
-          raise HttpError(
-              405,
-              "Method Not Allowed",
-              "/guards/<guard_name>/validate only supports the POST method. You specified"
-              " {request_method}".format(request_method=request.method),
-          )
         # TODO: Can we get the request id from the existing span?
         guard_run_id = uuid4()
         validate_span.set_attribute("guard_run_id", str(guard_run_id))
-        payload = request.json
-        openai_api_key = request.headers.get("x-openai-api-key", None)
-        guard_struct = guard_client.get_guard(guard_name)
-        prep_environment(guard_struct)
-        guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-
-        llm_output = payload.pop("llmOutput", None)
-        num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
-        prompt_params = payload.pop("promptParams", None)
-        llm_api = payload.pop("llmApi", None)
-        args = payload.pop("args", [])
-
         if llm_api is not None:
             llm_api = get_llm_callable(llm_api)
             if openai_api_key is None:
@@ -140,11 +140,15 @@ def validate(guard_name: str):
                 **payload
             )
 
-        cleanup_environment(guard_struct)
         guard_history = guard.state.most_recent_call
         result = len(guard_history.failed_validations) > 0
         validation_status = "pass" if result is True else "fail"
         validate_span.set_attribute("validation_status", validation_status)
-        return ValidationOutput(
-            result, validated_output, guard.state.all_histories, raw_llm_response
-        ).to_response()
+        raw_output = guard_history.output or raw_llm_response
+        validate_span.set_attribute("raw_llm_ouput", raw_output)
+        validate_span.set_attribute("validated_output", validated_output)
+        
+    cleanup_environment(guard_struct)
+    return ValidationOutput(
+        result, validated_output, guard.state.all_histories, raw_llm_response
+    ).to_response()
