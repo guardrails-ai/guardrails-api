@@ -1,5 +1,7 @@
+import json
 from flask import Blueprint, request
 from guardrails import Guard
+from guardrails.utils.logs_utils import GuardLogs
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
@@ -93,6 +95,7 @@ def validate(guard_name: str):
     with otel_tracer.start_as_current_span(f"validate-{guard_name}") as validate_span:
         # Don't use this; just use the trace id
         # validate_span.set_attribute("guard_run_id", str(guard_run_id))
+        validate_span.set_attribute("guardName", guard_name)
         if llm_api is not None:
             llm_api = get_llm_callable(llm_api)
             if openai_api_key is None:
@@ -139,13 +142,34 @@ def validate(guard_name: str):
 
         guard_history = guard.state.most_recent_call
         result = len(guard_history.failed_validations) > 0
+        raw_output = guard_history.output or raw_llm_response
+        
+        validation_output = ValidationOutput(
+            result, validated_output, guard.state.all_histories, raw_output
+        )
+
         validation_status = "pass" if result is True else "fail"
         validate_span.set_attribute("validation_status", validation_status)
-        raw_output = guard_history.output or raw_llm_response
         validate_span.set_attribute("raw_llm_ouput", raw_output)
-        validate_span.set_attribute("validated_output", validated_output)
+        
+        # Use the serialization from the class instead of re-writing it
+        valid_output: str = (
+            json.dumps(validation_output.validated_output)
+            if isinstance(validation_output.validated_output, dict)
+            else str(validation_output.validated_output)
+        )
+        print("type(validation_output.validated_output): ", type(validation_output.validated_output))
+        print("validation_output.validated_output: ", validation_output.validated_output)
+        print("type(valid_output): ", type(valid_output))
+        print("valid_output: ", valid_output)
+        validate_span.set_attribute("validated_output", valid_output)
+        
+        final_step_logs: GuardLogs = guard_history.history[-1]
+        final_response = final_step_logs.llm_response
+        prompt_token_count = final_response.prompt_token_count or 0
+        response_token_count = final_response.response_token_count or 0
+        total_token_count = prompt_token_count + response_token_count
+        validate_span.set_attribute("tokens_consumed", total_token_count)
         
     cleanup_environment(guard_struct)
-    return ValidationOutput(
-        result, validated_output, guard.state.all_histories, raw_llm_response
-    ).to_response()
+    return validation_output.to_response()
