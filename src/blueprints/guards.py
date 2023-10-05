@@ -151,6 +151,8 @@ def validate(guard_name: str):
         validation_status = "pass" if result is True else "fail"
         validate_span.set_attribute("validation_status", validation_status)
         validate_span.set_attribute("raw_llm_ouput", raw_output)
+        validate_span.set_attribute("prompt", guard.rail.prompt.format(**(prompt_params or {})))
+        validate_span.set_attribute("instructions", guard.rail.instructions.format(**(prompt_params or {})))
         
         # Use the serialization from the class instead of re-writing it
         valid_output: str = (
@@ -158,10 +160,6 @@ def validate(guard_name: str):
             if isinstance(validation_output.validated_output, dict)
             else str(validation_output.validated_output)
         )
-        print("type(validation_output.validated_output): ", type(validation_output.validated_output))
-        print("validation_output.validated_output: ", validation_output.validated_output)
-        print("type(valid_output): ", type(valid_output))
-        print("valid_output: ", valid_output)
         validate_span.set_attribute("validated_output", valid_output)
         
         final_step_logs: GuardLogs = guard_history.history[-1]
