@@ -1,11 +1,14 @@
 # FROM python:3.6
-FROM public.ecr.aws/docker/library/python:3-slim
+FROM public.ecr.aws/docker/library/python:3.11-slim
 
 # Create app directory
 WORKDIR /app
 
+# check the version
+RUN python3 --version
 # start the virtual environment
 RUN python3 -m venv /opt/venv
+
 # Enable venv
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -18,6 +21,10 @@ COPY ./guardrails-custom-validators ./guardrails-custom-validators
 # Copy the requirements file
 COPY requirements.txt .
 
+# RUN apt-get update
+# RUN apt-get install build-essential -y
+# RUN apt-get install python3-dev -y
+# RUN apt-get install libevent-dev -y
 RUN pip install ./guardrails-sdk
 RUN pip install ./guard-rails-api-client
 

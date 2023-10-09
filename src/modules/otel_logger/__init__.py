@@ -18,4 +18,5 @@ logger_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_logs_expor
 log_level = os.environ.get("LOGLEVEL", logging.INFO)
 logging.root.setLevel(log_level)
 
-logger = logging.getLogger('otel')
+service_name = os.environ.get('OTEL_SERVICE_NAME', 'guardrails-api')
+logger = logging.getLogger(service_name)

@@ -210,7 +210,7 @@ components:
       required: false
       schema:
         type: string
-        format: date
+        format: date-time
     OpenAiApiKey:
       name: x-openai-api-key
       in: header

@@ -13,7 +13,11 @@ class ValidationOutput:
         raw_llm_response: str = None,
     ):
         self.result = result
-        self.validated_output = validated_output
+        self.validated_output = (
+            validated_output.dict()
+            if isinstance(validated_output, ReAsk)
+            else validated_output
+        )
         self.session_history = [
             {
                 "history": [

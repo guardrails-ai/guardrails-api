@@ -61,6 +61,7 @@ class DataTypeStruct:
         format = "; ".join(self.formatters)
         plugins = "; ".join(self.plugins) if self.plugins is not None else None
         format_attr = FormatAttr(format, element, plugins)
+        # TODO: Pass tracer here if to_rail is ever used
         format_attr.get_validators(self.element.strict)
 
         self_is_list = self.element.type == "list"
@@ -79,6 +80,7 @@ class DataTypeStruct:
             object_element = ElementStub("object", {})
             object_format_attr = format_attr
             object_format_attr.element = object_element
+            # TODO: Pass tracer here if to_rail is ever used
             object_format_attr.get_validators()
             object_data_type = registry["object"](
                 children=children,
