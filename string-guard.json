@@ -1,0 +1,21 @@
+{
+  "name": "string-guard",
+  "railspec": {
+     "outputSchema": {
+        "schema": {
+           "pet_name": {
+              "element": {
+                 "type": "string",
+                 "name": "pet_name",
+                 "description": "Generate a pet name.",
+                 "onFail": "fix"
+              },
+              "formatters": ["length: 1 10"]
+           }
+        }
+     },
+     "prompt": "Generate a pet name.",
+     "version": "0.1"
+  },
+  "numReasks": 1
+}

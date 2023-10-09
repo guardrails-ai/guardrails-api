@@ -148,11 +148,25 @@ def validate(guard_name: str):
             result, validated_output, guard.state.all_histories, raw_output
         )
 
+        prompt = (
+            guard.rail.prompt.format(**(prompt_params or {})).source
+            if guard.rail.prompt
+            else None
+        )
+        if prompt:
+            validate_span.set_attribute("prompt", prompt)
+        
+        instructions = (
+            guard.rail.instructions.format(**(prompt_params or {})).source
+            if guard.rail.instructions
+            else None
+        )
+        if instructions:
+            validate_span.set_attribute("instructions", instructions)
+
         validation_status = "pass" if result is True else "fail"
         validate_span.set_attribute("validation_status", validation_status)
         validate_span.set_attribute("raw_llm_ouput", raw_output)
-        validate_span.set_attribute("prompt", guard.rail.prompt.format(**(prompt_params or {})))
-        validate_span.set_attribute("instructions", guard.rail.instructions.format(**(prompt_params or {})))
         
         # Use the serialization from the class instead of re-writing it
         valid_output: str = (
@@ -168,6 +182,13 @@ def validate(guard_name: str):
         response_token_count = final_response.response_token_count or 0
         total_token_count = prompt_token_count + response_token_count
         validate_span.set_attribute("tokens_consumed", total_token_count)
+        
+        num_of_reasks = (
+            len(guard_history.history) - 1
+            if len(guard_history.history) > 0
+            else 0
+        )
+        validate_span.set_attribute("num_of_reasks", num_of_reasks)
         
     cleanup_environment(guard_struct)
     return validation_output.to_response()
