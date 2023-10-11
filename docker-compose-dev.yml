@@ -11,6 +11,19 @@ services:
     ports:
       - "5432:5432"
     restart: always
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGUSER:-postgres}@guardrails.com"
+      PGADMIN_DEFAULT_PASSWORD: ${PGPASSWORD:-changeme}
+      PGADMIN_SERVER_JSON_FILE: /var/lib/pgadmin/servers.json
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
   guardrails-api:
     image: guardrails-api:latest
     build:
@@ -29,5 +42,107 @@ services:
       PGPASSWORD: ${PGPASSWORD:-changeme}
       PYTHONUNBUFFERED: 1
       LOGLEVEL: DEBUG
+      OTLP_ENDPOINT: 'http://otel-collector:4317'
     depends_on:
       - postgres
+      - opensearch-node1
+      - opensearch-node2
+      - data-prepper
+      - otel-collector
+  opensearch-node1:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=guardrails-cluster
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+      - 9600:9600
+    # networks:
+    #   - opensearch-net
+  opensearch-node2:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node2
+    environment:
+      - cluster.name=guardrails-cluster
+      - node.name=opensearch-node2
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data2:/usr/share/opensearch/data
+    # networks:
+    #   - opensearch-net
+  # For demo purposes
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601
+    expose:
+      - "5601"
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
+    # networks:
+    #   - opensearch-net
+  data-prepper:
+    restart: unless-stopped
+    container_name: data-prepper
+    image: opensearchproject/data-prepper:latest
+    volumes:
+      - ./configs/pipelines.yml:/usr/share/data-prepper/pipelines/pipelines.yaml
+      - ./configs/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yaml
+    ports:
+      - 21890:21890
+      - 21891:21891
+      - 21892:21892
+    expose:
+      - "21890"
+      - "21891"
+      - "21892"
+    # networks:
+    #   - opensearch-net
+    depends_on:
+      - opensearch-node1
+      - opensearch-node2
+  otel-collector:
+    restart: unless-stopped
+    container_name: otel-collector
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./configs/otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4317:4317"
+    depends_on:
+      - data-prepper
+    # networks:
+    #   - opensearch-net
+
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+
+# networks:
+#   opensearch-net:

@@ -1,0 +1,4 @@
+[flake8]
+count = True
+statistics = True
+max-line-length = 88
