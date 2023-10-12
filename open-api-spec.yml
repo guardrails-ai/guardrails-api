@@ -218,6 +218,7 @@ components:
       required: false
       schema:
         type: string
+        format: password
   schemas:
     HttpError:
       type: object
