@@ -307,11 +307,15 @@ components:
       type: object
       properties:
         schema:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/DataType"
+          oneOf:
+            - $ref: "#/components/schemas/JsonSchema"
+            - $ref: "#/components/schemas/DataType"
       required:
         - schema
+    JsonSchema:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/DataType"
     DataType:
       type: object
       properties:
