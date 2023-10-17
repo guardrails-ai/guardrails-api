@@ -148,7 +148,7 @@ tqdm==4.65.0
 trove-classifiers==2023.7.6
 typer==0.9.0
 typing_extensions==4.6.3
-urllib3==2.0.6
+urllib3==2.0.7
 virtualenv==20.23.1
 webencodings==0.5.1
 Werkzeug==2.3.6
