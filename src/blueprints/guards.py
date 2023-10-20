@@ -84,7 +84,6 @@ def validate(guard_name: str):
     openai_api_key = request.headers.get("x-openai-api-key", None)
     guard_struct = guard_client.get_guard(guard_name)
     prep_environment(guard_struct)
-    guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
 
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
@@ -93,8 +92,8 @@ def validate(guard_name: str):
     args = payload.pop("args", [])
 
     with otel_tracer.start_as_current_span(f"validate-{guard_name}") as validate_span:
-        # Don't use this; just use the trace id
-        # validate_span.set_attribute("guard_run_id", str(guard_run_id))
+        guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
+
         validate_span.set_attribute("guardName", guard_name)
         if llm_api is not None:
             llm_api = get_llm_callable(llm_api)
@@ -189,6 +188,6 @@ def validate(guard_name: str):
             else 0
         )
         validate_span.set_attribute("num_of_reasks", num_of_reasks)
-        
+
     cleanup_environment(guard_struct)
     return validation_output.to_response()
