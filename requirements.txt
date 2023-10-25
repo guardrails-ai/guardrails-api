@@ -151,7 +151,7 @@ typing_extensions==4.6.3
 urllib3==2.0.6
 virtualenv==20.23.1
 webencodings==0.5.1
-Werkzeug==2.3.6
+Werkzeug==3.0.1
 wrapt==1.15.0
 xattr==0.10.1
 yarl==1.9.2
