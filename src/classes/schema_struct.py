@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 from lxml.etree import _Element, _Comment, SubElement
 from guardrails.schema import Schema, StringSchema, JsonSchema
 from src.classes.data_type_struct import DataTypeStruct
@@ -8,7 +8,7 @@ from src.classes.data_type_struct import DataTypeStruct
 # consider making this JSONSchema
 # https://json-schema.org/
 class SchemaStruct:
-    schema: Dict[str, DataTypeStruct] = None
+    schema: Union[Dict[str, DataTypeStruct], DataTypeStruct] = None
 
     def __init__(self, schema: Dict[str, DataTypeStruct] = None):
         self.schema = schema
@@ -16,21 +16,24 @@ class SchemaStruct:
     @classmethod
     def from_schema(cls, schema: Schema):
         serialized_schema = {}
-        for key in schema._schema:
-            schema_element = schema._schema[key]
-            serialized_schema[key] = DataTypeStruct.from_data_type(
-                schema_element
+
+        if isinstance(schema, StringSchema):
+            serialized_schema = DataTypeStruct.from_data_type(
+                schema
             )
+        else:
+            for key in schema._schema:
+                schema_element = schema._schema[key]
+                serialized_schema[key] = DataTypeStruct.from_data_type(
+                    schema_element
+                )
         return cls({"schema": serialized_schema})
 
     def to_schema(self) -> Schema:
         schema = {}
         inner_schema = self.schema["schema"]
 
-        if (
-            hasattr(inner_schema, "element")
-            and inner_schema.element.type == "string"
-        ):
+        if isinstance(inner_schema, DataTypeStruct):
             string_schema = StringSchema()
             string_schema.string_key = inner_schema.element.name
             string_schema[
@@ -48,20 +51,28 @@ class SchemaStruct:
     def from_dict(cls, schema: dict):
         if schema is not None:
             serialized_schema = {}
-            orig_schema = schema["schema"]
-            for key in orig_schema:
-                schema_element = orig_schema[key]
-                serialized_schema[key] = DataTypeStruct.from_dict(
-                    schema_element
+            inner_schema = schema["schema"]
+            if DataTypeStruct.is_data_type_struct(inner_schema):
+                serialized_schema = DataTypeStruct.from_dict(
+                    inner_schema
                 )
+            else:
+                for key in inner_schema:
+                    schema_element = inner_schema[key]
+                    serialized_schema[key] = DataTypeStruct.from_dict(
+                        schema_element
+                    )
             return cls({"schema": serialized_schema})
 
     def to_dict(self):
         dict_schema = {}
         inner_schema = self.schema["schema"]
-        for key in inner_schema:
-            schema_element = inner_schema[key]
-            dict_schema[key] = schema_element.to_dict()
+        if isinstance(inner_schema, DataTypeStruct):
+            dict_schema = inner_schema.to_dict()
+        else:
+            for key in inner_schema:
+                schema_element = inner_schema[key]
+                dict_schema[key] = schema_element.to_dict()
         return {"schema": dict_schema}
 
     @classmethod
@@ -69,21 +80,33 @@ class SchemaStruct:
         if schema is not None:
             serialized_schema = {}
             inner_schema = schema["schema"]
-            for key in inner_schema:
-                schema_element = inner_schema[key]
-                serialized_schema[key] = DataTypeStruct.from_request(
-                    schema_element
+
+            # StringSchema (or really just any PrimitiveSchema)
+            if DataTypeStruct.is_data_type_struct(inner_schema):
+                serialized_schema = DataTypeStruct.from_request(
+                    inner_schema
                 )
+            else:
+                # JsonSchema
+                for key in inner_schema:
+                    schema_element = inner_schema[key]
+                    serialized_schema[key] = DataTypeStruct.from_request(
+                        schema_element
+                    )
             return cls({"schema": serialized_schema})
 
     def to_response(self):
         dict_schema = {}
         inner_schema = self.schema["schema"]
-        for key in inner_schema:
-            schema_element = inner_schema[key]
-            dict_schema[key] = schema_element.to_response()
+        if isinstance(inner_schema, DataTypeStruct):
+            dict_schema = inner_schema.to_response()
+        else:
+            for key in inner_schema:
+                schema_element = inner_schema[key]
+                dict_schema[key] = schema_element.to_response()
         return {"schema": dict_schema}
 
+    # FIXME: if this is ever used it needs to be updated to handle StringSchemas
     @classmethod
     def from_xml(cls, xml: _Element):
         schema = {}
@@ -99,9 +122,12 @@ class SchemaStruct:
     def to_xml(self, parent: _Element, tag: str) -> _Element:
         xml_schema = SubElement(parent, tag)
         inner_schema = self.schema["schema"]
-        for key in inner_schema:
-            child: DataTypeStruct = inner_schema[key]
-            child.to_xml(xml_schema)
+        if isinstance(inner_schema, DataTypeStruct):
+            inner_schema.to_xml(xml_schema, True)
+        else:
+            for key in inner_schema:
+                child: DataTypeStruct = inner_schema[key]
+                child.to_xml(xml_schema)
 
         return xml_schema
 
@@ -109,10 +135,7 @@ class SchemaStruct:
         plugins = []
         inner_schema = self.schema["schema"]
 
-        if (
-            hasattr(inner_schema, "element")
-            and inner_schema.element.type == "string"
-        ):
+        if isinstance(inner_schema, DataTypeStruct):
             plugins.extend(inner_schema.get_all_plugins())
         else:
             for key in inner_schema:
