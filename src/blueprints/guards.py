@@ -1,5 +1,6 @@
 import json
 from flask import Blueprint, request
+from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.utils.logs_utils import GuardLogs
 from src.classes.guard_struct import GuardStruct
@@ -43,17 +44,19 @@ def guards():
 @handle_error
 @gather_request_metrics
 def guard(guard_name: str):
+    decoded_guard_name = unquote_plus(guard_name)
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
-        guard = guard_client.get_guard(guard_name, as_of_query)
+        print(f"Guard with name {decoded_guard_name} was requested.")
+        guard = guard_client.get_guard(decoded_guard_name, as_of_query)
         return guard.to_response()
     elif request.method == "PUT":
         payload = request.json
         guard = GuardStruct.from_request(payload)
-        updated_guard = guard_client.upsert_guard(guard_name, guard)
+        updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
         return updated_guard.to_response()
     elif request.method == "DELETE":
-        guard = guard_client.delete_guard(guard_name)
+        guard = guard_client.delete_guard(decoded_guard_name)
         return guard.to_response()
     else:
         raise HttpError(
@@ -82,7 +85,8 @@ def validate(guard_name: str):
         )
     payload = request.json
     openai_api_key = request.headers.get("x-openai-api-key", None)
-    guard_struct = guard_client.get_guard(guard_name)
+    decoded_guard_name = unquote_plus(guard_name)
+    guard_struct = guard_client.get_guard(decoded_guard_name)
     prep_environment(guard_struct)
 
     llm_output = payload.pop("llmOutput", None)
@@ -91,10 +95,10 @@ def validate(guard_name: str):
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
 
-    with otel_tracer.start_as_current_span(f"validate-{guard_name}") as validate_span:
+    with otel_tracer.start_as_current_span(f"validate-{decoded_guard_name}") as validate_span:
         guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
 
-        validate_span.set_attribute("guardName", guard_name)
+        validate_span.set_attribute("guardName", decoded_guard_name)
         if llm_api is not None:
             llm_api = get_llm_callable(llm_api)
             if openai_api_key is None:
