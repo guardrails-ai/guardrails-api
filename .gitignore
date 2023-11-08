@@ -16,3 +16,6 @@ coverage.json
 .ropeproject
 install*.sh
 guardrails-custom-validators
+guardrails-api-client
+guardrails
+*.env

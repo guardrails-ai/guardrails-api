@@ -1,0 +1,36 @@
+FROM public.ecr.aws/docker/library/python:3.11-slim
+
+# Create app directory
+WORKDIR /app
+
+# check the version
+RUN python3 --version
+# start the virtual environment
+RUN python3 -m venv /opt/venv
+
+# Enable venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install git
+RUN apt-get update && apt-get install -y git
+
+COPY ./guard-rails-api-client ./guard-rails-api-client
+
+# Copy the requirements file
+COPY requirements.txt .
+
+RUN pip install ./guard-rails-api-client
+RUN pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry
+
+# Install app dependencies
+RUN pip install -r requirements.txt
+
+# Freeze dependencies
+RUN pip freeze > requirements.txt
+
+# Copy the whole folder inside the Image filesystem
+COPY . .
+
+EXPOSE 8000
+
+CMD opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"

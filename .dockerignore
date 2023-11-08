@@ -1,2 +1,9 @@
 .venv
 diagrams
+.github
+buildspecs
+tests
+docker*
+Docker*
+*.sh
+ingestion-service-spec.yml
