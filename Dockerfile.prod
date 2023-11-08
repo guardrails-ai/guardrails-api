@@ -22,7 +22,7 @@ COPY requirements.txt .
 
 RUN pip install ./guard-rails-api-client
 RUN pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry
-RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o ./global-bundle.pem
 
 # Install app dependencies
 RUN pip install -r requirements.txt
