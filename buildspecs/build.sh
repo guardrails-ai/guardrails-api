@@ -2,8 +2,7 @@
 
 callerIdentity=$(aws sts get-caller-identity);
 accountId=$(jq -r .Account <<< $callerIdentity);
-version=$(cat ./package.json | jq -r .version);
-imageName="${IMAGE_NAME:-api}";
+imageName="${IMAGE_NAME:-validation-service}";
 repoName="${ECR_REPO_NAME:-guardrails-validation-service-test}";
 commitSha=$(git rev-parse HEAD);
 region="${AWS_DEFAULT_REGION:-us-east-1}";
@@ -23,7 +22,6 @@ docker buildx build \
   --progress plain \
   -f Dockerfile.prod \
   -t "$imageName:$commitSha" \
-  -t "$imageName:$version" \
   -t "$imageName:latest" . \
   || exit 1;
 

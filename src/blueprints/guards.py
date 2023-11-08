@@ -47,7 +47,6 @@ def guard(guard_name: str):
     decoded_guard_name = unquote_plus(guard_name)
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
-        print(f"Guard with name {decoded_guard_name} was requested.")
         guard = guard_client.get_guard(decoded_guard_name, as_of_query)
         return guard.to_response()
     elif request.method == "PUT":
