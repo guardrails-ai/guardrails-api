@@ -150,7 +150,7 @@ export class Application extends Construct {
 
     this._lambdaFunction = new LambdaFunction(this, `${id}-lambda-function`, {
       functionName: lambdaFunctionName,
-      description: 'Guardrails Telemetry Service API',
+      description: 'Guardrails Validation Service API',
       role: this.lambdaRole.arn,
       architectures: ['arm64'],
       environment: {
