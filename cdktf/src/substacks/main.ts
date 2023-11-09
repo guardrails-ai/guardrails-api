@@ -32,7 +32,7 @@ export type DeploymentPipelineConfig = Omit<
   'vpc'
 >
 
-export type GuadrailsValidationServiceSubStackConfig = BaseConstructConfig & {
+export type GuardrailsValidationServiceSubStackConfig = BaseConstructConfig & {
   deploymentPipelineConfig: DeploymentPipelineConfig;
   ecrRepo: EcrRepository;
   openSearchConfig: OpenSearchConfig;
@@ -41,12 +41,12 @@ export type GuadrailsValidationServiceSubStackConfig = BaseConstructConfig & {
   vpc: Vpc;
 }
 
-export class GuadrailsValidationServiceSubStack extends Construct {
+export class GuardrailsValidationServiceSubStack extends Construct {
   private _pgDatabase: RdsPostgres;
   private _deploymentPipeline: DeploymentPipeline;
   private _application: Application;
 
-  constructor (scope: Construct, id: string, config: GuadrailsValidationServiceSubStackConfig) {
+  constructor (scope: Construct, id: string, config: GuardrailsValidationServiceSubStackConfig) {
     super(scope, id);
 
     const currentIdentity = new AwsCallerIdentity(this, `${id}-aws-identity`);

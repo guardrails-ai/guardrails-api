@@ -1,14 +1,14 @@
-import { Construct } from "constructs";
-import { App, TerraformStack } from "cdktf";
+import { Construct } from 'constructs';
+import { TerraformStack } from 'cdktf';
+import { GuardrailsValidationServiceSubStack, GuardrailsValidationServiceSubStackConfig } from '..';
 
-class MyStack extends TerraformStack {
-  constructor(scope: Construct, id: string) {
+export type GuardrailsTelemetryServiceStackConfig = GuardrailsValidationServiceSubStackConfig;
+
+// This is for if we want to do a multi-stack deployment
+export class GuardrailsValidationServiceStack extends TerraformStack {
+  constructor (scope: Construct, id: string, config: GuardrailsTelemetryServiceStackConfig) {
     super(scope, id);
 
-    // define resources here
+    new GuardrailsValidationServiceSubStack(this, `${id}-substack`, config);
   }
 }
-
-const app = new App();
-new MyStack(app, "cdktf");
-app.synth();
