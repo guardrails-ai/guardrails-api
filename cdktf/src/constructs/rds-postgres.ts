@@ -54,7 +54,7 @@ export type RdsPostgresConfig = {
    */
   engineVersion?: string;
   /**
-   * @default 'db.t4g'
+   * @default 'db.t4g.micro'
    */
   instanceClass?: string;
   /**
@@ -110,7 +110,7 @@ export class RdsPostgres extends Construct {
       caCertIdentifier = 'rds-ca-rsa4096-g1',
       engineVersion = '15.4',
       name: identifier,
-      instanceClass = 'db.t4g',
+      instanceClass = 'db.t4g.micro',
       maintenanceWindow = 'Sun:10:00-Sun:13:00',
       multiAz,
       port = 5432,
@@ -174,6 +174,7 @@ export class RdsPostgres extends Construct {
       multiAz,
       port,
       publiclyAccessible: false,
+      username: 'postgres',
       skipFinalSnapshot: true,
       storageEncrypted: true,
       storageType,

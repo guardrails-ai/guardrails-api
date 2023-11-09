@@ -74,7 +74,7 @@ export class GuardrailsValidationServiceSubStack extends Construct {
 
     const baseName = `${id}-guardrails-validation-service`;
     const lambdaFunctionName = truncate(`${baseName}-api-${environment}`, 59); // Allow 5 characters for appending `-role`
-    const dbName = `${baseName}-postgres-db`;
+    const dbName = truncate(`${baseName}-postgres-db`, 59); // 63 -sg
 
     const deploymentPipelineConfigRequired: DeploymentPipelineConfigRequired = {
       ...deploymentPipelineConfig,
@@ -92,7 +92,7 @@ export class GuardrailsValidationServiceSubStack extends Construct {
 
     this._deploymentPipeline = new DeploymentPipeline(this, `${id}-ci-cd`, baseConfig, deploymentPipelineConfigRequired);
 
-    this._pgDatabase = new RdsPostgres(this, `${id}-pg-db`, rdsPostgresConfigRequired)
+    this._pgDatabase = new RdsPostgres(this, `${id}-pg`, rdsPostgresConfigRequired)
 
     const applicationConfig: ApplicationConfig = {
       ecrRepo,
