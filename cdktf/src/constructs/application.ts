@@ -57,7 +57,8 @@ export class Application extends Construct {
 
     const {
       credentials: openSearchClusterCredentials,
-      opensearchDomain
+      opensearchDomain,
+      ingestionPipelineEndpoint
     } = openSearchConfig;
 
     this._lambdaLogs = new CloudwatchLogGroup(this, `${id}-lambda-logs`, {
@@ -170,10 +171,10 @@ export class Application extends Construct {
           OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST: 'Accept-Encoding,User-Agent,Referer',
           OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE: 'Last-Modified,Content-Type',
           OTEL_METRICS_EXPORTER: 'none', //'otlp',
-          OTEL_TRACE_SINK: '',
-          OTEL_METRIC_SINK: '',
-          OTEL_LOG_SINK: '',
-          // OPENTELEMETRY_COLLECTOR_CONFIG_FILE: 'configs/lambda-collector-config.yml'
+          OTEL_TRACE_SINK: `${ingestionPipelineEndpoint}:21890`,
+          OTEL_METRIC_SINK: `${ingestionPipelineEndpoint}:21891`,
+          OTEL_LOG_SINK: `${ingestionPipelineEndpoint}:21892`,
+          OPENTELEMETRY_COLLECTOR_CONFIG_FILE: 'app/configs/lambda-collector-config.yml',
           PGPORT: rdsPostgres.instance.port.toString(),
           PGDATABASE: rdsPostgres.instance.dbName,
           PGHOST: rdsPostgres.instance.endpoint,

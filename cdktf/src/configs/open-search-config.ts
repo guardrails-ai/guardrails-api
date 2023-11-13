@@ -9,4 +9,5 @@ import SecretsmanagerSecret = secretsmanagerSecretLib.SecretsmanagerSecret;
 export type OpenSearchConfig = {
   opensearchDomain: OpensearchDomain;
   credentials: SecretsmanagerSecret;
+  ingestionPipelineEndpoint: string;
 }
