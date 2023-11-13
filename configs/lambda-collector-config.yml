@@ -1,0 +1,57 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 'localhost:4317'
+      http:
+        endpoint: 'localhost:4318'
+
+exporters:
+  logging:
+    loglevel: ${env:OTEL_PYTHON_LOG_LEVEL}
+  otlp/traces:
+    endpoint: ${env:OTEL_TRACE_SINK}
+    tls:
+      insecure: true
+      insecure_skip_verify: true
+  otlp/metrics:
+    endpoint: ${env:OTEL_METRIC_SINK}
+    tls:
+      insecure: true
+      insecure_skip_verify: true
+  otlp/logs:
+    endpoint: ${env:OTEL_LOG_SINK}
+    tls:
+      insecure: true
+      insecure_skip_verify: true
+
+service:
+  pipelines:
+    traces:
+      receivers: 
+        - otlp
+      # processors: 
+      #   - batch
+      exporters: 
+        - logging
+        # - otlp/traces
+    metrics:
+      receivers: 
+        - otlp
+      # processors: 
+      #   - batch
+      exporters: 
+        - logging
+        # - otlp/metrics
+        # - prometheus
+    logs:
+      receivers: 
+        - otlp
+      # processors: 
+      #   - batch
+      exporters: 
+        - logging
+        # - otlp/logs
+  telemetry:
+    logs:
+      level: info
