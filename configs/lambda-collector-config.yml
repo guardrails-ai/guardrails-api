@@ -17,6 +17,8 @@ receivers:
 exporters:
   logging:
     loglevel: ${env:OTEL_PYTHON_LOG_LEVEL}
+  # AWS OpenSearch Ingestion Pipeline forces you to use a path
+  # Because of that, you can't use the standard otlp exporter because it's grpc based
   otlphttp:
     traces_endpoint: ${env:OTEL_TRACE_SINK}
     auth:
