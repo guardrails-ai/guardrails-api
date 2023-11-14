@@ -2,11 +2,9 @@ import { Construct } from 'constructs';
 import {
   cloudwatchLogGroup as cloudwatchLogGroupLib,
   ecrRepository,
-  dataAwsIamPolicyDocument,
   iamRole,
   lambdaFunction as lambdaFunctionLib,
   lambdaFunctionUrl as lambdaFunctionUrlLib,
-  opensearchDomainPolicy as opensearchDomainPolicyLib,
   subnet,
   vpc as vpcLib
 } from '@cdktf/provider-aws';
@@ -14,11 +12,9 @@ import { DefaultedBaseConstructConfig, OpenSearchConfig } from '../configs';
 
 import CloudwatchLogGroup = cloudwatchLogGroupLib.CloudwatchLogGroup;
 import EcrRepository = ecrRepository.EcrRepository;
-import DataAwsIamPolicyDocument = dataAwsIamPolicyDocument.DataAwsIamPolicyDocument;
 import IamRole = iamRole.IamRole;
 import LambdaFunction = lambdaFunctionLib.LambdaFunction;
 import LambdaFunctionUrl = lambdaFunctionUrlLib.LambdaFunctionUrl;
-import OpensearchDomainPolicy = opensearchDomainPolicyLib.OpensearchDomainPolicy;
 import Subnet = subnet.Subnet;
 import Vpc = vpcLib.Vpc;
 import { RdsPostgres } from './rds-postgres';
@@ -58,7 +54,9 @@ export class Application extends Construct {
     const {
       credentials: openSearchClusterCredentials,
       opensearchDomain,
-      ingestionPipelineEndpoint
+      traceIngestionPipeline,
+      logIngestionPipeline,
+      metricIngestionPipeline
     } = openSearchConfig;
 
     this._lambdaLogs = new CloudwatchLogGroup(this, `${id}-lambda-logs`, {
@@ -145,6 +143,23 @@ export class Application extends Construct {
               ]
             }]
           })
+        },
+        {
+          name: 'ingestion-access',
+          policy: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Action: ['osis:Ingest'],
+                Resource: [
+                  traceIngestionPipeline.arn,
+                  metricIngestionPipeline.arn,
+                  logIngestionPipeline.arn
+                ]
+              }
+            ]
+          })
         }
       ]
     });
@@ -160,20 +175,16 @@ export class Application extends Construct {
           AWS_LWA_READINESS_CHECK_PORT: '8000',
           LOGLEVEL: 'INFO',
           NODE_ENV: 'production',
-          // TODO: enable otlp via lambda extension:
-          // https://opentelemetry.io/docs/faas/lambda-collector/
-          // https://aws.amazon.com/blogs/compute/working-with-lambda-layers-and-extensions-in-container-images/
           OPENSEARCH_SECRET: openSearchClusterCredentials.arn,
           OPENSEARCH_URL: opensearchDomain.endpoint,
           OTEL_SERVICE_NAME: 'guardrails-api',
-          // OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4317',
-          OTEL_TRACES_EXPORTER: 'none', //'otlp',
+          OTEL_TRACES_EXPORTER: 'otlp',
           OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST: 'Accept-Encoding,User-Agent,Referer',
           OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE: 'Last-Modified,Content-Type',
-          OTEL_METRICS_EXPORTER: 'none', //'otlp',
-          OTEL_TRACE_SINK: `${ingestionPipelineEndpoint}:21890`,
-          OTEL_METRIC_SINK: `${ingestionPipelineEndpoint}:21891`,
-          OTEL_LOG_SINK: `${ingestionPipelineEndpoint}:21892`,
+          OTEL_METRICS_EXPORTER: 'otlp',
+          OTEL_TRACE_SINK: `https://${traceIngestionPipeline.endpoint}/traces/ingest`,
+          OTEL_METRIC_SINK: `https://${metricIngestionPipeline.endpoint}/metrics/ingest`,
+          OTEL_LOG_SINK: `https://${logIngestionPipeline.endpoint}/logs/ingest`,
           OPENTELEMETRY_COLLECTOR_CONFIG_FILE: 'app/configs/lambda-collector-config.yml',
           PGPORT: rdsPostgres.instance.port.toString(),
           PGDATABASE: rdsPostgres.instance.dbName,
@@ -199,33 +210,6 @@ export class Application extends Construct {
       authorizationType: 'NONE'
     });
     this._endpoint = this.lambdaUrl.functionUrl;
-
-    // This needs to happen here because since the lambda role will be a principal, it must exist before creating the below policy.
-    // We make this depend on the lambda url to force it to launch last.
-    const policyDocument = new DataAwsIamPolicyDocument(this, `${id}-domain-policy-document`, {
-      statement: [
-        {
-          effect: 'Allow',
-          principals: [
-            {
-              type: 'AWS',
-              identifiers: [this.lambdaRole.arn]
-            }
-          ],
-          actions: ['es:ESHttp*'],
-          resources: [
-            opensearchDomain.arn,
-            `${opensearchDomain.arn}/*`
-          ]
-        }
-      ],
-      dependsOn: [this.lambdaRole, opensearchDomain, this.lambdaUrl]
-    });
-    new OpensearchDomainPolicy(this, `${id}-domain-policy`, {
-      domainName: opensearchDomain.domainName,
-      accessPolicies: policyDocument.json,
-      dependsOn: [this.lambdaRole, opensearchDomain, this.lambdaUrl]
-    });
   }
 
   public get endpoint (): string {
