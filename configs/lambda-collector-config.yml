@@ -1,3 +1,11 @@
+# Based on https://docs.aws.amazon.com/opensearch-service/latest/developerguide/configure-client-otel.html
+# Still had to add tls block
+# Not tested for metrics or logs
+extensions:
+  sigv4auth:
+    region: ${env:AWS_REGION}
+    service: "osis"
+
 receivers:
   otlp:
     protocols:
@@ -9,23 +17,32 @@ receivers:
 exporters:
   logging:
     loglevel: ${env:OTEL_PYTHON_LOG_LEVEL}
-  otlp/traces:
-    endpoint: ${env:OTEL_TRACE_SINK}
+  otlphttp:
+    traces_endpoint: ${env:OTEL_TRACE_SINK}
+    auth:
+      authenticator: sigv4auth
+    compression: none
     tls:
-      insecure: true
+      insecure: false
       insecure_skip_verify: true
-  otlp/metrics:
-    endpoint: ${env:OTEL_METRIC_SINK}
-    tls:
-      insecure: true
-      insecure_skip_verify: true
-  otlp/logs:
-    endpoint: ${env:OTEL_LOG_SINK}
-    tls:
-      insecure: true
-      insecure_skip_verify: true
+  # otlp/traces:
+  #   endpoint: ${env:OTEL_TRACE_SINK}
+    # tls:
+    #   insecure: true
+    #   insecure_skip_verify: true
+  # otlp/metrics:
+  #   endpoint: ${env:OTEL_METRIC_SINK}
+    # tls:
+    #   insecure: true
+    #   insecure_skip_verify: true
+  # otlp/logs:
+  #   endpoint: ${env:OTEL_LOG_SINK}
+    # tls:
+    #   insecure: true
+    #   insecure_skip_verify: true
 
 service:
+  extensions: [sigv4auth]
   pipelines:
     traces:
       receivers: 
@@ -34,7 +51,8 @@ service:
       #   - batch
       exporters: 
         - logging
-        - otlp/traces
+        - otlphttp
+        # - otlp/traces
     metrics:
       receivers: 
         - otlp
@@ -42,7 +60,8 @@ service:
       #   - batch
       exporters: 
         - logging
-        - otlp/metrics
+        # - otlphttp
+        # - otlp/metrics
         # - prometheus
     logs:
       receivers: 
@@ -51,7 +70,8 @@ service:
       #   - batch
       exporters: 
         - logging
-        - otlp/logs
+        # - otlphttp
+        # - otlp/logs
   telemetry:
     logs:
       level: info
