@@ -42,6 +42,9 @@ class SchemaElementStruct:
                 elem_dict[
                     validator_on_fail.get("validatorTag")
                 ] = validator_on_fail.get("method")
+        elem_dict.pop('date_format', None)
+        elem_dict.pop('time_format', None)
+        elem_dict.pop('on_fails', None)
         return ElementStub(self.type, elem_dict)
 
     @classmethod
