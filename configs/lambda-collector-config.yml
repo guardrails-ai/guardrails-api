@@ -34,7 +34,7 @@ service:
       #   - batch
       exporters: 
         - logging
-        # - otlp/traces
+        - otlp/traces
     metrics:
       receivers: 
         - otlp
@@ -42,7 +42,7 @@ service:
       #   - batch
       exporters: 
         - logging
-        # - otlp/metrics
+        - otlp/metrics
         # - prometheus
     logs:
       receivers: 
@@ -51,7 +51,7 @@ service:
       #   - batch
       exporters: 
         - logging
-        # - otlp/logs
+        - otlp/logs
   telemetry:
     logs:
       level: info
