@@ -29,10 +29,13 @@ docker login -u AWS -p $(aws ecr get-login-password --region $region) $ecrEndpoi
 docker buildx build \
   --platform linux/arm64 \
   --progress plain \
+  --no-cache \
+  --build-arg CACHEBUST="$(date)" \
   -f Dockerfile.prod \
   -t "$imageName:$commitSha" \
   -t "$imageName:latest" . \
   || exit 1;
+  # > ./out.log 2>&1 \
 
 docker image tag "$imageName:$commitSha" "$ecrImageUrl:$commitSha";
 docker image tag "$imageName:latest" "$ecrImageUrl:latest";
