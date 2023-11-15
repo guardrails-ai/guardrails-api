@@ -1,3 +1,5 @@
+# !!! UPDATE ME !!!
+# See Tracer setup
 import os
 from opentelemetry import metrics
 
