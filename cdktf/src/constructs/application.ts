@@ -175,6 +175,7 @@ export class Application extends Construct {
           AWS_LWA_READINESS_CHECK_PORT: '8000',
           LOGLEVEL: 'INFO',
           NODE_ENV: 'production',
+          NLTK_DATA: '/opt/nltk_data',
           OPENSEARCH_SECRET: openSearchClusterCredentials.arn,
           OPENSEARCH_URL: opensearchDomain.endpoint,
           OTEL_SERVICE_NAME: 'guardrails-api',
@@ -196,7 +197,8 @@ export class Application extends Construct {
         }
       },
       imageUri: `${ecrRepo.repositoryUrl}:latest`,
-      memorySize: 512,
+      // Because some of the extended dependencies require gcc which over doubles our image size
+      memorySize: 1024,
       packageType: 'Image',
       timeout: 60 * 15,
       vpcConfig: {

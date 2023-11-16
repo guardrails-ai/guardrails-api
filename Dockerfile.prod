@@ -31,6 +31,9 @@ RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o ./
 # Install app dependencies
 RUN pip install -r requirements.txt
 
+# Download punkt data
+RUN python -m nltk.downloader -d /opt/nltk_data punkt
+
 # Freeze dependencies
 RUN pip freeze > requirements.txt
 
