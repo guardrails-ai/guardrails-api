@@ -18,7 +18,7 @@ jobs:
       - name: Quality Checks
         run: |
           python -m pip install --upgrade pip;
-          pip install -r requirements.txt;
+          make build;
           make qa;
           
           ##

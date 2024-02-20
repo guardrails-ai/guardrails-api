@@ -4,7 +4,7 @@ from src.classes.health_check import HealthCheck
 from src.clients.postgres_client import PostgresClient
 from src.utils.handle_error import handle_error
 from src.utils.gather_request_metrics import gather_request_metrics
-from src.utils import logger
+from src.utils.logger import logger
 
 # from src.modules.otel_logger import logger
 
