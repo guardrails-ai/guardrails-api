@@ -1,4 +1,3 @@
-import inspect
 import re
 from typing import Any, Dict, List, Optional
 from operator import attrgetter
@@ -256,7 +255,9 @@ class DataTypeStruct:
 
         return cls(children, formatters, element, plugins)
 
-    def to_xml(self, parent: _Element, as_parent: Optional[bool] = False) -> _Element:
+    def to_xml(
+        self, parent: _Element, as_parent: Optional[bool] = False
+    ) -> _Element:
         element = None
         if as_parent:
             element = parent
@@ -277,7 +278,11 @@ class DataTypeStruct:
         if plugins is not None:
             element.attrib["plugins"] = plugins
 
-        xml_data_type = element if as_parent else SubElement(parent, element.tag, element.attrib)
+        xml_data_type = (
+            element
+            if as_parent
+            else SubElement(parent, element.tag, element.attrib)
+        )
 
         self_is_list = self.element.type == "list"
         if self.children is not None:
@@ -306,7 +311,7 @@ class DataTypeStruct:
             for child_key in children:
                 plugins.extend(children[child_key].get_all_plugins())
         return plugins
-    
+
     @staticmethod
     def is_data_type_struct(other: Any) -> bool:
         if isinstance(other, dict):

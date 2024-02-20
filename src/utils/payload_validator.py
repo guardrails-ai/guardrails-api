@@ -4,21 +4,23 @@ from jsonschema import Draft202012Validator, ValidationError
 from referencing import Registry, jsonschema as jsonschema_ref
 from src.classes.http_error import HttpError
 
-with open("./open-api-spec.yml", 'r') as open_api_spec:
+with open("./open-api-spec.yml", "r") as open_api_spec:
     api_spec: Dict = yaml.safe_load(open_api_spec)
 
-registry = Registry().with_resources([
-    (
-        "urn:guardrails-api-spec",
-        jsonschema_ref.DRAFT202012.create_resource(api_spec)
-    )
-])
+registry = Registry().with_resources(
+    [
+        (
+            "urn:guardrails-api-spec",
+            jsonschema_ref.DRAFT202012.create_resource(api_spec),
+        )
+    ]
+)
 
 guard_validator = Draft202012Validator(
     {
         "$ref": "urn:guardrails-api-spec#/components/schemas/Guard",
     },
-    registry=registry
+    registry=registry,
 )
 
 
@@ -34,5 +36,5 @@ def validate_payload(payload: dict):
             400,
             "BadRequest",
             "The request payload did not match the required schema.",
-            fields
+            fields,
         )

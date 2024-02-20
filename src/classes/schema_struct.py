@@ -18,9 +18,7 @@ class SchemaStruct:
         serialized_schema = {}
 
         if isinstance(schema, StringSchema):
-            serialized_schema = DataTypeStruct.from_data_type(
-                schema
-            )
+            serialized_schema = DataTypeStruct.from_data_type(schema)
         else:
             for key in schema._schema:
                 schema_element = schema._schema[key]
@@ -53,9 +51,7 @@ class SchemaStruct:
             serialized_schema = {}
             inner_schema = schema["schema"]
             if DataTypeStruct.is_data_type_struct(inner_schema):
-                serialized_schema = DataTypeStruct.from_dict(
-                    inner_schema
-                )
+                serialized_schema = DataTypeStruct.from_dict(inner_schema)
             else:
                 for key in inner_schema:
                     schema_element = inner_schema[key]
@@ -83,9 +79,7 @@ class SchemaStruct:
 
             # StringSchema (or really just any PrimitiveSchema)
             if DataTypeStruct.is_data_type_struct(inner_schema):
-                serialized_schema = DataTypeStruct.from_request(
-                    inner_schema
-                )
+                serialized_schema = DataTypeStruct.from_request(inner_schema)
             else:
                 # JsonSchema
                 for key in inner_schema:

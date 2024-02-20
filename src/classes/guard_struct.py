@@ -1,5 +1,5 @@
 from typing import Optional
-from guardrails import Guard, Rail
+from guardrails import Guard
 from opentelemetry.trace import Tracer
 from lxml.etree import tostring
 from src.classes.rail_spec_struct import RailSpecStruct
@@ -32,7 +32,9 @@ class GuardStruct:
             guard.description,
         )
 
-    def to_guard(self, openai_api_key: Optional[str] = None, tracer: Tracer = None) -> Guard:
+    def to_guard(
+        self, openai_api_key: Optional[str] = None, tracer: Tracer = None
+    ) -> Guard:
         rail_xml = self.railspec.to_xml()
         rail_string = tostring(rail_xml)
         guard = Guard.from_rail_string(
@@ -40,7 +42,7 @@ class GuardStruct:
             self.num_reasks,
             description=self.description,
             name=self.name,
-            tracer=tracer
+            tracer=tracer,
         )
         guard.openai_api_key = openai_api_key
         return guard

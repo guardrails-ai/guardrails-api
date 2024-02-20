@@ -94,7 +94,9 @@ def validate(guard_name: str):
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
 
-    with otel_tracer.start_as_current_span(f"validate-{decoded_guard_name}") as validate_span:
+    with otel_tracer.start_as_current_span(
+        f"validate-{decoded_guard_name}"
+    ) as validate_span:
         guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
 
         validate_span.set_attribute("guardName", decoded_guard_name)
@@ -131,7 +133,7 @@ def validate(guard_name: str):
                 prompt_params=prompt_params,
                 llm_api=llm_api,
                 *args,
-                **payload
+                **payload,
             )
         else:
             raw_llm_response, validated_output = guard(
@@ -139,17 +141,23 @@ def validate(guard_name: str):
                 prompt_params=prompt_params,
                 num_reasks=num_reasks,
                 *args,
-                **payload
+                **payload,
             )
 
         guard_history = guard.state.most_recent_call
         last_step_logs: GuardLogs = guard_history.history[-1]
         validation_logs = last_step_logs.field_validation_logs.validator_logs
-        failed_validations = list([log for log in validation_logs if log.validation_result.outcome == 'fail'])
-        
+        failed_validations = list(
+            [
+                log
+                for log in validation_logs
+                if log.validation_result.outcome == "fail"
+            ]
+        )
+
         result = len(failed_validations) == 0
         raw_output = guard_history.output or raw_llm_response
-        
+
         validation_output = ValidationOutput(
             result, validated_output, guard.state.all_histories, raw_output
         )
@@ -161,7 +169,7 @@ def validate(guard_name: str):
         )
         if prompt:
             validate_span.set_attribute("prompt", prompt)
-        
+
         instructions = (
             guard.rail.instructions.format(**(prompt_params or {})).source
             if guard.rail.instructions
@@ -173,7 +181,7 @@ def validate(guard_name: str):
         validation_status = "pass" if result is True else "fail"
         validate_span.set_attribute("validation_status", validation_status)
         validate_span.set_attribute("raw_llm_ouput", raw_output)
-        
+
         # Use the serialization from the class instead of re-writing it
         valid_output: str = (
             json.dumps(validation_output.validated_output)
@@ -181,14 +189,14 @@ def validate(guard_name: str):
             else str(validation_output.validated_output)
         )
         validate_span.set_attribute("validated_output", valid_output)
-        
+
         final_step_logs: GuardLogs = guard_history.history[-1]
         final_response = final_step_logs.llm_response
         prompt_token_count = final_response.prompt_token_count or 0
         response_token_count = final_response.response_token_count or 0
         total_token_count = prompt_token_count + response_token_count
         validate_span.set_attribute("tokens_consumed", total_token_count)
-        
+
         num_of_reasks = (
             len(guard_history.history) - 1
             if len(guard_history.history) > 0

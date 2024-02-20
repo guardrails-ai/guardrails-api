@@ -5,6 +5,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+
 def create_app():
     api_doc(
         app,
@@ -14,7 +15,7 @@ def create_app():
     )
 
     from src.clients.postgres_client import PostgresClient
-    
+
     pg_client = PostgresClient()
     pg_client.initialize(app)
 
