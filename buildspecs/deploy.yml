@@ -1,0 +1,8 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - echo "Deploying $ECR_ENDPOINT:$IMAGE_VERSION_TAG to lambda function $LAMBDA_FUNCTION_NAME"
+      - aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri "$ECR_ENDPOINT:$IMAGE_VERSION_TAG"
+      - echo "Deployment complete"

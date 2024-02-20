@@ -1,5 +1,8 @@
 FROM public.ecr.aws/docker/library/python:3.11.5-slim
 
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
+COPY ./opentelemetry-lambda-layer /opt
+
 # Create app directory
 WORKDIR /app
 
@@ -11,21 +14,19 @@ RUN python3 -m venv /opt/venv
 # Enable venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install gcc
+# Install git and curl
 RUN apt-get update
-RUN apt-get install -y gcc
+RUN apt-get install -y git curl gcc
 
-COPY ./guardrails-sdk ./guardrails-sdk
-
+# Copy pre-built api client
 COPY ./guard-rails-api-client ./guard-rails-api-client
-
-COPY ./guardrails-custom-validators ./guardrails-custom-validators
 
 # Copy the requirements file
 COPY requirements.txt .
 
-RUN pip install ./guardrails-sdk
 RUN pip install ./guard-rails-api-client
+RUN pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry
+RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o ./global-bundle.pem
 
 # Install app dependencies
 RUN pip install -r requirements.txt

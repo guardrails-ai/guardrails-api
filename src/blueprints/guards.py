@@ -47,7 +47,6 @@ def guard(guard_name: str):
     decoded_guard_name = unquote_plus(guard_name)
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
-        print(f"Guard with name {decoded_guard_name} was requested.")
         guard = guard_client.get_guard(decoded_guard_name, as_of_query)
         return guard.to_response()
     elif request.method == "PUT":
@@ -144,7 +143,11 @@ def validate(guard_name: str):
             )
 
         guard_history = guard.state.most_recent_call
-        result = len(guard_history.failed_validations) > 0
+        last_step_logs: GuardLogs = guard_history.history[-1]
+        validation_logs = last_step_logs.field_validation_logs.validator_logs
+        failed_validations = list([log for log in validation_logs if log.validation_result.outcome == 'fail'])
+        
+        result = len(failed_validations) == 0
         raw_output = guard_history.output or raw_llm_response
         
         validation_output = ValidationOutput(

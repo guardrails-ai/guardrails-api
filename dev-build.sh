@@ -3,4 +3,4 @@ docker build \
     --progress=plain \
     --no-cache \
     --build-arg CACHEBUST="$(date)" \
-    -t "guardrails-api:latest" .;
+    -t "guardrails-api:dev" .;

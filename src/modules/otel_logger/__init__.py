@@ -1,3 +1,5 @@
+# !!! UPDATE ME !!!
+# See Tracer setup
 import os
 import logging
 import opentelemetry._logs as logs
