@@ -40,10 +40,8 @@ def test_home(mocker):
     assert root_bp.routes == ["/", "/health-check"]
     text.assert_called_once_with("SELECT count(datid) FROM pg_stat_activity;")
     assert mock_pg.db.session.queries == ["SELECT count(datid) FROM pg_stat_activity;"]
-    
-    assert info_spy.call_count == 1
-    
-    info_spy.assert_called_once_with("response: ", [(1,)])
+        
+    info_spy.assert_called_once_with("response: %s", [(1,)])
     assert response == { "status": 200, "message": "Ok" }
 
     mocker.resetall()
