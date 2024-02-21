@@ -1,0 +1,45 @@
+FROM public.ecr.aws/docker/library/python:3.11.5-slim
+
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
+COPY ./opentelemetry-lambda-layer /opt
+
+# Create app directory
+WORKDIR /app
+
+# check the version
+RUN python3 --version
+# start the virtual environment
+RUN python3 -m venv /opt/venv
+
+# Enable venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install git and curl
+RUN apt-get update
+RUN apt-get install -y git curl gcc
+
+# Copy pre-built api client
+COPY ./guard-rails-api-client ./guard-rails-api-client
+
+# Copy the requirements file
+COPY requirements.txt .
+
+RUN pip install ./guard-rails-api-client
+RUN pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry
+RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o ./global-bundle.pem
+
+# Install app dependencies
+RUN pip install -r requirements.txt
+
+# Download punkt data
+RUN python -m nltk.downloader -d /opt/nltk_data punkt
+
+# Freeze dependencies
+RUN pip freeze > requirements.txt
+
+# Copy the whole folder inside the Image filesystem
+COPY . .
+
+EXPOSE 8000
+
+CMD opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"

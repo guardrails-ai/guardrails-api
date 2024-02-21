@@ -13,6 +13,7 @@ def test_guards_get(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("flask.request", mock_request)
     mocker.patch("src.clients.guard_client.GuardClient", new=MockGuardClient)
+    mocker.patch("opentelemetry.trace.get_tracer_provider")
     from src.blueprints.guards import guards, guards_bp
 
     response = guards()

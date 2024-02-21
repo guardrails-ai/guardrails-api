@@ -1,5 +1,4 @@
-# FROM python:3.6
-FROM public.ecr.aws/docker/library/python:3.11-slim
+FROM public.ecr.aws/docker/library/python:3.11.5-slim
 
 # Create app directory
 WORKDIR /app
@@ -12,6 +11,10 @@ RUN python3 -m venv /opt/venv
 # Enable venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Install gcc
+RUN apt-get update
+RUN apt-get install -y gcc
+
 COPY ./guardrails-sdk ./guardrails-sdk
 
 COPY ./guard-rails-api-client ./guard-rails-api-client
@@ -21,15 +24,14 @@ COPY ./guardrails-custom-validators ./guardrails-custom-validators
 # Copy the requirements file
 COPY requirements.txt .
 
-# RUN apt-get update
-# RUN apt-get install build-essential -y
-# RUN apt-get install python3-dev -y
-# RUN apt-get install libevent-dev -y
 RUN pip install ./guardrails-sdk
 RUN pip install ./guard-rails-api-client
 
 # Install app dependencies
 RUN pip install -r requirements.txt
+
+# Download punkt data
+RUN python -m nltk.downloader -d /opt/nltk_data punkt
 
 # Freeze dependencies
 RUN pip freeze > requirements.txt

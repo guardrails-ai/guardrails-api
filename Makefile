@@ -1,6 +1,12 @@
 build-sdk:
 	bash build-sdk.sh
 
+build:
+	pip install -r requirements.txt;
+	pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry;
+	make build-sdk;
+	pip install ./guard-rails-api-client
+
 dev:
 	bash ./dev.sh
 

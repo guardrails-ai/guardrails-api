@@ -1,5 +1,5 @@
 **/__pycache__
-.venv
+.venv*
 postgres
 venv
 guardrails-sdk
@@ -16,3 +16,7 @@ coverage.json
 .ropeproject
 install*.sh
 guardrails-custom-validators
+guardrails-api-client
+guardrails
+*.env
+opentelemetry-lambda-layer

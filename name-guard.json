@@ -1,0 +1,41 @@
+{
+  "name": "name-guard",
+  "railspec": {
+     "outputSchema": {
+        "schema": {
+           "names": {
+              "element": {
+                 "type": "list",
+                 "name": "names",
+                 "description": "Generate a list of names, each entry should be an object with two properties: firstName and lastName.",
+                 "onFail": "noop"
+              },
+              "formatters": ["length: 1 10"],
+              "children": {
+                 "item": {
+                     "firstName": {
+                       "element": {
+                          "type": "string",
+                          "name": "firstName",
+                          "description": "The person's first name."
+                       },
+                       "formatters": ["one-word", "length: 3 12"]
+                     },
+                     "lastName": {
+                       "element": {
+                          "type": "string",
+                          "name": "lastName",
+                          "description": "The person's last name."
+                       },
+                       "formatters": ["one-word", "length: 3 24"]
+                     }
+                 }
+              }
+           }
+        }
+     },
+     "prompt": "Generate a dataset of fake people. Each row of the dataset should be valid.\n\n${gr.complete_json_suffix}",
+     "version": "0.1"
+  },
+  "numReasks": 1
+}

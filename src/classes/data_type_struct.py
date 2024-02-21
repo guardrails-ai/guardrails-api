@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from operator import attrgetter
 from lxml.etree import _Element, SubElement
 from guardrails.datatypes import DataType, registry
@@ -10,6 +10,11 @@ from src.utils.pluck import pluck
 
 
 class DataTypeStruct:
+    children: Dict[str, Any] = None
+    formatters: List[str] = None
+    element: SchemaElementStruct = None
+    plugins: List[str] = None
+
     def __init__(
         self,
         children: Dict[str, Any] = None,
@@ -250,8 +255,17 @@ class DataTypeStruct:
 
         return cls(children, formatters, element, plugins)
 
-    def to_xml(self, parent: _Element) -> _Element:
-        element = self.element.to_element()
+    def to_xml(
+        self, parent: _Element, as_parent: Optional[bool] = False
+    ) -> _Element:
+        element = None
+        if as_parent:
+            element = parent
+            elem_attribs: ElementStub = self.element.to_element()
+            for k, v in elem_attribs.attrib.items():
+                element.set(k, v)
+        else:
+            element = self.element.to_element()
 
         format = (
             "; ".join(self.formatters) if len(self.formatters) > 0 else None
@@ -264,7 +278,11 @@ class DataTypeStruct:
         if plugins is not None:
             element.attrib["plugins"] = plugins
 
-        xml_data_type = SubElement(parent, element.tag, element.attrib)
+        xml_data_type = (
+            element
+            if as_parent
+            else SubElement(parent, element.tag, element.attrib)
+        )
 
         self_is_list = self.element.type == "list"
         if self.children is not None:
@@ -293,3 +311,11 @@ class DataTypeStruct:
             for child_key in children:
                 plugins.extend(children[child_key].get_all_plugins())
         return plugins
+
+    @staticmethod
+    def is_data_type_struct(other: Any) -> bool:
+        if isinstance(other, dict):
+            data_type_struct_attrs = DataTypeStruct.__dict__.keys()
+            other_keys = other.keys()
+            return set(other_keys).issubset(data_type_struct_attrs)
+        return False
