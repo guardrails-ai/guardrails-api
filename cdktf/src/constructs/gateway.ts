@@ -8,6 +8,7 @@ import { Apigatewayv2Route } from '@cdktf/provider-aws/lib/apigatewayv2-route';
 import { TerraformOutput } from 'cdktf';
 import { Apigatewayv2Stage } from '@cdktf/provider-aws/lib/apigatewayv2-stage';
 import { BaseConstructConfig } from '../../../../src/configs';
+import { truncate } from '../utils';
 
 export type GatewayConfig = BaseConstructConfig & {
   serviceName: string;
@@ -38,7 +39,7 @@ export class Gateway extends Construct {
     });
 
     this._discoveryService = new ServiceDiscoveryService(this, `${id}-service-discovery-service`, {
-      name: `${serviceName}-discovery-service`,
+      name: `${truncate(serviceName, (61 - '-discovery-service'.length))}-discovery-service`,
       dnsConfig: {
         namespaceId: serviceDiscoveryNamespace.id,
         dnsRecords: [
