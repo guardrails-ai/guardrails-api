@@ -3,7 +3,6 @@ import {
   cloudwatchLogGroup as cloudwatchLogGroupLib,
   iamRole
 } from '@cdktf/provider-aws';
-import { OpenSearchConfig } from '../configs';
 
 import CloudwatchLogGroup = cloudwatchLogGroupLib.CloudwatchLogGroup;
 import IamRole = iamRole.IamRole;
@@ -18,7 +17,6 @@ type ComputeServiceConfig = Omit<
 >
 
 export type ApplicationConfig = ComputeServiceConfig & {
-  openSearchConfig: OpenSearchConfig;
   rdsPostgres: RdsPostgres;
   environmentVariables?: NameValue[];
 };
@@ -35,56 +33,14 @@ export class Application extends Construct {
     const {
       environment,
       ecrRepo,
-      openSearchConfig,
       rdsPostgres,
       environmentVariables = [],
       taskPolicies = [],
       memory = 1024
     } = config;
 
-    const {
-      credentials: openSearchClusterCredentials,
-      opensearchDomain,
-      traceIngestionPipeline,
-      logIngestionPipeline,
-      metricIngestionPipeline
-    } = openSearchConfig;
-
-    const openSearchAccess: IamRoleInlinePolicy = {
-      name: 'opensearch-access',
-      policy: JSON.stringify({
-        Version: '2012-10-17',
-        Statement: [{
-          Effect: 'Allow',
-          Action: [
-            'es:ESHttp*'
-          ],
-          Resource: [
-            opensearchDomain.arn,
-            `${opensearchDomain.arn}/*`
-          ]
-        }]
-      })
-    };
-    const openSearchIngestionAccess: IamRoleInlinePolicy = {
-      name: 'ingestion-access',
-      policy: JSON.stringify({
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Effect: 'Allow',
-            Action: ['osis:Ingest'],
-            Resource: [
-              traceIngestionPipeline.arn,
-              metricIngestionPipeline.arn,
-              logIngestionPipeline.arn
-            ]
-          }
-        ]
-      })
-    };
-    const secretsManagerAccess: IamRoleInlinePolicy = {
-      name: 'secrets-manager-access',
+    const pgSecretsManagerAccess: IamRoleInlinePolicy = {
+      name: 'pg-secrets-manager-access',
       policy: JSON.stringify({
         Version: '2012-10-17',
         Statement: [{
@@ -93,7 +49,6 @@ export class Application extends Construct {
             'secretsmanager:GetSecretValue'
           ],
           Resource: [
-            openSearchClusterCredentials.arn,
             rdsPostgres.secretArn
           ]
         }]
@@ -101,18 +56,12 @@ export class Application extends Construct {
     };
     
     taskPolicies.push(
-      openSearchAccess,
-      openSearchIngestionAccess,
-      secretsManagerAccess
+      pgSecretsManagerAccess
     )
     environmentVariables.push(...[
       {
         name: 'APP_ENVIRONMENT',
         value: environment
-      },
-      {
-        name: 'AWS_LWA_READINESS_CHECK_PORT',
-        value: '8000'
       },
       {
         name: 'LOGLEVEL',
@@ -125,50 +74,6 @@ export class Application extends Construct {
       {
         name: 'NLTK_DATA',
         value: '/opt/nltk_data'
-      },
-      {
-        name: 'OPENSEARCH_SECRET',
-        value: openSearchClusterCredentials.arn
-      },
-      {
-        name: 'OPENSEARCH_URL',
-        value: opensearchDomain.endpoint
-      },
-      {
-        name: 'OTEL_SERVICE_NAME',
-        value: 'guardrails-api'
-      },
-      {
-        name: 'OTEL_TRACES_EXPORTER',
-        value: 'otlp'
-      },
-      {
-        name: 'OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST',
-        value: 'Accept-Encoding,User-Agent,Referer'
-      },
-      {
-        name: 'OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE',
-        value: 'Last-Modified,Content-Type'
-      },
-      {
-        name: 'OTEL_METRICS_EXPORTER',
-        value: 'none'
-      },
-      {
-        name: 'OTEL_TRACE_SINK',
-        value: `https://${traceIngestionPipeline.endpoint}/traces/ingest`
-      },
-      {
-        name: 'OTEL_METRIC_SINK',
-        value: `https://${metricIngestionPipeline.endpoint}/metrics/ingest`
-      },
-      {
-        name: 'OTEL_LOG_SINK',
-        value: `https://${logIngestionPipeline.endpoint}/logs/ingest`
-      },
-      {
-        name: 'OPENTELEMETRY_COLLECTOR_CONFIG_FILE',
-        value: 'app/configs/lambda-collector-config.yml'
       },
       {
         name: 'PGPORT',

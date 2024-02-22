@@ -27,7 +27,8 @@ span_exporter = (
 
 simple_processor = SimpleSpanProcessor(span_exporter)
 is_lambda = os.environ.get("AWS_EXECUTION_ENV", "").startswith("AWS_Lambda_")
-if is_lambda or not span_processor:
+is_fargate = os.environ.get("AWS_EXECUTION_ENV", "").startswith("AWS_ECS_")
+if is_lambda or is_fargate or not span_processor:
     provider._active_span_processor._span_processors = (simple_processor,)
 
 service_name = os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")

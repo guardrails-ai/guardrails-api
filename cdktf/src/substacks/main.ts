@@ -5,7 +5,7 @@ import {
   subnet,
   vpc as vpcLib
 } from '@cdktf/provider-aws';
-import { BaseConstructConfig, DefaultedBaseConstructConfig, OpenSearchConfig } from '../configs';
+import { BaseConstructConfig, DefaultedBaseConstructConfig } from '../configs';
 import {
   Application,
   ApplicationConfig as ApplicationConfigRequired,
@@ -54,7 +54,6 @@ export type ApplicationConfig = Omit<
 export type GuardrailsValidationServiceSubStackConfig = BaseConstructConfig & ApplicationConfig & {
   deploymentPipelineConfig: DeploymentPipelineConfig;
   ecrRepo: EcrRepository;
-  openSearchConfig: OpenSearchConfig;
   rdsPostgresConfig?: RdsPostgresConfig;
   subnets: Subnet[];
   vpc: Vpc;
