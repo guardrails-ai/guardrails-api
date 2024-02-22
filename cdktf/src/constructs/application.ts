@@ -1,232 +1,136 @@
 import { Construct } from 'constructs';
 import {
   cloudwatchLogGroup as cloudwatchLogGroupLib,
-  ecrRepository,
-  iamRole,
-  lambdaFunction as lambdaFunctionLib,
-  lambdaFunctionUrl as lambdaFunctionUrlLib,
-  subnet,
-  vpc as vpcLib
+  iamRole
 } from '@cdktf/provider-aws';
-import { DefaultedBaseConstructConfig, OpenSearchConfig } from '../configs';
 
 import CloudwatchLogGroup = cloudwatchLogGroupLib.CloudwatchLogGroup;
-import EcrRepository = ecrRepository.EcrRepository;
 import IamRole = iamRole.IamRole;
-import LambdaFunction = lambdaFunctionLib.LambdaFunction;
-import LambdaFunctionUrl = lambdaFunctionUrlLib.LambdaFunctionUrl;
-import Subnet = subnet.Subnet;
-import Vpc = vpcLib.Vpc;
 import { RdsPostgres } from './rds-postgres';
+import { ComputeService, ComputeServiceConfig as ComputeServiceConfigRequired } from './compute-service';
+import { NameValue } from './task';
+import { IamRoleInlinePolicy } from '@cdktf/provider-aws/lib/iam-role';
 
-export type ApplicationConfig = {
-  ecrRepo: EcrRepository;
-  lambdaFunctionName: string;
-  openSearchConfig: OpenSearchConfig;
+type ComputeServiceConfig = Omit<
+  ComputeServiceConfigRequired,
+  'containers'
+>
+
+export type ApplicationConfig = ComputeServiceConfig & {
   rdsPostgres: RdsPostgres;
-  subnets: Subnet[];
-  vpc: Vpc;
+  environmentVariables?: NameValue[];
 };
 
 export class Application extends Construct {
   private _endpoint: string;
-  private _lambdaFunction: LambdaFunction;
-  private _lambdaRole: IamRole;
-  private _lambdaUrl: LambdaFunctionUrl;
-  private _lambdaLogs: CloudwatchLogGroup;
+  private _service: ComputeService;
+  private _role: IamRole;
+  private _logs: CloudwatchLogGroup;
 
-  constructor (scope: Construct, id: string, baseConfig: DefaultedBaseConstructConfig, applicationConfig: ApplicationConfig) {
+  constructor(scope: Construct, id: string, config: ApplicationConfig) {
     super(scope, id);
 
     const {
-      environment
-    } = baseConfig;
-
-    const {
+      environment,
       ecrRepo,
-      lambdaFunctionName,
-      openSearchConfig,
       rdsPostgres,
-      subnets,
-      vpc
-    } = applicationConfig;
+      environmentVariables = [],
+      taskPolicies = [],
+      memory = 1024
+    } = config;
 
-    const {
-      credentials: openSearchClusterCredentials,
-      opensearchDomain,
-      traceIngestionPipeline,
-      logIngestionPipeline,
-      metricIngestionPipeline
-    } = openSearchConfig;
-
-    this._lambdaLogs = new CloudwatchLogGroup(this, `${id}-lambda-logs`, {
-      name: `/aws/lambda/${lambdaFunctionName}`,
-      retentionInDays: 30
-    });
-
-    this._lambdaRole = new IamRole(this, `${id}-lambda-role`, {
-      name: `${lambdaFunctionName}-role`,
-      assumeRolePolicy: JSON.stringify({
+    const pgSecretsManagerAccess: IamRoleInlinePolicy = {
+      name: 'pg-secrets-manager-access',
+      policy: JSON.stringify({
         Version: '2012-10-17',
         Statement: [{
           Effect: 'Allow',
-          Principal: {
-            Service: 'lambda.amazonaws.com'
-          },
-          Action: 'sts:AssumeRole'
+          Action: [
+            'secretsmanager:GetSecretValue'
+          ],
+          Resource: [
+            rdsPostgres.secretArn
+          ]
         }]
-      }),
-      inlinePolicy: [
-        {
-          name: 'opensearch-access',
-          policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [{
-              Effect: 'Allow',
-              Action: [
-                'es:ESHttp*'
-              ],
-              Resource: [
-                opensearchDomain.arn,
-                `${opensearchDomain.arn}/*`
-              ]
-            }]
-          })
-        },
-        {
-          name: 'secrets-manager-access',
-          policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [{
-              Effect: 'Allow',
-              Action: [
-                'secretsmanager:GetSecretValue'
-              ],
-              Resource: [
-                openSearchClusterCredentials.arn,
-                rdsPostgres.secretArn
-              ]
-            }]
-          })
-        },
-        {
-          name: 'eni-access',
-          policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [{
-              Effect: 'Allow',
-              Action: [
-                'ec2:CreateNetworkInterface',
-                'ec2:DescribeNetworkInterfaces',
-                'ec2:DeleteNetworkInterface'
-              ],
-              // Does not work without broad access
-              Resource: '*'
-            }]
-          })
-        },
-        {
-          name: 'cloudwatch-access',
-          policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [{
-              Effect: 'Allow',
-              Action: [
-                'logs:CreateLogGroup',
-                'logs:CreateLogStream',
-                'logs:PutLogEvents'
-              ],
-              Resource: [
-                this.lambdaLogs.arn,
-                `${this.lambdaLogs.arn}/*`,
-                `${this.lambdaLogs.arn}:*`
-              ]
-            }]
-          })
-        },
-        {
-          name: 'ingestion-access',
-          policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-              {
-                Effect: 'Allow',
-                Action: ['osis:Ingest'],
-                Resource: [
-                  traceIngestionPipeline.arn,
-                  metricIngestionPipeline.arn,
-                  logIngestionPipeline.arn
-                ]
-              }
-            ]
-          })
-        }
-      ]
-    });
-
-    this._lambdaFunction = new LambdaFunction(this, `${id}-lambda-function`, {
-      functionName: lambdaFunctionName,
-      description: 'Guardrails Validation Service API',
-      role: this.lambdaRole.arn,
-      architectures: ['arm64'],
-      environment: {
-        variables: {
-          APP_ENVIRONMENT: environment,
-          AWS_LWA_READINESS_CHECK_PORT: '8000',
-          LOGLEVEL: 'INFO',
-          NODE_ENV: 'production',
-          NLTK_DATA: '/opt/nltk_data',
-          OPENSEARCH_SECRET: openSearchClusterCredentials.arn,
-          OPENSEARCH_URL: opensearchDomain.endpoint,
-          OTEL_SERVICE_NAME: 'guardrails-api',
-          OTEL_TRACES_EXPORTER: 'otlp',
-          OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST: 'Accept-Encoding,User-Agent,Referer',
-          OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE: 'Last-Modified,Content-Type',
-          OTEL_METRICS_EXPORTER: 'none',
-          OTEL_TRACE_SINK: `https://${traceIngestionPipeline.endpoint}/traces/ingest`,
-          OTEL_METRIC_SINK: `https://${metricIngestionPipeline.endpoint}/metrics/ingest`,
-          OTEL_LOG_SINK: `https://${logIngestionPipeline.endpoint}/logs/ingest`,
-          OPENTELEMETRY_COLLECTOR_CONFIG_FILE: 'app/configs/lambda-collector-config.yml',
-          PGPORT: rdsPostgres.instance.port.toString(),
-          PGDATABASE: rdsPostgres.instance.dbName,
-          PGHOST: rdsPostgres.instance.endpoint,
-          PGUSER: 'postgres',
-          PGPASSWORD_SECRET_ARN: rdsPostgres.secretArn,
-          PORT: '8000',
-          PYTHONUNBUFFERED: '1'
-        }
+      })
+    };
+    
+    taskPolicies.push(
+      pgSecretsManagerAccess
+    )
+    environmentVariables.push(...[
+      {
+        name: 'APP_ENVIRONMENT',
+        value: environment
       },
-      imageUri: `${ecrRepo.repositoryUrl}:latest`,
-      // Because some of the extended dependencies require gcc which over doubles our image size
-      memorySize: 1024,
-      packageType: 'Image',
-      timeout: 60 * 15,
-      vpcConfig: {
-        securityGroupIds: [vpc.defaultSecurityGroupId],
-        subnetIds: subnets.map(s => s.id)
+      {
+        name: 'LOGLEVEL',
+        value: 'INFO'
+      },
+      {
+        name: 'NODE_ENV',
+        value: 'production'
+      },
+      {
+        name: 'NLTK_DATA',
+        value: '/opt/nltk_data'
+      },
+      {
+        name: 'PGPORT',
+        value: rdsPostgres.instance.port.toString()
+      },
+      {
+        name: 'PGDATABASE',
+        value: rdsPostgres.instance.dbName
+      },
+      {
+        name: 'PGHOST',
+        value: rdsPostgres.instance.endpoint
+      },
+      {
+        name: 'PGUSER',
+        value: 'postgres'
+      },
+      {
+        name: 'PGPASSWORD_SECRET_ARN',
+        value: rdsPostgres.secretArn
+      },
+      {
+        name: 'PORT',
+        value: '8000'
+      },
+      {
+        name: 'PYTHONUNBUFFERED',
+        value: '1'
       }
+    ])
+    this._service = new ComputeService(this, `${id}-compute-service`, {
+      ...config,
+      containers: [{
+        image: ecrRepo.repositoryUrl,
+        name: ecrRepo.name,
+        port: 8000,
+        environmentVariables
+      }],
+      memory,
+      taskPolicies
     });
 
-    this._lambdaUrl = new LambdaFunctionUrl(this, `${id}-lambda-url`, {
-      functionName: this.lambdaFunction.functionName,
-      authorizationType: 'NONE'
-    });
-    this._endpoint = this.lambdaUrl.functionUrl;
+    this._logs = this.service.logGroup;
+    this._role = this.service.task.taskRole;
+    this._endpoint = this.service.gateway.api.apiEndpoint;
   }
 
-  public get endpoint (): string {
+  public get endpoint(): string {
     return this._endpoint;
   }
-  public get lambdaLogs (): CloudwatchLogGroup {
-    return this._lambdaLogs;
+  public get logs(): CloudwatchLogGroup {
+    return this._logs;
   }
-  public get lambdaRole (): IamRole {
-    return this._lambdaRole;
+  public get role(): IamRole {
+    return this._role;
   }
-  public get lambdaFunction (): LambdaFunction {
-    return this._lambdaFunction;
-  }
-  public get lambdaUrl (): LambdaFunctionUrl {
-    return this._lambdaUrl;
+  public get service(): ComputeService {
+    return this._service;
   }
 }

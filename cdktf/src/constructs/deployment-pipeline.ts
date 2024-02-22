@@ -38,9 +38,17 @@ export type DeploymentPipelineConfig = {
    */
   ecrRepo: EcrRepository;
   /**
-   * Name of the Lambda Function to deploy changes to.
+   * Arn of the ECS Cluster that hosts the target service.
    */
-  lambdaFunctionName: string;
+  clusterArn: string;
+  /**
+   * Name of the ECS Cluster to deploy changes to.
+   */
+  clusterName: string;
+  /**
+   * Name of the ECS Service to deploy changes to.
+   */
+  serviceName: string;
   /**
    * The private subnets with a NAT to launch the codebuild jobs in.
    */
@@ -49,6 +57,10 @@ export type DeploymentPipelineConfig = {
    * The VPC to launch the codebuild jobs in.
    */
   vpc: Vpc;
+  /**
+   * The number of tasks to set on the service on update.
+   */
+  taskCount?: number;
 };
 
 export class DeploymentPipeline extends Construct {
@@ -68,18 +80,21 @@ export class DeploymentPipeline extends Construct {
     const {
       deployAfterBuild = false,
       ecrRepo,
-      lambdaFunctionName,
+      clusterArn,
+      clusterName,
+      serviceName,
       subnets,
-      vpc
+      vpc,
+      taskCount = 0
     } = deploymentPipelineConfig;
 
     this._deployLogs = new CloudwatchLogGroup(this, `${id}-deploy-logs`, {
-      name: `/${lambdaFunctionName}/${environment}/deploy`,
+      name: `/${serviceName}/${environment}/deploy`,
       retentionInDays: 180
     });
 
     const roleNamePostfix = `-${environment}-deploy-role`;
-    const namePrefix = truncate(`${lambdaFunctionName}`, (64 - roleNamePostfix.length));
+    const namePrefix = truncate(`${serviceName}`, (64 - roleNamePostfix.length));
     const roleName = `${namePrefix}${roleNamePostfix}`;
     this._deployRole = new IamRole(this, `${id}-deploy-role`, {
       name: roleName,
@@ -95,16 +110,16 @@ export class DeploymentPipeline extends Construct {
       }),
       inlinePolicy: [
         {
-          name: 'lambda-deploy-access',
+          name: 'ecs-deploy-access',
           policy: JSON.stringify({
             Version: '2012-10-17',
             Statement: [{
               Effect: 'Allow',
               Action: [
-                'lambda:UpdateFunctionCode'
+                'ecs:UpdateService'
               ],
               Resource: [
-                `arn:aws:lambda:${region}:${accountId}:function:${lambdaFunctionName}`
+                `arn:aws:ecs:${region}:${accountId}:service/${clusterName}/${serviceName}`
               ]
             }]
           })
@@ -184,7 +199,7 @@ export class DeploymentPipeline extends Construct {
           })
         }
       ],
-      description: `Role used by CodeBuild to deploy image updates to the lambda function ${lambdaFunctionName}`
+      description: `Role used by CodeBuild to deploy image updates to the ECS Service ${serviceName}`
     });
 
     /**
@@ -199,7 +214,7 @@ export class DeploymentPipeline extends Construct {
       )
     ).toString().replace(/\$\{/g, '$$${');
     this._deploy = new CodebuildProject(this, `${id}-deploy`, {
-      name: `${lambdaFunctionName}-${environment}-deploy`,
+      name: `${serviceName}-${environment}-deploy`,
       queuedTimeout: 5,
       buildTimeout: 5,
       source: {
@@ -224,8 +239,20 @@ export class DeploymentPipeline extends Construct {
             value: 'latest'
           },
           {
-            name: 'LAMBDA_FUNCTION_NAME',
-            value: lambdaFunctionName
+            name: 'CLUSTER_ARN',
+            value: clusterArn
+          },
+          {
+            name: 'ECS_CLUSTER_NAME',
+            value: clusterName
+          },
+          {
+            name: 'ECS_SERVICE_NAME',
+            value: serviceName
+          },
+          {
+            name: 'TASK_COUNT',
+            value: taskCount.toString()
           }
         ]
       },
@@ -244,7 +271,7 @@ export class DeploymentPipeline extends Construct {
     });
 
     const onPublishServiceRole = new IamRole(this, `${id}-deploy-pub-role`, {
-      name: truncate(`${lambdaFunctionName}-${environment}-deploy-rule-role`, 64),
+      name: truncate(`${serviceName}-${environment}-deploy-rule-role`, 64),
       assumeRolePolicy: JSON.stringify({
         Version: '2012-10-17',
         Statement: [{
@@ -274,11 +301,11 @@ export class DeploymentPipeline extends Construct {
           })
         }
       ],
-      description: `Role used by EventBridge to trigger actions for ${lambdaFunctionName}-${environment}-deploy-rule`
+      description: `Role used by EventBridge to trigger actions for ${serviceName}-${environment}-deploy-rule`
     });
     const onPublishRule = new CloudwatchEventRule(this, `${id}-deploy-pub-rule`, {
-      name: truncate(`${lambdaFunctionName}-${environment}-deploy-rule`, 64),
-      description: `Starts ${lambdaFunctionName}-${environment}-deploy when an image is published to ${ecrRepo.name}`,
+      name: truncate(`${serviceName}-${environment}-deploy-rule`, 64),
+      description: `Starts ${serviceName}-${environment}-deploy when an image is published to ${ecrRepo.name}`,
       isEnabled: deployAfterBuild,
       eventPattern: JSON.stringify({
         'detail-type': [
