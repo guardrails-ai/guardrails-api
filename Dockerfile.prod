@@ -1,7 +1,7 @@
 FROM public.ecr.aws/docker/library/python:3.11.5-slim
 
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
-COPY ./opentelemetry-lambda-layer /opt
+# COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
+# COPY ./opentelemetry-lambda-layer /opt
 
 # Create app directory
 WORKDIR /app
@@ -42,4 +42,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
+# CMD opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
+CMD gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
