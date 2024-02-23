@@ -18,7 +18,7 @@ insecure = not endpoint.startswith("https://")
 provider = trace.get_tracer_provider()
 
 span_processors = provider._active_span_processor._span_processors
-span_processor = span_processors[0]
+span_processor = span_processors[0] if len(span_processors) > 0 else None
 span_exporter = (
     span_processor.span_exporter
     if span_processor is not None
