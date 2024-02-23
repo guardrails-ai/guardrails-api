@@ -64,10 +64,6 @@ export class Application extends Construct {
         value: environment
       },
       {
-        name: 'LOGLEVEL',
-        value: 'INFO'
-      },
-      {
         name: 'NODE_ENV',
         value: 'production'
       },
