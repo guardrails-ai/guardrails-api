@@ -1,3 +1,6 @@
+# Dereference API Spec to JSON
+npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
+
 # Setup unpublished api client
 echo "Building api client..."
 # Speed things up for local testing

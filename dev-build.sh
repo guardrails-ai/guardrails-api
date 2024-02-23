@@ -1,3 +1,5 @@
+npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
+
 docker build \
     -f Dockerfile.dev \
     --progress=plain \

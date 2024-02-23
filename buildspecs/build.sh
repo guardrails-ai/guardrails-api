@@ -10,18 +10,22 @@ defaultEcrEndpoint="${accountId}.dkr.ecr.${region}.amazonaws.com";
 ecrEndpoint="${ECR_ENDPOINT:-$defaultEcrEndpoint}"
 ecrImageUrl="${ecrEndpoint}/${repoName}";
 
+# Dereference API Spec to JSON
+npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
+
+
 # Setup unpublished api client
 echo "Building api client..."
 bash build-sdk.sh
 
 # Building OTEL Collector extension
-if [ -d "opentelemetry-lambda-layer" ]; then
-  rm -rf opentelemetry-lambda-layer
-fi
+# if [ -d "opentelemetry-lambda-layer" ]; then
+#   rm -rf opentelemetry-lambda-layer
+# fi
 
-curl $(aws lambda get-layer-version-by-arn --arn arn:aws:lambda:us-east-1:184161586896:layer:opentelemetry-collector-arm64-0_2_0:1 --query 'Content.Location' --output text) --output otel-collector.zip
-unzip otel-collector.zip -d ./opentelemetry-lambda-layer
-rm otel-collector.zip
+# curl $(aws lambda get-layer-version-by-arn --arn arn:aws:lambda:us-east-1:184161586896:layer:opentelemetry-collector-arm64-0_2_0:1 --query 'Content.Location' --output text) --output otel-collector.zip
+# unzip otel-collector.zip -d ./opentelemetry-lambda-layer
+# rm otel-collector.zip
 
 echo "Performing docker build"
 docker login -u AWS -p $(aws ecr get-login-password --region $region) $ecrEndpoint;

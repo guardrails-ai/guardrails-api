@@ -1,18 +1,10 @@
 from flask import Flask
-from swagger_ui import api_doc
 from flask_cors import CORS
-
-app = Flask(__name__)
-CORS(app)
 
 
 def create_app():
-    api_doc(
-        app,
-        config_path="./open-api-spec.yml",
-        url_prefix="/docs",
-        title="GuardRails API Docs",
-    )
+    app = Flask(__name__)
+    CORS(app)
 
     from src.clients.postgres_client import PostgresClient
 
