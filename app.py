@@ -13,10 +13,12 @@ def create_app():
     self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
     url = urlparse(self_endpoint)
     alt_scheme = 'https'
+    alt_port = 80
     if url.scheme == 'https':
         alt_scheme = 'http'
+        alt_port = 443
     
-    alt_endpoint = f"{alt_scheme}://{url.hostname}"
+    alt_endpoint = f"{alt_scheme}://{url.hostname}:{alt_port}"
     Talisman(
         app,
         force_https=False,
