@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
-# from flask_seasurf import SeaSurf
+from urllib.parse import urlparse
 from flask_talisman import Talisman
 
 
@@ -10,26 +10,36 @@ def create_app():
     app = Flask(__name__)
     CORS(app)
     
-    # host = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
-    # if host.startswith("https://"):
-    #     SeaSurf(app)
+    self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
+    url = urlparse(self_endpoint)
+    alt_scheme = 'https'
+    if url.scheme == 'https':
+        alt_scheme = 'http'
+    
+    alt_endpoint = f"{alt_scheme}://{url.hostname}"
     Talisman(
         app,
         force_https=False,
         content_security_policy={
             "default-src": [
                 "'self'",
+                self_endpoint,
+                alt_endpoint,
                 "https://unpkg.com",
                 "http://www.w3.org"
             ],
             "script-src": [
                 "'self'",
+                self_endpoint,
+                alt_endpoint,
                 "https://unpkg.com",
                 "http://www.w3.org"
             ],
             "img-src": [
                 "'self'",
                 "data:",
+                self_endpoint,
+                alt_endpoint,
                 "https://unpkg.com",
                 "http://www.w3.org"
             ]
