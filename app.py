@@ -1,9 +1,15 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 
 
 def create_app():
     app = Flask(__name__)
+    host = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
+    if host.startswith("https://"):
+        from flask_talisman import Talisman
+        Talisman(app)
+    
     CORS(app)
 
     from src.clients.postgres_client import PostgresClient

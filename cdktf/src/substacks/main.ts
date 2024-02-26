@@ -5,10 +5,8 @@ import {
   subnet,
   vpc as vpcLib
 } from '@cdktf/provider-aws';
-import { BaseConstructConfig, DefaultedBaseConstructConfig } from '../configs';
+import { DefaultedBaseConstructConfig } from '../configs';
 import {
-  Application,
-  ApplicationConfig as ApplicationConfigRequired,
   DeploymentPipeline,
   DeploymentPipelineConfig as DeploymentPipelineConfigRequired,
   RdsPostgres,
@@ -24,6 +22,9 @@ import { EcsCluster } from '@cdktf/provider-aws/lib/ecs-cluster';
 import { Apigatewayv2VpcLink } from '@cdktf/provider-aws/lib/apigatewayv2-vpc-link';
 import { ServiceDiscoveryPrivateDnsNamespace } from '@cdktf/provider-aws/lib/service-discovery-private-dns-namespace';
 import { EcrRepository } from '@cdktf/provider-aws/lib/ecr-repository';
+import { ComputeService, ComputeServiceConfig } from '../constructs/compute-service';
+import { IamRoleInlinePolicy } from '@cdktf/provider-aws/lib/iam-role';
+import { NameValue } from '../constructs/task';
 
 export type RdsPostgresConfig = Omit<RdsPostgresConfigRequired, 'name' | 'subnets' | 'vpc'>
 export type DeploymentPipelineConfig = Omit<
@@ -36,22 +37,60 @@ export type DeploymentPipelineConfig = Omit<
   'serviceName'
 >
 
-export type ApplicationConfig = Omit<
-  ApplicationConfigRequired,
-  'accountId' |
+export type OtelConfig = {
+  /**
+   * Sets the environment variable `OTEL_PYTHON_TRACER_PROVIDER`
+   * Defaults to `sdk_tracer_provider`
+   */
+  pythonTracerProvider?: string;
+  /**
+   * Sets the environment variable `OTEL_SERVICE_NAME`
+   * Defaults to `guardrails-api`
+   */
+  serviceName?: string;
+  /**
+   * Sets the environment variable `OTEL_TRACES_EXPORTER`
+   * Defaults to `otlp`
+   */
+  tracesExporter?: string;
+  /**
+   * Sets the environment variable `OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST`
+   * Defaults to `Accept-Encoding,User-Agent,Referer`
+   */
+  instrumentationHttpCaptureHeadersServerRequest?: string;
+  /**
+   * Sets the environment variable `OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE`
+   * Defaults to `Last-Modified,Content-Type`
+   */
+  instrumentationHttpCaptureHeadersServerResponse?: string;
+  /**
+   * Sets the environment variable `OTEL_METRICS_EXPORTER`
+   * Defaults to `none`
+   */
+  metricsExporter?: string;
+  /**
+   * Sets the environment variable `OTEL_TRACE_SINK`
+   * Defaults to `http://localhost:4317/v1/traces`
+   */
+  traceSink?: string;
+  /**
+   * Sets the environment variable `OTEL_METRIC_SINK`
+   * Defaults to `http://localhost:4317/v1/metrics`
+   */
+  metricsSink?: string;
+  /**
+   * Sets the environment variable `OTEL_LOG_SINK`
+   * Defaults to `http://localhost:4317/v1/logs`
+   */
+  logsSink?: string;
+}
+
+export type ServerConfig = Omit<ComputeServiceConfig,
   'containers' |
-  'ecrRepo' |
-  'cluster' |
-  'subnets' |
-  'vpc' |
-  'vpcLink' |
-  'serviceDiscoveryNamespace' |
-  'serviceName' |
-  'rdsPostgres' |
-  'region'
+  'serviceName'
 >
 
-export type GuardrailsValidationServiceSubStackConfig = BaseConstructConfig & ApplicationConfig & {
+export type GuardrailsValidationServiceSubStackConfig = ServerConfig & {
   deploymentPipelineConfig: DeploymentPipelineConfig;
   ecrRepo: EcrRepository;
   rdsPostgresConfig?: RdsPostgresConfig;
@@ -60,13 +99,14 @@ export type GuardrailsValidationServiceSubStackConfig = BaseConstructConfig & Ap
   cluster: EcsCluster;
   vpcLink: Apigatewayv2VpcLink;
   serviceDiscoveryNamespace: ServiceDiscoveryPrivateDnsNamespace;
-  taskCount?: number;
+  otelConfig?: OtelConfig;
+  environmentVariables?: NameValue[];
 }
 
 export class GuardrailsValidationServiceSubStack extends Construct {
   private _pgDatabase: RdsPostgres;
   private _deploymentPipeline: DeploymentPipeline;
-  private _application: Application;
+  private _server: ComputeService;
 
   constructor (scope: Construct, id: string, config: GuardrailsValidationServiceSubStackConfig) {
     super(scope, id);
@@ -86,8 +126,25 @@ export class GuardrailsValidationServiceSubStack extends Construct {
       region = defaultRegion,
       subnets,
       vpc,
-      profile
+      profile,
+      environmentVariables = [],
+      taskPolicies = [],
+      memory = 1024,
+      otelConfig = {}
     } = config;
+
+
+    const {
+      pythonTracerProvider = 'sdk_tracer_provider',
+      serviceName: otelServiceName = 'guardrails-api',
+      tracesExporter = 'otlp',
+      instrumentationHttpCaptureHeadersServerRequest = 'Accept-Encoding,User-Agent,Referer',
+      instrumentationHttpCaptureHeadersServerResponse = 'Last-Modified,Content-Type',
+      metricsExporter = 'none',
+      traceSink = 'http://localhost:4317/v1/traces',
+      metricsSink = 'http://localhost:4317/v1/metrics',
+      logsSink = 'http://localhost:4317/v1/logs',
+    } = otelConfig;
     
     const baseConfig: DefaultedBaseConstructConfig = {
       accountId,
@@ -120,12 +177,133 @@ export class GuardrailsValidationServiceSubStack extends Construct {
 
     this._pgDatabase = new RdsPostgres(this, `${id}-pg`, rdsPostgresConfigRequired)
 
-    const applicationConfig: ApplicationConfigRequired = {
-      ...config,
-      serviceName,
-      rdsPostgres: this._pgDatabase
+    const pgSecretsManagerAccess: IamRoleInlinePolicy = {
+      name: 'pg-secrets-manager-access',
+      policy: JSON.stringify({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: [
+            'secretsmanager:GetSecretValue'
+          ],
+          Resource: [
+            this.pgDatabase.secretArn
+          ]
+        }]
+      })
     };
-    this._application = new Application(this, `${id}-app`, applicationConfig);
+    
+    taskPolicies.push(
+      pgSecretsManagerAccess
+    );
+    const mandatoryEnvVars = [
+      {
+        name: 'APP_ENVIRONMENT',
+        value: environment
+      },
+      {
+        name: 'NODE_ENV',
+        value: 'production'
+      },
+      {
+        name: 'NLTK_DATA',
+        value: '/opt/nltk_data'
+      },
+      {
+        name: 'PGPORT',
+        value: this.pgDatabase.instance.port.toString()
+      },
+      {
+        name: 'PGDATABASE',
+        value: this.pgDatabase.instance.dbName
+      },
+      {
+        name: 'PGHOST',
+        value: this.pgDatabase.instance.endpoint
+      },
+      {
+        name: 'PGUSER',
+        value: 'postgres'
+      },
+      {
+        name: 'PGPASSWORD_SECRET_ARN',
+        value: this.pgDatabase.secretArn
+      },
+      {
+        name: 'PORT',
+        value: '8000'
+      },
+      {
+        name: 'AWS_EXECUTION_ENV',
+        value: 'AWS_ECS_Fargate'
+      }
+    ];
+    const optionalEnvVars = [
+      {
+        name: 'PYTHONUNBUFFERED',
+        value: '1'
+      },
+      {
+        name: 'OTEL_PYTHON_TRACER_PROVIDER',
+        value: pythonTracerProvider
+      },
+      {
+        name: 'OTEL_SERVICE_NAME',
+        value: otelServiceName
+      },
+      {
+        name: 'OTEL_TRACES_EXPORTER',
+        value: tracesExporter
+      },
+      {
+        name: 'OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST',
+        value: instrumentationHttpCaptureHeadersServerRequest
+      },
+      {
+        name: 'OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE',
+        value: instrumentationHttpCaptureHeadersServerResponse
+      },
+      {
+        name: 'OTEL_METRICS_EXPORTER',
+        value: metricsExporter
+      },
+      {
+        name: 'OTEL_TRACE_SINK',
+        value: traceSink
+      },
+      {
+        name: 'OTEL_METRIC_SINK',
+        value: metricsSink
+      },
+      {
+        name: 'OTEL_LOG_SINK',
+        value: logsSink
+      },
+      {
+        name: 'LOG_LEVEL',
+        value: 'DEBUG'
+      }
+    ];
+    
+    const mandatoryEnvVarNames: string[] = mandatoryEnvVars.map(ev => ev.name);
+    const userEnvVarNames: string[] = environmentVariables.map(ev => ev.name);
+    mandatoryEnvVars.push(
+      ...environmentVariables.filter((envVar: NameValue) => !mandatoryEnvVarNames.includes(envVar.name)),
+      ...optionalEnvVars.filter((envVar: NameValue) => !userEnvVarNames.includes(envVar.name))
+    );
+    environmentVariables;
+    this._server = new ComputeService(this, `${id}-compute-service`, {
+      ...config,
+      containers: [{
+        image: ecrRepo.repositoryUrl,
+        name: ecrRepo.name,
+        port: 8000,
+        environmentVariables: mandatoryEnvVars
+      }],
+      memory,
+      taskPolicies,
+      serviceName
+    });
   }
 
   public get pgDatabase(): RdsPostgres {
@@ -134,7 +312,7 @@ export class GuardrailsValidationServiceSubStack extends Construct {
   public get deploymentPipeline (): DeploymentPipeline {
     return this._deploymentPipeline;
   }
-  public get application (): Application {
-    return this._application;
+  public get server (): ComputeService {
+    return this._server;
   }
 }
