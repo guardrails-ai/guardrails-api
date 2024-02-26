@@ -3,7 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_seasurf import SeaSurf
-from flask_talisman import Talisman
+# from flask_talisman import Talisman
 
 
 def create_app():
@@ -11,15 +11,17 @@ def create_app():
     CORS(app)
     
     host = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
-    print("host: ", host)
     if host.startswith("https://"):
-        print("Adding additional middleware")
         SeaSurf(app)
-        Talisman(app)
-        app.wsgi_app = ProxyFix(
-            app.wsgi_app,
-            x_for=1
-        )
+        # Talisman(app, force_https_permanent=True)
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=1,
+        x_proto=1,
+        x_host=1,
+        x_port=1,
+        x_prefix=1
+    )
     
     
 

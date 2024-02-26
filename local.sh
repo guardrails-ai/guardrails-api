@@ -17,8 +17,19 @@ export PYTHONUNBUFFERED=1
 export LOGLEVEL=INFO
 export GUARDRAILS_PROCESS_COUNT=1
 export SELF_ENDPOINT=http://localhost:8000
+# export SELF_ENDPOINT=https://localhost:8000
 
 npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
 
+# For running https locally
+# mkdir -p ~/certificates
+# if [ ! -f ~/certificates/local.key ]; then
+#     openssl req  -nodes -new -x509  -keyout ~/certificates/local.key -out ~/certificates/local.cert
+# fi
+
+
+
 # opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
+# For running https locally
+# gunicorn --keyfile ~/certificates/local.key --certfile ~/certificates/local.cert --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
 gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
