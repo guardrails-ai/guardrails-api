@@ -1,5 +1,6 @@
 import os
 import json
+import flask
 from string import Template
 from flask import Blueprint
 from sqlalchemy import text
@@ -73,7 +74,7 @@ def docs():
 <body>
 <div id="swagger-ui"></div>
 <script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-bundle.js" crossorigin></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   window.onload = () => {
     window.ui = SwaggerUIBundle({
       url: '${apiDocUrl}',
@@ -84,4 +85,4 @@ def docs():
 </body>
 </html>""").safe_substitute(apiDocUrl=f"{host}/api-docs")
     
-    return swagger_ui
+    return flask.render_template_string(swagger_ui)

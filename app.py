@@ -3,7 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 # from flask_seasurf import SeaSurf
-# from flask_talisman import Talisman
+from flask_talisman import Talisman
 
 
 def create_app():
@@ -13,7 +13,29 @@ def create_app():
     # host = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
     # if host.startswith("https://"):
     #     SeaSurf(app)
-    #     Talisman(app, force_https_permanent=True)
+    Talisman(
+        app,
+        force_https=False,
+        content_security_policy={
+            "default-src": [
+                "'self'",
+                "https://unpkg.com",
+                "http://www.w3.org"
+            ],
+            "script-src": [
+                "'self'",
+                "https://unpkg.com",
+                "http://www.w3.org"
+            ],
+            "img-src": [
+                "'self'",
+                "data:",
+                "https://unpkg.com",
+                "http://www.w3.org"
+            ]
+        },
+        content_security_policy_nonce_in=["script-src"]
+    )
     app.wsgi_app = ProxyFix(
         app.wsgi_app,
         x_for=1,
