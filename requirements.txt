@@ -14,7 +14,7 @@ numpy
 faiss-cpu
 boto3
 gunicorn
-psycopg2
+psycopg2-binary
 # Downgrades
 # Remove once guardrails is upgraded
 pydantic==1.10.9
