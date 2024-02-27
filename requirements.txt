@@ -11,6 +11,8 @@ flask_cors
 numpy
 faiss-cpu
 boto3
+gunicorn
+psycopg2
 # Downgrades
 # Remove once guardrails is upgraded
 pydantic==1.10.9
