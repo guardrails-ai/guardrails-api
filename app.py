@@ -12,7 +12,9 @@ class ReverseProxied(object):
 
     def __call__(self, environ, start_response):
         self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
+        print("SELF_ENDPOINT is ", self_endpoint)
         url = urlparse(self_endpoint)
+        print("setting environ['wsgi.url_scheme'] to ", url.scheme)
         environ['wsgi.url_scheme'] = url.scheme
         return self.app(environ, start_response)
 
