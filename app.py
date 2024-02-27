@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, request, Response
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from urllib.parse import urlparse
@@ -8,6 +8,16 @@ from flask_talisman import Talisman
 
 def create_app():
     app = Flask(__name__)
+    
+    @app.before_request
+    def trace_requests_before():
+        print(f"Request {request.endpoint} received!")
+
+    @app.after_request
+    def trace_requests_after(response: Response):
+        print(f"Responding to request with status: {response.status}")
+        return response
+    
     app.config["PREFERRED_URL_SCHEME"] = "https"
     CORS(app)
 
