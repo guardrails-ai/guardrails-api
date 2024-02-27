@@ -12,6 +12,9 @@ install-dev:
 lock:
 	pip freeze --exclude guardrails-ai --exclude guard-rails-api-client > requirements-lock.txt
 
+install-lock:
+	pip install -r requirements-lock.txt
+
 build-sdk:
 	bash build-sdk.sh
 
