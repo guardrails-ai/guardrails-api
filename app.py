@@ -21,7 +21,7 @@ class ReverseProxied(object):
 
 def create_app():
     app = Flask(__name__)
-    
+
     @app.before_request
     def trace_requests_before():
         print(f"Request {request.endpoint or request.url or request.path} received!")
@@ -30,7 +30,7 @@ def create_app():
     def trace_requests_after(response: Response):
         print(f"Responding to request with status: {response.status}")
         return response
-    
+
     app.config["PREFERRED_URL_SCHEME"] = "https"
     ReverseProxied(app)
     CORS(app)

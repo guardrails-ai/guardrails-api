@@ -83,7 +83,5 @@ def docs():
 </script>
 </body>
 </html>""").safe_substitute(apiDocUrl=f"{host}/api-docs")  # noqa
-    
-# <script nonce="{{ csp_nonce() }}">
 
     return flask.render_template_string(swagger_ui)

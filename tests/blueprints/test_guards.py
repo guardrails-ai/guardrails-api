@@ -19,7 +19,7 @@ def test_guards_get(mocker):
     response = guards()
 
     assert guards_bp.route_call_count == 3
-    assert guards_bp.routes == ["/", "/<guard_name>", "/<guard_name>/validate"]
+    assert guards_bp.routes == ["", "/<guard_name>", "/<guard_name>/validate"]
     
     assert get_guards_spy.call_count == 1
 

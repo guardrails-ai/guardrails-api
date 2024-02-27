@@ -19,7 +19,7 @@ guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 guard_client = GuardClient()
 
 
-@guards_bp.route("/", methods=["GET", "POST"])
+@guards_bp.route("", methods=["GET", "POST"])
 @handle_error
 @gather_request_metrics
 def guards():
