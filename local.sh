@@ -18,6 +18,7 @@ export OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST="Accept-Encoding
 export OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE="Last-Modified,Content-Type"
 export OTEL_METRICS_EXPORTER=none #otlp #,console
 
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 export OTEL_EXPORTER_OTLP_ENDPOINT=https://hty0gc1ok3.execute-api.us-east-1.amazonaws.com
 # export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 
@@ -43,4 +44,4 @@ npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json 
 # opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
 # For running https locally
 # gunicorn --keyfile ~/certificates/local.key --certfile ~/certificates/local.cert --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
-gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
+opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"

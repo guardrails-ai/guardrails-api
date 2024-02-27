@@ -1,8 +1,10 @@
+import os
 import json
 from flask import Blueprint, request
 from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.utils.logs_utils import GuardLogs
+from opentelemetry.trace import get_tracer
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
@@ -12,8 +14,6 @@ from src.utils.gather_request_metrics import gather_request_metrics
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
 
-
-from src.modules.otel_tracer import otel_tracer
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 guard_client = GuardClient()
@@ -93,6 +93,9 @@ def validate(guard_name: str):
     prompt_params = payload.pop("promptParams", None)
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
+
+    service_name = os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
+    otel_tracer = get_tracer(service_name)
 
     with otel_tracer.start_as_current_span(
         f"validate-{decoded_guard_name}"

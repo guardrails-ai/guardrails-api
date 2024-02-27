@@ -1,9 +1,10 @@
 flask
 sqlalchemy
 lxml
-opentelemetry-sdk==1.22.0
-opentelemetry-exporter-otlp-proto-grpc==1.22.0
-opentelemetry-exporter-otlp-proto-http==1.22.0
+opentelemetry-distro==0.41b0
+opentelemetry-sdk==1.20.0
+opentelemetry-exporter-otlp-proto-grpc==1.20.0
+opentelemetry-exporter-otlp-proto-http==1.20.0
 flask_sqlalchemy
 werkzeug
 jsonschema

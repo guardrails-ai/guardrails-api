@@ -69,6 +69,11 @@ export type OtelConfig = {
    */
   metricsExporter?: string;
   /**
+   * Sets the environment variable `OTEL_EXPORTER_OTLP_PROTOCOL`
+   * Defaults to `http/protobuf`
+   */
+  otlpProtocol?: string;
+  /**
    * Sets the environment variable `OTEL_EXPORTER_OTLP_ENDPOINT`
    * Defaults to `http://localhost:4317`
    */
@@ -146,7 +151,8 @@ export class GuardrailsValidationServiceSubStack extends Construct {
       instrumentationHttpCaptureHeadersServerRequest = 'Accept-Encoding,User-Agent,Referer',
       instrumentationHttpCaptureHeadersServerResponse = 'Last-Modified,Content-Type',
       metricsExporter = 'none',
-      otlpEndpoint = 'http://localhost:4317',
+      otlpProtocol = 'http/protobuf',
+      otlpEndpoint = 'http://localhost:4317/v1/traces',
       traceSink = 'http://localhost:4317/v1/traces',
       metricsSink = 'http://localhost:4317/v1/metrics',
       logsSink = 'http://localhost:4317/v1/logs',
@@ -272,6 +278,10 @@ export class GuardrailsValidationServiceSubStack extends Construct {
       {
         name: 'OTEL_METRICS_EXPORTER',
         value: metricsExporter
+      },
+      {
+        name: 'OTEL_EXPORTER_OTLP_PROTOCOL',
+        value: otlpProtocol
       },
       {
         name: 'OTEL_EXPORTER_OTLP_ENDPOINT',

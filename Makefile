@@ -1,7 +1,7 @@
 # Installs production dependencies
 install:
 	pip install -r requirements.txt;
-	# opentelemetry-bootstrap -a install
+	opentelemetry-bootstrap -a install
 	pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry;
 
 # Installs development dependencies
