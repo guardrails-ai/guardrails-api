@@ -11,24 +11,13 @@ class ReverseProxied(object):
 
     def __call__(self, environ, start_response):
         self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
-        print("SELF_ENDPOINT is ", self_endpoint)
         url = urlparse(self_endpoint)
-        print("setting environ['wsgi.url_scheme'] to ", url.scheme)
         environ['wsgi.url_scheme'] = url.scheme
         return self.app(environ, start_response)
 
 
 def create_app():
     app = Flask(__name__)
-
-    @app.before_request
-    def trace_requests_before():
-        print(f"Request {request.endpoint or request.url or request.path} received!")
-
-    @app.after_request
-    def trace_requests_after(response: Response):
-        print(f"Responding to request with status: {response.status}")
-        return response
 
     app.config['APPLICATION_ROOT'] = '/'
     app.config["PREFERRED_URL_SCHEME"] = "https"

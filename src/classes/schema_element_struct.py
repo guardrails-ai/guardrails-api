@@ -203,9 +203,6 @@ class SchemaElementStruct:
             if attr_key.startswith("on-fail") and attr_key != "on-fail":
                 on_fail_method = xml.get(attr_key)
                 on_fail_tag = attr_key
-                print(
-                    f"appending to on_fails - ${on_fail_tag} ${on_fail_method}"
-                )
                 on_fails.append(
                     {"validatorTag": on_fail_tag, "method": on_fail_method}
                 )

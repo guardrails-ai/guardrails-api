@@ -46,8 +46,6 @@ def health_check():
 def api_docs():
     global cached_api_spec
     if not cached_api_spec:
-        print("API spec is not cached!")
-        print("Loading from file...")
         with open('./open-api-spec.json') as api_spec_file:
             cached_api_spec = json.loads(api_spec_file.read())
     return json.dumps(cached_api_spec)
