@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, Response
+from flask import Flask
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from urllib.parse import urlparse

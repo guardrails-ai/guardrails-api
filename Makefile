@@ -1,9 +1,22 @@
+# Installs production dependencies
+install:
+	pip install -r requirements.txt;
+	opentelemetry-bootstrap -a install
+	pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry;
+
+# Installs development dependencies
+install-dev:
+	make install
+	pip install -r requirements-dev.txt;
+
+lock:
+	pip freeze > requirements-lock.txt
+
 build-sdk:
 	bash build-sdk.sh
 
 build:
-	pip install -r requirements.txt;
-	pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry;
+	make install
 	make build-sdk;
 	pip install ./guard-rails-api-client
 
@@ -18,9 +31,6 @@ env:
 
 format:
 	black -l 80 ./src app.py wsgi.py
-
-install:
-	pip install -r requirements.txt
 
 lint:
 	flake8 --count ./src app.py wsgi.py

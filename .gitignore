@@ -21,3 +21,5 @@ guardrails
 *.env
 opentelemetry-lambda-layer
 open-api-spec.json
+.python-version
+requirements-lock-old.txt

@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/python:3.11.5-slim
+FROM public.ecr.aws/docker/library/python:3.11.6-slim
 
 # COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
 # COPY ./opentelemetry-lambda-layer /opt
@@ -35,7 +35,7 @@ RUN pip install -r requirements.txt
 RUN python -m nltk.downloader -d /opt/nltk_data punkt
 
 # Freeze dependencies
-RUN pip freeze > requirements.txt
+RUN pip freeze > requirements-lock.txt
 
 # Copy the whole folder inside the Image filesystem
 COPY . .

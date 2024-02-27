@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/python:3.11.5-slim
+FROM public.ecr.aws/docker/library/python:3.11.6-slim
 
 # Create app directory
 WORKDIR /app
@@ -34,7 +34,7 @@ RUN pip install -r requirements.txt
 RUN python -m nltk.downloader -d /opt/nltk_data punkt
 
 # Freeze dependencies
-RUN pip freeze > requirements.txt
+RUN pip freeze > requirements-lock.txt
 
 # Copy the whole folder inside the Image filesystem
 COPY . .
