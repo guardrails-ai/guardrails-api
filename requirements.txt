@@ -53,7 +53,7 @@ faiss-cpu==1.7.4
 fastjsonschema==2.18.1
 filelock==3.12.2
 flake8==6.0.0
-Flask==2.3.2
+Flask==3.0.2
 Flask-Cors==4.0.0
 Flask-SeaSurf==1.1.1
 Flask-SQLAlchemy==3.0.5

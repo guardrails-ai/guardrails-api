@@ -37,7 +37,7 @@ def test_home(mocker):
     response = health_check()
     
     assert root_bp.name == "root"
-    assert root_bp.routes == ["/", "/health-check"]
+    assert root_bp.routes == ["/", "/health-check", "/api-docs", "/docs"]
     text.assert_called_once_with("SELECT count(datid) FROM pg_stat_activity;")
     assert mock_pg.db.session.queries == ["SELECT count(datid) FROM pg_stat_activity;"]
         

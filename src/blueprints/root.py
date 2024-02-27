@@ -50,7 +50,6 @@ def api_docs():
         print("Loading from file...")
         with open('./open-api-spec.json') as api_spec_file:
             cached_api_spec = json.loads(api_spec_file.read())
-            
     return json.dumps(cached_api_spec)
 
 
@@ -83,6 +82,6 @@ def docs():
   };
 </script>
 </body>
-</html>""").safe_substitute(apiDocUrl=f"{host}/api-docs")
-    
+</html>""").safe_substitute(apiDocUrl=f"{host}/api-docs")  # noqa
+
     return flask.render_template_string(swagger_ui)

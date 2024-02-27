@@ -25,8 +25,12 @@
 #     BatchLogRecordProcessor(otlp_logs_exporter)
 # )
 # # For Debugging
-# # logger_provider.add_log_record_processor(SimpleLogRecordProcessor(otlp_logs_exporter))
-# # logger_provider.add_log_record_processor(SimpleLogRecordProcessor(console_log_exporter))
+# # logger_provider.add_log_record_processor(
+#     SimpleLogRecordProcessor(otlp_logs_exporter)
+# )
+# # logger_provider.add_log_record_processor(
+#     SimpleLogRecordProcessor(console_log_exporter)
+# )
 # log_level = os.environ.get("LOGLEVEL", logging.INFO)
 # logging.root.setLevel(log_level)
 

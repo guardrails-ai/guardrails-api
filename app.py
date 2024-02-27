@@ -8,8 +8,9 @@ from flask_talisman import Talisman
 
 def create_app():
     app = Flask(__name__)
+    app.config["PREFERRED_URL_SCHEME"] = "https"
     CORS(app)
-    
+
     self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
     url = urlparse(self_endpoint)
     alt_scheme = 'https'
@@ -17,8 +18,9 @@ def create_app():
     if url.scheme == 'https':
         alt_scheme = 'http'
         alt_port = 443
-    
-    alt_endpoint = f"{alt_scheme}://{url.hostname}:{alt_port}"
+
+    alt_endpoint = f"{alt_scheme}://{url.hostname}"
+    alt_endpoint_w_port = f"{alt_scheme}://{url.hostname}:{alt_port}"
     Talisman(
         app,
         force_https=False,
@@ -27,6 +29,7 @@ def create_app():
                 "'self'",
                 self_endpoint,
                 alt_endpoint,
+                alt_endpoint_w_port,
                 "https://unpkg.com",
                 "http://www.w3.org"
             ],
@@ -34,6 +37,7 @@ def create_app():
                 "'self'",
                 self_endpoint,
                 alt_endpoint,
+                alt_endpoint_w_port,
                 "https://unpkg.com",
                 "http://www.w3.org"
             ],
@@ -42,6 +46,7 @@ def create_app():
                 "data:",
                 self_endpoint,
                 alt_endpoint,
+                alt_endpoint_w_port,
                 "https://unpkg.com",
                 "http://www.w3.org"
             ]
@@ -56,8 +61,6 @@ def create_app():
         # x_port=1,
         # x_prefix=1
     )
-    
-    
 
     from src.clients.postgres_client import PostgresClient
 
