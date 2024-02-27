@@ -69,17 +69,22 @@ export type OtelConfig = {
    */
   metricsExporter?: string;
   /**
-   * Sets the environment variable `OTEL_TRACE_SINK`
+   * Sets the environment variable `OTEL_EXPORTER_OTLP_ENDPOINT`
+   * Defaults to `http://localhost:4317`
+   */
+  otlpEndpoint?: string;
+  /**
+   * Sets the environment variable `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`
    * Defaults to `http://localhost:4317/v1/traces`
    */
   traceSink?: string;
   /**
-   * Sets the environment variable `OTEL_METRIC_SINK`
+   * Sets the environment variable `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`
    * Defaults to `http://localhost:4317/v1/metrics`
    */
   metricsSink?: string;
   /**
-   * Sets the environment variable `OTEL_LOG_SINK`
+   * Sets the environment variable `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`
    * Defaults to `http://localhost:4317/v1/logs`
    */
   logsSink?: string;
@@ -141,6 +146,7 @@ export class GuardrailsValidationServiceSubStack extends Construct {
       instrumentationHttpCaptureHeadersServerRequest = 'Accept-Encoding,User-Agent,Referer',
       instrumentationHttpCaptureHeadersServerResponse = 'Last-Modified,Content-Type',
       metricsExporter = 'none',
+      otlpEndpoint = 'http://localhost:4317',
       traceSink = 'http://localhost:4317/v1/traces',
       metricsSink = 'http://localhost:4317/v1/metrics',
       logsSink = 'http://localhost:4317/v1/logs',
@@ -268,15 +274,19 @@ export class GuardrailsValidationServiceSubStack extends Construct {
         value: metricsExporter
       },
       {
-        name: 'OTEL_TRACE_SINK',
+        name: 'OTEL_EXPORTER_OTLP_ENDPOINT',
+        value: otlpEndpoint
+      },
+      {
+        name: 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
         value: traceSink
       },
       {
-        name: 'OTEL_METRIC_SINK',
+        name: 'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
         value: metricsSink
       },
       {
-        name: 'OTEL_LOG_SINK',
+        name: 'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
         value: logsSink
       },
       {

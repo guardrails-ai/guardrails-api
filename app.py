@@ -3,6 +3,8 @@ from flask import Flask
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from urllib.parse import urlparse
+from guardrails import configure_logging
+# from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
 
 class ReverseProxied(object):
@@ -31,6 +33,11 @@ def create_app():
         x_host=1,
         x_port=1
     )
+
+    guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
+    configure_logging(log_level=guardrails_log_level)
+
+    # FlaskInstrumentor().instrument_app(app)
 
     from src.clients.postgres_client import PostgresClient
 
