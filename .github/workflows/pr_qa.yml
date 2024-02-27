@@ -18,6 +18,7 @@ jobs:
       - name: Quality Checks
         run: |
           python -m pip install --upgrade pip;
+          make install-dev
           make build;
           make qa;
           
