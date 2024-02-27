@@ -12,6 +12,7 @@ referencing
 flask_cors
 numpy
 faiss-cpu
+nltk
 boto3
 gunicorn
 psycopg2-binary
