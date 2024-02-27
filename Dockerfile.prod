@@ -22,7 +22,7 @@ RUN apt-get install -y git curl gcc
 COPY ./guard-rails-api-client ./guard-rails-api-client
 
 # Copy the requirements file
-COPY requirements.txt .
+COPY requirements*.txt .
 
 RUN pip install ./guard-rails-api-client
 RUN pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry
