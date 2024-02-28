@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from operator import attrgetter
 from lxml.etree import _Element, SubElement
 from guardrails.datatypes import DataType, registry
-from guardrails.schema import FormatAttr
+from guardrails.validatorsattr import ValidatorsAttr
 from src.classes.schema_element_struct import SchemaElementStruct
 from src.classes.element_stub import ElementStub
 from src.utils.pluck import pluck
@@ -65,7 +65,7 @@ class DataTypeStruct:
 
         format = "; ".join(self.formatters)
         plugins = "; ".join(self.plugins) if self.plugins is not None else None
-        format_attr = FormatAttr(format, element, plugins)
+        format_attr = ValidatorsAttr(format, element, plugins)
         # TODO: Pass tracer here if to_rail is ever used
         format_attr.get_validators(self.element.strict)
 
