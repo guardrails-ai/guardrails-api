@@ -413,9 +413,9 @@ components:
         output:
           type: string
         parsedOutput:
-          type: object
-          properties: {}
-          additionalProperties: {}
+          oneOf:
+            - $ref: "#/components/schemas/AnyObject"
+            - type: string
         prompt:
           type: object
           properties:
@@ -428,9 +428,9 @@ components:
             properties: {}
             additionalProperties: {}
         validatedOutput:
-          type: object
-          properties: {}
-          additionalProperties: {}
+          oneOf:
+            - $ref: "#/components/schemas/AnyObject"
+            - type: string
       additionalProperties: {}
     Reask:
       type: object

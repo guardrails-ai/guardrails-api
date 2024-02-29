@@ -263,7 +263,7 @@ class DataTypeStruct:
             element = parent
             elem_attribs: ElementStub = self.element.to_element()
             for k, v in elem_attribs.attrib.items():
-                element.set(k, v)
+                element.set(k, str(v))
         else:
             element = self.element.to_element()
 

@@ -1,5 +1,4 @@
-from typing import List, Union, Dict
-from guardrails import Instructions
+from typing import Union, Dict
 from guardrails.classes.generic import Stack
 from guardrails.classes.history import Call
 from guardrails.utils.reask_utils import ReAsk
@@ -22,7 +21,7 @@ class ValidationOutput:
                         "instructions": i.inputs.instructions.source
                         if i.inputs.instructions is not None
                         else None,
-                        "output": i.outputs.raw_output,
+                        "output": i.outputs.raw_output or i.outputs.llm_response_info.output,
                         "parsedOutput": i.parsed_output,
                         "prompt": {
                             "source": i.inputs.prompt.source

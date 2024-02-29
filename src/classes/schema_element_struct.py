@@ -180,9 +180,13 @@ class SchemaElementStruct:
         name = xml.get("name")
         description = xml.get("description")
         strict = None
-        strict_tag = xml.get("strict")
+        strict_tag = xml.get("strict", "False")
         if strict_tag:
-            strict = True if strict_tag == "true" else False
+            strict = (
+                True
+                if strict_tag.lower() == "true"
+                else False
+            )
         date_format = xml.get("date-format")
         time_format = xml.get("time-format")
         on_fail = xml.get("on-fail")
