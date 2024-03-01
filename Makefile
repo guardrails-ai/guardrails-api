@@ -2,7 +2,6 @@
 install:
 	pip install -r requirements.txt;
 	opentelemetry-bootstrap -a install
-	pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry;
 
 # Installs development dependencies
 install-dev:
@@ -10,18 +9,13 @@ install-dev:
 	pip install -r requirements-dev.txt;
 
 lock:
-	pip freeze --exclude guardrails-ai --exclude guard-rails-api-client > requirements-lock.txt
+	pip freeze > requirements-lock.txt
 
 install-lock:
 	pip install -r requirements-lock.txt
 
-build-sdk:
-	bash build-sdk.sh
-
 build:
 	make install
-	make build-sdk;
-	pip install ./guard-rails-api-client
 
 dev:
 	bash ./dev.sh

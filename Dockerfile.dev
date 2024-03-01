@@ -15,17 +15,17 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN apt-get update
 RUN apt-get install -y gcc
 
-COPY ./guardrails-sdk ./guardrails-sdk
+# COPY ./guardrails-sdk ./guardrails-sdk
 
-COPY ./guard-rails-api-client ./guard-rails-api-client
+# COPY ./guard-rails-api-client ./guard-rails-api-client
 
-COPY ./guardrails-custom-validators ./guardrails-custom-validators
+# COPY ./guardrails-custom-validators ./guardrails-custom-validators
 
 # Copy the requirements file
 COPY requirements*.txt .
 
-RUN pip install ./guardrails-sdk
-RUN pip install ./guard-rails-api-client
+# RUN pip install ./guardrails-sdk
+# RUN pip install ./guard-rails-api-client
 
 # Install app dependencies
 RUN pip install -r requirements-lock.txt
