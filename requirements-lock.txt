@@ -28,8 +28,8 @@ frozenlist==1.4.1
 googleapis-common-protos==1.62.0
 griffe==0.36.9
 grpcio==1.62.0
-guard-rails-api-client @ git+https://github.com/guardrails-ai/guardrails-api-client.git@c3d8a6d370b56992fb20b588b18c3ea8de53c89e#subdirectory=guard-rails-api-client
-guardrails-ai @ git+https://github.com/guardrails-ai/guardrails-internal.git@d21dbc769f13b5913945167fd65ec652e0ef4223
+guard-rails-api-client @ git+https://github.com/guardrails-ai/guardrails-api-client.git@try-generating-sdk-in-hook#subdirectory=guard-rails-api-client
+guardrails-ai @ git+https://github.com/guardrails-ai/guardrails-internal.git@gaas-additions
 gunicorn==21.2.0
 h11==0.14.0
 httpcore==0.17.3
