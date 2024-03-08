@@ -45,7 +45,7 @@ test:
 
 test-cov:
 	coverage run --source=./src -m pytest ./tests
-	coverage report --fail-under=0 ## TODO: Update with real coverage threshold after tests are backfilled
+	coverage report --fail-under=70
 
 view-test-cov:
 	coverage run --source=./src -m pytest ./tests

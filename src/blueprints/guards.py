@@ -1,9 +1,9 @@
 import os
 import json
+from string import Template
 from flask import Blueprint, request
 from urllib.parse import unquote_plus
 from guardrails import Guard
-from guardrails.classes.history import Call, Iteration
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import get_tracer
 from src.classes.guard_struct import GuardStruct
@@ -91,7 +91,7 @@ def validate(guard_name: str):
 
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
-    prompt_params = payload.pop("promptParams", None)
+    prompt_params = payload.pop("promptParams", {})
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
 
@@ -152,24 +152,17 @@ def validate(guard_name: str):
             result.raw_llm_output
         )
 
-        prompt = (
-            guard.rail.prompt.format(**(prompt_params or {})).source
-            if guard.rail.prompt
-            else None
-        )
+        prompt = guard.history.last.inputs.prompt
         if prompt:
+            prompt = Template(prompt).safe_substitute(**prompt_params)
             validate_span.set_attribute("prompt", prompt)
 
-        instructions = (
-            guard.rail.instructions.format(**(prompt_params or {})).source
-            if guard.rail.instructions
-            else None
-        )
+        instructions = guard.history.last.inputs.instructions
         if instructions:
+            instructions = Template(instructions).safe_substitute(**prompt_params)
             validate_span.set_attribute("instructions", instructions)
 
-        validation_status = "pass" if result is True else "fail"
-        validate_span.set_attribute("validation_status", validation_status)
+        validate_span.set_attribute("validation_status", guard.history.last.status)
         validate_span.set_attribute("raw_llm_ouput", result.raw_llm_output)
 
         # Use the serialization from the class instead of re-writing it
@@ -182,7 +175,11 @@ def validate(guard_name: str):
 
         validate_span.set_attribute("tokens_consumed", guard.history.last.tokens_consumed)
 
-        num_of_reasks = guard.history.last.iterations.length - 1
+        num_of_reasks = (
+            guard.history.last.iterations.length - 1
+            if guard.history.last.iterations.length > 0
+            else 0
+        )
         validate_span.set_attribute("num_of_reasks", num_of_reasks)
 
     cleanup_environment(guard_struct)
