@@ -6,6 +6,7 @@ imageName="${IMAGE_NAME:-validation-service}";
 repoName="${ECR_REPO_NAME:-guardrails-validation-service-test}";
 commitSha=$(git rev-parse HEAD);
 region="${AWS_DEFAULT_REGION:-us-east-1}";
+dockerfile="${DOCKERFILE:-Dockerfile.prod}";
 defaultEcrEndpoint="${accountId}.dkr.ecr.${region}.amazonaws.com";
 ecrEndpoint="${ECR_ENDPOINT:-$defaultEcrEndpoint}"
 ecrImageUrl="${ecrEndpoint}/${repoName}";
@@ -15,8 +16,8 @@ npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json 
 
 
 # Setup unpublished api client
-echo "Building api client..."
-bash build-sdk.sh
+# echo "Building api client..."
+# bash build-sdk.sh
 
 # Building OTEL Collector extension
 # if [ -d "opentelemetry-lambda-layer" ]; then
@@ -35,7 +36,7 @@ docker buildx build \
   --progress plain \
   --no-cache \
   --build-arg CACHEBUST="$(date)" \
-  -f Dockerfile.prod \
+  -f "$DOCKERFILE" \
   -t "$imageName:$commitSha" \
   -t "$imageName:latest" . \
   || exit 1;
