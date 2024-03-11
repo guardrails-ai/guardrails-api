@@ -33,7 +33,7 @@ RUN python -m nltk.downloader -d /opt/nltk_data punkt
 RUN pip freeze > requirements-lock.txt
 
 COPY buildspecs/hub-install.sh ./buildspecs/hub-install.sh
-
+RUN chmod +x ./buildspecs/hub-install.sh
 RUN ./buildspecs/hub-install.sh
 
 # Copy the whole folder inside the Image filesystem

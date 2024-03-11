@@ -1,8 +1,11 @@
 flask
 sqlalchemy
 lxml
-guardrails-ai @ git+https://github.com/guardrails-ai/guardrails.git@gaas-additions
-guard-rails-api-client @ git+https://github.com/guardrails-ai/guardrails-api-client.git@v0.0.2#egg=guard-rails-api-client&subdirectory=guard-rails-api-client
+guardrails-ai @ git+https://github.com/guardrails-ai/guardrails.git
+# Let this come from guardrails-ai as a transient dependency.
+# Pip confuses tag versions with commit ids,
+# and claims a conflict even though it's the same thing.
+# guard-rails-api-client @ git+https://github.com/guardrails-ai/guardrails-api-client.git@v0.0.2#egg=guard-rails-api-client&subdirectory=guard-rails-api-client
 opentelemetry-distro==0.41b0
 opentelemetry-sdk==1.20.0
 opentelemetry-exporter-otlp-proto-grpc==1.20.0
