@@ -1,4 +1,4 @@
-name: Publish Image To ER
+name: Publish Image To ECR
 on:
   push:
     branches: 
