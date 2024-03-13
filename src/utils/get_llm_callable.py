@@ -5,7 +5,7 @@ from guardrails.utils.openai_utils import (
     get_static_openai_acreate_func,
     get_static_openai_chat_acreate_func
 )
-from guard_rails_api_client.models.validate_payload_llm_api import (
+from guardrails_api_client.models.validate_payload_llm_api import (
     ValidatePayloadLlmApi,
 )
 

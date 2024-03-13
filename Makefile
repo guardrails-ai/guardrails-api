@@ -9,7 +9,7 @@ install-dev:
 	pip install -r requirements-dev.txt;
 
 lock:
-	pip freeze --exclude guard-rails-api-client > requirements-lock.txt
+	pip freeze --exclude guardrails-api-client > requirements-lock.txt
 
 install-lock:
 	pip install -r requirements-lock.txt
