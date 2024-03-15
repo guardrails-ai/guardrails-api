@@ -132,6 +132,7 @@ def validate(guard_name: str):
                 num_reasks=num_reasks,
                 prompt_params=prompt_params,
                 llm_api=llm_api,
+                api_key=openai_api_key,
                 *args,
                 **payload,
             )
@@ -140,6 +141,7 @@ def validate(guard_name: str):
                 llm_api=llm_api,
                 prompt_params=prompt_params,
                 num_reasks=num_reasks,
+                api_key=openai_api_key,
                 *args,
                 **payload,
             )

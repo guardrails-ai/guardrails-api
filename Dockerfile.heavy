@@ -1,5 +1,7 @@
 FROM public.ecr.aws/docker/library/python:3.11.6-slim
 
+ARG GITHUB_TOKEN
+
 # COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
 # COPY ./opentelemetry-lambda-layer /opt
 
@@ -16,7 +18,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install git and curl
 RUN apt-get update
-RUN apt-get install -y git curl gcc
+RUN apt-get install -y git curl gcc jq
 
 # Copy the requirements file
 COPY requirements*.txt .
@@ -41,5 +43,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
+CMD opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=90 --threads=10 "app:create_app()"
 # CMD gunicorn --forwarded-allow-ips="*" --bind 0.0.0.0:8000 --timeout=60 --threads=10 "app:create_app()"

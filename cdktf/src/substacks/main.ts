@@ -80,17 +80,17 @@ export type OtelConfig = {
   otlpEndpoint?: string;
   /**
    * Sets the environment variable `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`
-   * Defaults to `http://localhost:4317/v1/traces`
+   * Defaults to `${otlpEndpoint}/v1/traces`
    */
   traceSink?: string;
   /**
    * Sets the environment variable `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`
-   * Defaults to `http://localhost:4317/v1/metrics`
+   * Defaults to `${otlpEndpoint}/v1/metrics`
    */
   metricsSink?: string;
   /**
    * Sets the environment variable `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`
-   * Defaults to `http://localhost:4317/v1/logs`
+   * Defaults to `${otlpEndpoint}/v1/logs`
    */
   logsSink?: string;
 }
@@ -152,10 +152,12 @@ export class GuardrailsValidationServiceSubStack extends Construct {
       instrumentationHttpCaptureHeadersServerResponse = 'Last-Modified,Content-Type',
       metricsExporter = 'none',
       otlpProtocol = 'http/protobuf',
-      otlpEndpoint = 'http://localhost:4317/v1/traces',
-      traceSink = 'http://localhost:4317/v1/traces',
-      metricsSink = 'http://localhost:4317/v1/metrics',
-      logsSink = 'http://localhost:4317/v1/logs',
+      otlpEndpoint = 'http://localhost:4317',
+    } = otelConfig;
+    const {
+      traceSink = `${otlpEndpoint}/v1/traces`,
+      metricsSink = `${otlpEndpoint}/v1/metrics`,
+      logsSink = `${otlpEndpoint}/v1/logs`,
     } = otelConfig;
     
     const baseConfig: DefaultedBaseConstructConfig = {
