@@ -5,4 +5,5 @@ docker build \
     --progress=plain \
     --no-cache \
     --build-arg CACHEBUST="$(date)" \
+    --build-arg GITHUB_TOKEN="$GITHUB_TOKEN" \
     -t "guardrails-api:dev" .;

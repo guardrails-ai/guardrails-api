@@ -1,5 +1,7 @@
 FROM public.ecr.aws/docker/library/python:3.11.6-slim
 
+# COPY .guardrailsrc /root/.guardrailsrc
+
 # Create app directory
 WORKDIR /app
 
@@ -13,7 +15,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install gcc
 RUN apt-get update
-RUN apt-get install -y gcc
+RUN apt-get install -y git gcc
 
 # COPY ./guardrails-sdk ./guardrails-sdk
 
