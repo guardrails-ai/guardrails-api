@@ -21,8 +21,3 @@ nltk
 boto3
 gunicorn
 psycopg2-binary
-# Downgrades
-# Remove once guardrails is upgraded
-pydantic==1.10.9
-openapi-python-client==0.14.1
-openai==0.28.1

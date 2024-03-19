@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Deactivating old virtual environment"
-deactivate
+deactivate || true
 
 echo "Deleting old virtual environment"
 rm -rf ./.venv
@@ -12,8 +12,7 @@ python3 -m venv ./.venv
 echo "Sourcing new virtual environment"
 source ./.venv/bin/activate
 
-echo "Installing guardrails"
-make install-dev
-
-echo "building..."
-make build
+echo "Installing dependencies"
+pip install -r requirements.txt --no-cache-dir;
+# make install
+# make install-dev
