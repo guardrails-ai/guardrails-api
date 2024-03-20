@@ -23,7 +23,7 @@ def get_validators():
         raise HttpError(
             405,
             "Method Not Allowed",
-            "/guard/<guard_name> only supports the GET, PUT, and DELETE methods."
+            "/validators only supports the GET methods"
             " You specified {request_method}".format(
                 request_method=request.method
             ),
