@@ -55,9 +55,11 @@ def create_app():
 
     from src.blueprints.root import root_bp
     from src.blueprints.guards import guards_bp
+    from src.blueprints.validators import validators_bp
 
     app.register_blueprint(root_bp)
     app.register_blueprint(guards_bp)
+    app.register_blueprint(validators_bp)
     
     register_custom_validators()
 
