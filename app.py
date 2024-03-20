@@ -20,7 +20,10 @@ class ReverseProxied(object):
 def register_custom_validators():
     validators_init = f"/opt/validators/__init__.py"
     if os.path.isfile(validators_init):
-        from importlib.machinery import SourceFileLoader 
+        from importlib.machinery import SourceFileLoader
+        # This creates a module named "custom_validators" with the contents of the init file
+        # This allow statements like `from custom_validators import StartsWith`
+        # But more importantly, it registers all of the validators imported in the init
         SourceFileLoader("custom_validators", validators_init).load_module()
 
 

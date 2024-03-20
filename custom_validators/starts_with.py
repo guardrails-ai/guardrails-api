@@ -10,7 +10,7 @@ from guardrails.validator_base import (
 )
 
 
-@register_validator(name="guardrails/starts_with", data_type=["string", "list"])
+@register_validator(name="custom/starts_with", data_type=["string", "list"])
 class StartsWith(Validator):
     """Validates that a list starts with a given value.
 
