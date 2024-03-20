@@ -6,5 +6,5 @@ docker build \
     --no-cache \
     --build-arg CACHEBUST="$(date)" \
     --build-arg GITHUB_TOKEN="$GITHUB_TOKEN" \
-    --build-arg HUGGINGFACE_TOKEN="$HUGGINGFACE_TOKEN" \
+    --build-arg HF_TOKEN="$HF_TOKEN" \
     -t "guardrails-api:dev" .;
