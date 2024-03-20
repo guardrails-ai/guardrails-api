@@ -1,0 +1,9 @@
+FROM guardrails-api:dev
+
+RUN echo "which python: $(which python)"
+RUN echo "which pip: $(which pip)"
+RUN echo "which guardrails: $(which guardrails)"
+
+RUN guardrails hub install hub://guardrails/ends_with
+
+COPY ./custom_validators/* /opt/validators/

@@ -16,6 +16,12 @@ class ReverseProxied(object):
         url = urlparse(self_endpoint)
         environ['wsgi.url_scheme'] = url.scheme
         return self.app(environ, start_response)
+    
+def register_custom_validators():
+    validators_init = f"/opt/validators/__init__.py"
+    if os.path.isfile(validators_init):
+        from importlib.machinery import SourceFileLoader 
+        SourceFileLoader("custom_validators", validators_init).load_module()
 
 
 def create_app():
@@ -49,5 +55,7 @@ def create_app():
 
     app.register_blueprint(root_bp)
     app.register_blueprint(guards_bp)
+    
+    register_custom_validators()
 
     return app
