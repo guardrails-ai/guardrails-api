@@ -21,10 +21,10 @@ def register_custom_validators():
     validators_init = f"/opt/validators/__init__.py"
     if os.path.isfile(validators_init):
         from importlib.machinery import SourceFileLoader
-        # This creates a module named "custom_validators" with the contents of the init file
-        # This allow statements like `from custom_validators import StartsWith`
+        # This creates a module named "validators" with the contents of the init file
+        # This allow statements like `from validators import StartsWith`
         # But more importantly, it registers all of the validators imported in the init
-        SourceFileLoader("custom_validators", validators_init).load_module()
+        SourceFileLoader("validators", validators_init).load_module()
 
 
 def create_app():
