@@ -1,6 +1,7 @@
 FROM public.ecr.aws/docker/library/python:3.11.6-slim
 
 ARG GITHUB_TOKEN
+ARG HUGGINGFACE_TOKEN
 
 # COPY .guardrailsrc /root/.guardrailsrc
 

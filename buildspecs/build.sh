@@ -37,6 +37,7 @@ docker buildx build \
   --no-cache \
   --build-arg CACHEBUST="$(date)" \
   --build-arg GITHUB_TOKEN="$GITHUB_TOKEN" \
+  --build-arg HUGGINGFACE_TOKEN="$HUGGINGFACE_TOKEN" \
   -f "$DOCKERFILE" \
   -t "$imageName:$commitSha" \
   -t "$imageName:latest" . \
