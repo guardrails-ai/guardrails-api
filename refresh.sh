@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Deactivating old virtual environment"
-deactivate || true
+deactivate
 
 echo "Deleting old virtual environment"
 rm -rf ./.venv
