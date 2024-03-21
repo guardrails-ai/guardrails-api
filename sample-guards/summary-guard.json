@@ -9,7 +9,7 @@
                "description": "The sentence to check.",
                "onFail": "refrain"
             },
-            "formatters": ["hub://guardrails/extracted_summary_sentences_match: 0.8 /opt/documents"]
+            "formatters": ["hub://guardrails/extracted_summary_sentences_match"]
         }
      },
      "prompt": "Verify this sentence is a valid summary from the sources in the directory provided.  Return the sentence and only the sentence if it is a valid summary; otherwise return nothing. Don't talk, just go.",
