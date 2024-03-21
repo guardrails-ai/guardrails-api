@@ -4,8 +4,13 @@ FROM guardrails-api:dev
 RUN guardrails hub install hub://guardrails/ends_with
 RUN guardrails hub install hub://guardrails/provenance_embeddings
 RUN pip install sentence-transformers
+RUN guardrails hub install hub://guardrails/extracted_summary_sentences_match
+
 
 # Mount any custom validators to the specified directory
 COPY ./custom_validators/* /opt/validators/
 
 RUN python /opt/validators/load_model.py
+
+# Mount a directory with documents to serve ExtractedSummarySentencesMatch
+COPY ./documents /opt/documents
