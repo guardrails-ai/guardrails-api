@@ -35,10 +35,8 @@ class GuardStruct:
     def to_guard(
         self, openai_api_key: Optional[str] = None, tracer: Tracer = None
     ) -> Guard:
-        print("self.railspec: ", self.railspec)
         rail_xml = self.railspec.to_xml()
         rail_string = tostring(rail_xml)
-        print("rail_string: ", rail_string)
         guard = Guard.from_rail_string(
             rail_string,
             self.num_reasks,

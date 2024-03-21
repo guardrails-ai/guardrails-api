@@ -153,10 +153,6 @@ def validate(guard_name: str):
             guard.history,
             result.raw_llm_output
         )
-        
-        print(" ")
-        print("Failed Validations: ", guard.history.last.failed_validations)
-        print(" ")
 
         prompt = guard.history.last.inputs.prompt
         if prompt:
