@@ -102,7 +102,7 @@ def validate(guard_name: str):
         f"validate-{decoded_guard_name}"
     ) as validate_span:
         guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-
+        
         validate_span.set_attribute("guardName", decoded_guard_name)
         if llm_api is not None:
             llm_api = get_llm_callable(llm_api)
@@ -153,6 +153,10 @@ def validate(guard_name: str):
             guard.history,
             result.raw_llm_output
         )
+        
+        print(" ")
+        print("Failed Validations: ", guard.history.last.failed_validations)
+        print(" ")
 
         prompt = guard.history.last.inputs.prompt
         if prompt:

@@ -1,0 +1,19 @@
+{
+  "name": "provenance-guard",
+  "railspec": {
+     "outputSchema": {
+        "schema": {
+            "element": {
+               "type": "string",
+               "name": "sentence",
+               "description": "The sentence to check.",
+               "onFail": "refrain"
+            },
+            "formatters": ["custom/provenance"]
+        }
+     },
+     "prompt": "Verify this sentence is supported by the sources in the metadata.  Return the sentence and only the sentence if it is supported; otherwise return nothing. Don't talk, just go.",
+     "version": "0.1"
+  },
+  "numReasks": 1
+}

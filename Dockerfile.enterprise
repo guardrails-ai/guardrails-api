@@ -2,6 +2,10 @@ FROM guardrails-api:dev
 
 # Install whatever Hub validators they want
 RUN guardrails hub install hub://guardrails/ends_with
+RUN guardrails hub install hub://guardrails/provenance_embeddings
+RUN pip install sentence-transformers
 
 # Mount any custom validators to the specified directory
 COPY ./custom_validators/* /opt/validators/
+
+RUN python /opt/validators/load_model.py
