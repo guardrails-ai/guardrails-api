@@ -28,10 +28,28 @@ class ValidationOutput:
                             if i.inputs.prompt is not None
                             else None
                         },
-                        "reasks": list(r.dict() for r in i.reasks),
-                        "validatedOutput": i.validated_output.dict()
-                        if isinstance(i.validated_output, ReAsk)
-                        else i.validated_output,
+                        "reasks": list(r.model_dump() for r in i.reasks),
+                        "validatedOutput": i.guarded_output.model_dump()
+                        if isinstance(i.guarded_output, ReAsk)
+                        else i.guarded_output,
+                        "failedValidations": list(
+                            {
+                                "validatorName": fv.validator_name,
+                                "registeredName": fv.registered_name,
+                                "valueBeforeValidation": fv.value_before_validation,
+                                "validationResult": {
+                                    "outcome": fv.validation_result.outcome,
+                                    # Don't include metadata bc it could contain api keys
+                                    # "metadata": fv.validation_result.metadata
+                                },
+                                "valueAfterValidation": fv.value_after_validation,
+                                "startTime": fv.start_time,
+                                "endTime": fv.end_time,
+                                "instanceId": fv.instance_id,
+                                "propertyPath": fv.property_path,
+                            }
+                            for fv in i.failed_validations
+                        )
                     }
                     for i in c.iterations
                 ]
