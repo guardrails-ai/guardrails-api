@@ -39,8 +39,10 @@ class SchemaElementStruct:
             elem_dict["on-fail"] = self.on_fail
         if len(self.on_fails) > 0:
             for validator_on_fail in self.on_fails:
+                validator_tag = validator_on_fail.get("validatorTag", "")
+                escaped_validator_tag = validator_tag.replace("/", "_")
                 elem_dict[
-                    validator_on_fail.get("validatorTag")
+                    f"on-fail-{escaped_validator_tag}"
                 ] = validator_on_fail.get("method")
         elem_dict.pop("date_format", None)
         elem_dict.pop("time_format", None)
