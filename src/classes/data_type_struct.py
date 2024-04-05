@@ -171,17 +171,17 @@ class DataTypeStruct:
 
     @classmethod
     def from_request(cls, data_type: dict):
-        if data_type is not None:
+        if data_type:
             children, formatters, element, plugins = pluck(
                 data_type, ["children", "formatters", "element", "plugins"]
-            )
+            ) 
             children_data_types = None
-            if children is not None:
+            if children:
                 class_children = {}
-                elem_type = element["type"] if element is not None else None
+                elem_type = element.get("type") if element is not None else None
                 elem_is_list = elem_type == "list"
                 child_entries = (
-                    children.get("item", {}) if elem_is_list else children
+                    children.get("item", {}).get("children", {}) if elem_is_list else children
                 )
                 for child_key in child_entries:
                     class_children[child_key] = cls.from_request(
@@ -278,10 +278,14 @@ class DataTypeStruct:
         if plugins is not None:
             element.attrib["plugins"] = plugins
 
+
+        stringified_attribs = {}
+        for k, v in element.attrib.items():
+            stringified_attribs[k] = str(v)
         xml_data_type = (
             element
             if as_parent
-            else SubElement(parent, element.tag, element.attrib)
+            else SubElement(parent, element.tag, stringified_attribs)
         )
 
         self_is_list = self.element.type == "list"
