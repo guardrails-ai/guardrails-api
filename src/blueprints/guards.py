@@ -97,6 +97,8 @@ def validate(guard_name: str):
 
     service_name = os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
     otel_tracer = get_tracer(service_name)
+    
+    payload["api_key"] = payload.get("api_key", openai_api_key)
 
     with otel_tracer.start_as_current_span(
         f"validate-{decoded_guard_name}"
@@ -132,7 +134,7 @@ def validate(guard_name: str):
                 num_reasks=num_reasks,
                 prompt_params=prompt_params,
                 llm_api=llm_api,
-                api_key=openai_api_key,
+                # api_key=openai_api_key,
                 *args,
                 **payload,
             )
@@ -141,7 +143,7 @@ def validate(guard_name: str):
                 llm_api=llm_api,
                 prompt_params=prompt_params,
                 num_reasks=num_reasks,
-                api_key=openai_api_key,
+                # api_key=openai_api_key,
                 *args,
                 **payload,
             )
