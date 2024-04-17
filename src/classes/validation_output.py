@@ -21,7 +21,14 @@ class ValidationOutput:
                         "instructions": i.inputs.instructions.source
                         if i.inputs.instructions is not None
                         else None,
-                        "output": i.outputs.raw_output or i.outputs.llm_response_info.output,
+                        "output": (
+                            i.outputs.raw_output
+                            or (
+                                i.outputs.llm_response_info.output
+                                if i.outputs.llm_response_info is not None
+                                else None
+                            )
+                        ),
                         "parsedOutput": i.parsed_output,
                         "prompt": {
                             "source": i.inputs.prompt.source

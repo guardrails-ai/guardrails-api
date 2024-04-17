@@ -1,11 +1,12 @@
 import os
 import json
 from string import Template
-from flask import Blueprint, request
+from typing import Any, Dict, cast
+from flask import Blueprint, Response, request, stream_with_context
 from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.classes import ValidationOutcome
-from opentelemetry.trace import get_tracer
+from opentelemetry.trace import get_tracer, Span
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
@@ -69,6 +70,46 @@ def guard(guard_name: str):
         )
 
 
+def collect_telemetry(
+        *,
+        guard: Guard,
+        validate_span: Span,
+        validation_output: ValidationOutput,
+        prompt_params: Dict[str, Any],
+        result: ValidationOutcome
+    ):
+    # Below is all telemetry collection and 
+    # should have no impact on what is returned to the user
+    prompt = guard.history.last.inputs.prompt
+    if prompt:
+        prompt = Template(prompt).safe_substitute(**prompt_params)
+        validate_span.set_attribute("prompt", prompt)
+
+    instructions = guard.history.last.inputs.instructions
+    if instructions:
+        instructions = Template(instructions).safe_substitute(**prompt_params)
+        validate_span.set_attribute("instructions", instructions)
+
+    validate_span.set_attribute("validation_status", guard.history.last.status)
+    validate_span.set_attribute("raw_llm_ouput", result.raw_llm_output)
+
+    # Use the serialization from the class instead of re-writing it
+    valid_output: str = (
+        json.dumps(validation_output.validated_output)
+        if isinstance(validation_output.validated_output, dict)
+        else str(validation_output.validated_output)
+    )
+    validate_span.set_attribute("validated_output", valid_output)
+
+    validate_span.set_attribute("tokens_consumed", guard.history.last.tokens_consumed)
+
+    num_of_reasks = (
+        guard.history.last.iterations.length - 1
+        if guard.history.last.iterations.length > 0
+        else 0
+    )
+    validate_span.set_attribute("num_of_reasks", num_of_reasks)
+
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
 @gather_request_metrics
@@ -94,6 +135,7 @@ def validate(guard_name: str):
     prompt_params = payload.pop("promptParams", {})
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
+    stream = payload.pop("stream", False)
 
     service_name = os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
     otel_tracer = get_tracer(service_name)
@@ -129,6 +171,13 @@ def validate(guard_name: str):
             )
 
         if llm_output is not None:
+            if stream:
+                raise HttpError(
+                    status=400,
+                    message="BadRequest",
+                    cause="Streaming is not supported for parse calls!",
+                )
+                
             result: ValidationOutcome = guard.parse(
                 llm_output=llm_output,
                 num_reasks=num_reasks,
@@ -139,6 +188,60 @@ def validate(guard_name: str):
                 **payload,
             )
         else:
+            if stream:
+                def guard_streamer ():
+                    guard_stream = guard(
+                        llm_api=llm_api,
+                        prompt_params=prompt_params,
+                        num_reasks=num_reasks,
+                        stream=stream,
+                        # api_key=openai_api_key,
+                        *args,
+                        **payload,
+                    )
+                    
+                    for result in guard_stream:
+                        # TODO: Just make this a ValidationOutcome with history
+                        validation_output: ValidationOutput = ValidationOutput(
+                            result.validation_passed,
+                            result.validated_output,
+                            guard.history,
+                            result.raw_llm_output
+                        )
+                        
+                        yield validation_output, cast(ValidationOutcome, result)
+
+                def validate_streamer(guard_iter):
+                    next_result = None
+                    next_validation_output = None
+                    for validation_output, result in guard_iter:
+                        next_result = result
+                        next_validation_output = validation_output
+                        fragment = json.dumps(validation_output.to_response())
+                        yield f"{fragment}\n"
+
+                    final_validation_output: ValidationOutput = ValidationOutput(
+                        next_result.validation_passed,
+                        next_result.validated_output,
+                        guard.history,
+                        next_result.raw_llm_output
+                    )
+                    # I don't know if these are actually making it to OpenSearch 
+                    # because the span may be ended already
+                    collect_telemetry(
+                        guard=guard,
+                        validate_span=validate_span,
+                        validation_output=next_validation_output,
+                        prompt_params=prompt_params,
+                        result=next_result
+                    )
+                    final_output_json = json.dumps(final_validation_output.to_response())
+                    yield f"{final_output_json}\n"
+                return Response(
+                    stream_with_context(validate_streamer(guard_streamer())),
+                    content_type="application/json"
+                )
+            
             result: ValidationOutcome = guard(
                 llm_api=llm_api,
                 prompt_params=prompt_params,
@@ -156,35 +259,13 @@ def validate(guard_name: str):
             result.raw_llm_output
         )
 
-        prompt = guard.history.last.inputs.prompt
-        if prompt:
-            prompt = Template(prompt).safe_substitute(**prompt_params)
-            validate_span.set_attribute("prompt", prompt)
-
-        instructions = guard.history.last.inputs.instructions
-        if instructions:
-            instructions = Template(instructions).safe_substitute(**prompt_params)
-            validate_span.set_attribute("instructions", instructions)
-
-        validate_span.set_attribute("validation_status", guard.history.last.status)
-        validate_span.set_attribute("raw_llm_ouput", result.raw_llm_output)
-
-        # Use the serialization from the class instead of re-writing it
-        valid_output: str = (
-            json.dumps(validation_output.validated_output)
-            if isinstance(validation_output.validated_output, dict)
-            else str(validation_output.validated_output)
+        collect_telemetry(
+            guard=guard,
+            validate_span=validate_span,
+            validation_output=validation_output,
+            prompt_params=prompt_params,
+            result=result
         )
-        validate_span.set_attribute("validated_output", valid_output)
-
-        validate_span.set_attribute("tokens_consumed", guard.history.last.tokens_consumed)
-
-        num_of_reasks = (
-            guard.history.last.iterations.length - 1
-            if guard.history.last.iterations.length > 0
-            else 0
-        )
-        validate_span.set_attribute("num_of_reasks", num_of_reasks)
 
     cleanup_environment(guard_struct)
     return validation_output.to_response()
