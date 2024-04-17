@@ -35,6 +35,7 @@ RUN python -m nltk.downloader -d /opt/nltk_data punkt
 RUN guardrails hub install hub://guardrails/provenance_llm
 RUN guardrails hub install hub://guardrails/detect_pii
 RUN guardrails hub install hub://guardrails/competitor_check
+RUN guardrails hub install hub://guardrails/valid_length
 
 # Freeze dependencies
 RUN pip freeze > requirements-lock.txt
