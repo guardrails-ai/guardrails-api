@@ -3,7 +3,7 @@ curl https://raw.githubusercontent.com/guardrails-ai/guardrails-api-client/main/
 npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
 
 docker build \
-    -f Dockerfile.dev \
+    -f Dockerfile.lite \
     --progress=plain \
     --no-cache \
     --build-arg CACHEBUST="$(date)" \
