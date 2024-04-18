@@ -22,6 +22,13 @@ guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 guard_client = GuardClient()
 
 
+@guards_bp.after_request
+def after_request_func(response):
+    print("after_request executing...")
+    print("status code: ", response.status_code)
+    return response
+
+
 @guards_bp.route("/", methods=["GET", "POST"])
 @handle_error
 @gather_request_metrics
@@ -238,6 +245,7 @@ def validate(guard_name: str):
                 #     result=next_result
                 # )
                 final_output_json = json.dumps(final_validation_output.to_response())
+                print("Yielding final output.")
                 yield f"{final_output_json}\n"
             return Response(
                 stream_with_context(validate_streamer(guard_streamer())),
