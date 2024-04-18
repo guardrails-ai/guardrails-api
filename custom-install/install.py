@@ -38,6 +38,7 @@ custom_manifests = {
     "guardrails/provenance_llm": load_manifest("provenance-llm.json"),
     "guardrails/detect_pii": load_manifest("detect-pii.json"),
     "guardrails/competitor_check": load_manifest("competitor-check.json"),
+    "guardrails/many_shot_jailbreak": load_manifest("jailbreak.json"),
 }
 
 def get_validator_manifest(module_name) -> ModuleManifest:
@@ -107,3 +108,4 @@ https://hub.guardrailsai.com/validator/${id}
 custom_install("hub://guardrails/provenance_llm")
 custom_install("hub://guardrails/detect_pii")
 custom_install("hub://guardrails/competitor_check")
+custom_install("hub://guardrails/many_shot_jailbreak")
