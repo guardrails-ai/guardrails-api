@@ -229,13 +229,13 @@ def validate(guard_name: str):
                     )
                     # I don't know if these are actually making it to OpenSearch 
                     # because the span may be ended already
-                    collect_telemetry(
-                        guard=guard,
-                        validate_span=validate_span,
-                        validation_output=next_validation_output,
-                        prompt_params=prompt_params,
-                        result=next_result
-                    )
+                    # collect_telemetry(
+                    #     guard=guard,
+                    #     validate_span=validate_span,
+                    #     validation_output=next_validation_output,
+                    #     prompt_params=prompt_params,
+                    #     result=next_result
+                    # )
                     final_output_json = json.dumps(final_validation_output.to_response())
                     yield f"{final_output_json}\n"
                 return Response(
