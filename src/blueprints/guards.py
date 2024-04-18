@@ -1,5 +1,6 @@
 import os
 import json
+from guardrails.hub import *  # noqa
 from string import Template
 from typing import Any, Dict, cast
 from flask import Blueprint, Response, request, stream_with_context
