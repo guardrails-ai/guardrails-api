@@ -146,7 +146,8 @@ def validate(guard_name: str):
     with otel_tracer.start_as_current_span(
         f"validate-{decoded_guard_name}"
     ) as validate_span:
-        guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
+        # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
+        guard: Guard = guard_struct.to_guard(openai_api_key)
 
         validate_span.set_attribute("guardName", decoded_guard_name)
         if llm_api is not None:
@@ -241,6 +242,7 @@ def validate(guard_name: str):
                 return Response(
                     stream_with_context(validate_streamer(guard_streamer())),
                     content_type="application/json"
+                    # content_type="text/event-stream"
                 )
             
             result: ValidationOutcome = guard(
