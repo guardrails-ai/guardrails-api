@@ -1,0 +1,45 @@
+{
+  "name": "Competitor Check",
+  "author": {
+      "name": "Guardrails AI",
+      "email": "contact@guardrailsai.com"
+  },
+  "maintainers": [{
+      "name": "Karan Acharya",
+      "email": "karan@guardrailsai.com"
+  }],
+  "repository": {
+      "url": "https://github.com/guardrails-ai/competitor_check.git"
+  },
+  "index": "./__init__.py",
+  "exports": [
+      "CompetitorCheck"
+  ],
+  "tags": {
+      "language": [
+          "en"
+      ],
+      "certification": [
+          "Guardrails Certified"
+      ],
+      "contentType": [
+          "string"
+      ],
+      "infrastructureRequirements": [
+          "ML"
+      ],
+      "riskCategory": [
+          "Brand risk"
+      ],
+      "useCases": [
+          "Chatbots",
+          "Customer Support"
+      ]
+  },
+  "id": "guardrails/competitor_check",
+  "namespace": "guardrails",
+  "packageName": "competitor_check",
+  "moduleName": "validator",
+  "requiresAuth": false,
+  "postInstall": "post-install.py"
+}
