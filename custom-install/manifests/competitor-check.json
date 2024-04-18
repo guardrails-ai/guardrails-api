@@ -9,7 +9,8 @@
       "email": "karan@guardrailsai.com"
   }],
   "repository": {
-      "url": "https://github.com/guardrails-ai/competitor_check.git"
+      "url": "https://github.com/guardrails-ai/competitor_check.git",
+      "branch": "frontend_demo"
   },
   "index": "./__init__.py",
   "exports": [
