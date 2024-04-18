@@ -138,137 +138,137 @@ def validate(guard_name: str):
     args = payload.pop("args", [])
     stream = payload.pop("stream", False)
 
-    service_name = os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
-    otel_tracer = get_tracer(service_name)
+    # service_name = os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
+    # otel_tracer = get_tracer(service_name)
     
     payload["api_key"] = payload.get("api_key", openai_api_key)
 
-    with otel_tracer.start_as_current_span(
-        f"validate-{decoded_guard_name}"
-    ) as validate_span:
-        # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-        guard: Guard = guard_struct.to_guard(openai_api_key)
+    # with otel_tracer.start_as_current_span(
+    #     f"validate-{decoded_guard_name}"
+    # ) as validate_span:
+    # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
+    guard: Guard = guard_struct.to_guard(openai_api_key)
 
-        validate_span.set_attribute("guardName", decoded_guard_name)
-        if llm_api is not None:
-            llm_api = get_llm_callable(llm_api)
-            if openai_api_key is None:
-                raise HttpError(
-                    status=400,
-                    message="BadRequest",
-                    cause=(
-                        "Cannot perform calls to OpenAI without an api key.  Pass"
-                        " openai_api_key when initializing the Guard or set the"
-                        " OPENAI_API_KEY environment variable."
-                    ),
-                )
-        elif num_reasks > 1:
+    # validate_span.set_attribute("guardName", decoded_guard_name)
+    if llm_api is not None:
+        llm_api = get_llm_callable(llm_api)
+        if openai_api_key is None:
             raise HttpError(
                 status=400,
                 message="BadRequest",
                 cause=(
-                    "Cannot perform re-asks without an LLM API.  Specify llm_api when"
-                    " calling guard(...)."
+                    "Cannot perform calls to OpenAI without an api key.  Pass"
+                    " openai_api_key when initializing the Guard or set the"
+                    " OPENAI_API_KEY environment variable."
                 ),
             )
+    elif num_reasks > 1:
+        raise HttpError(
+            status=400,
+            message="BadRequest",
+            cause=(
+                "Cannot perform re-asks without an LLM API.  Specify llm_api when"
+                " calling guard(...)."
+            ),
+        )
 
-        if llm_output is not None:
-            if stream:
-                raise HttpError(
-                    status=400,
-                    message="BadRequest",
-                    cause="Streaming is not supported for parse calls!",
+    if llm_output is not None:
+        if stream:
+            raise HttpError(
+                status=400,
+                message="BadRequest",
+                cause="Streaming is not supported for parse calls!",
+            )
+            
+        result: ValidationOutcome = guard.parse(
+            llm_output=llm_output,
+            num_reasks=num_reasks,
+            prompt_params=prompt_params,
+            llm_api=llm_api,
+            # api_key=openai_api_key,
+            *args,
+            **payload,
+        )
+    else:
+        if stream:
+            def guard_streamer ():
+                guard_stream = guard(
+                    llm_api=llm_api,
+                    prompt_params=prompt_params,
+                    num_reasks=num_reasks,
+                    stream=stream,
+                    # api_key=openai_api_key,
+                    *args,
+                    **payload,
                 )
                 
-            result: ValidationOutcome = guard.parse(
-                llm_output=llm_output,
-                num_reasks=num_reasks,
-                prompt_params=prompt_params,
-                llm_api=llm_api,
-                # api_key=openai_api_key,
-                *args,
-                **payload,
-            )
-        else:
-            if stream:
-                def guard_streamer ():
-                    guard_stream = guard(
-                        llm_api=llm_api,
-                        prompt_params=prompt_params,
-                        num_reasks=num_reasks,
-                        stream=stream,
-                        # api_key=openai_api_key,
-                        *args,
-                        **payload,
+                for result in guard_stream:
+                    # TODO: Just make this a ValidationOutcome with history
+                    validation_output: ValidationOutput = ValidationOutput(
+                        result.validation_passed,
+                        result.validated_output,
+                        guard.history,
+                        result.raw_llm_output
                     )
                     
-                    for result in guard_stream:
-                        # TODO: Just make this a ValidationOutcome with history
-                        validation_output: ValidationOutput = ValidationOutput(
-                            result.validation_passed,
-                            result.validated_output,
-                            guard.history,
-                            result.raw_llm_output
-                        )
-                        
-                        yield validation_output, cast(ValidationOutcome, result)
+                    yield validation_output, cast(ValidationOutcome, result)
 
-                def validate_streamer(guard_iter):
-                    next_result = None
-                    next_validation_output = None
-                    for validation_output, result in guard_iter:
-                        next_result = result
-                        next_validation_output = validation_output
-                        fragment = json.dumps(validation_output.to_response())
-                        yield f"{fragment}\n"
+            def validate_streamer(guard_iter):
+                next_result = None
+                next_validation_output = None
+                for validation_output, result in guard_iter:
+                    next_result = result
+                    next_validation_output = validation_output
+                    fragment = json.dumps(validation_output.to_response())
+                    yield f"{fragment}\n"
 
-                    final_validation_output: ValidationOutput = ValidationOutput(
-                        next_result.validation_passed,
-                        next_result.validated_output,
-                        guard.history,
-                        next_result.raw_llm_output
-                    )
-                    # I don't know if these are actually making it to OpenSearch 
-                    # because the span may be ended already
-                    # collect_telemetry(
-                    #     guard=guard,
-                    #     validate_span=validate_span,
-                    #     validation_output=next_validation_output,
-                    #     prompt_params=prompt_params,
-                    #     result=next_result
-                    # )
-                    final_output_json = json.dumps(final_validation_output.to_response())
-                    yield f"{final_output_json}\n"
-                return Response(
-                    stream_with_context(validate_streamer(guard_streamer())),
-                    content_type="application/json"
-                    # content_type="text/event-stream"
+                final_validation_output: ValidationOutput = ValidationOutput(
+                    next_result.validation_passed,
+                    next_result.validated_output,
+                    guard.history,
+                    next_result.raw_llm_output
                 )
-            
-            result: ValidationOutcome = guard(
-                llm_api=llm_api,
-                prompt_params=prompt_params,
-                num_reasks=num_reasks,
-                # api_key=openai_api_key,
-                *args,
-                **payload,
+                # I don't know if these are actually making it to OpenSearch 
+                # because the span may be ended already
+                # collect_telemetry(
+                #     guard=guard,
+                #     validate_span=validate_span,
+                #     validation_output=next_validation_output,
+                #     prompt_params=prompt_params,
+                #     result=next_result
+                # )
+                final_output_json = json.dumps(final_validation_output.to_response())
+                yield f"{final_output_json}\n"
+            return Response(
+                stream_with_context(validate_streamer(guard_streamer())),
+                content_type="application/json"
+                # content_type="text/event-stream"
             )
-
-        # TODO: Just make this a ValidationOutcome with history
-        validation_output = ValidationOutput(
-            result.validation_passed,
-            result.validated_output,
-            guard.history,
-            result.raw_llm_output
-        )
-
-        collect_telemetry(
-            guard=guard,
-            validate_span=validate_span,
-            validation_output=validation_output,
+        
+        result: ValidationOutcome = guard(
+            llm_api=llm_api,
             prompt_params=prompt_params,
-            result=result
+            num_reasks=num_reasks,
+            # api_key=openai_api_key,
+            *args,
+            **payload,
         )
+
+    # TODO: Just make this a ValidationOutcome with history
+    validation_output = ValidationOutput(
+        result.validation_passed,
+        result.validated_output,
+        guard.history,
+        result.raw_llm_output
+    )
+
+    # collect_telemetry(
+    #     guard=guard,
+    #     validate_span=validate_span,
+    #     validation_output=validation_output,
+    #     prompt_params=prompt_params,
+    #     result=result
+    # )
 
     cleanup_environment(guard_struct)
     return validation_output.to_response()
