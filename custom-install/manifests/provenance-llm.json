@@ -10,7 +10,7 @@
   }],
   "repository": {
       "url": "https://github.com/guardrails-ai/provenance_llm.git",
-      "branch": "frontend_demo"
+      "branch": "default-embed-func"
   },
   "index": "./__init__.py",
   "exports": [

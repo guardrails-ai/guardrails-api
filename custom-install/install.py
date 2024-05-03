@@ -106,6 +106,6 @@ https://hub.guardrailsai.com/validator/${id}
     
 
 custom_install("hub://guardrails/provenance_llm")
-custom_install("hub://guardrails/detect_pii")
-custom_install("hub://guardrails/competitor_check")
-custom_install("hub://guardrails/many_shot_jailbreak")
+# custom_install("hub://guardrails/detect_pii")
+# custom_install("hub://guardrails/competitor_check")
+# custom_install("hub://guardrails/many_shot_jailbreak")

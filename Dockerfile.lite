@@ -34,7 +34,7 @@ RUN pip install -r requirements-lock.txt
 # Download punkt data
 RUN python -m nltk.downloader -d /opt/nltk_data punkt
 
-RUN guardrails hub install hub://guardrails/profanity_free
+# RUN guardrails hub install hub://guardrails/profanity_free
 RUN guardrails hub install hub://guardrails/valid_length
 RUN guardrails hub install hub://guardrails/lowercase
 RUN guardrails hub install hub://guardrails/regex_match

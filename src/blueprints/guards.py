@@ -122,6 +122,8 @@ def collect_telemetry(
 @handle_error
 @gather_request_metrics
 def validate(guard_name: str):
+    from rich import print 
+    
     # Do we actually need a child span here?
     # We could probably use the existing span from the request unless we forsee
     #   capturing the same attributes on non-GaaS Guard runs.
