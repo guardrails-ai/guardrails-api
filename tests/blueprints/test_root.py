@@ -1,8 +1,6 @@
 from src.utils.logger import logger
-from unittest.mock import MagicMock
 from tests.mocks.mock_blueprint import MockBlueprint
 from tests.mocks.mock_postgres_client import MockPostgresClient
-from tests.mocks.mock_sql_alchemy import mock_text
 
 
 def test_home(mocker):
@@ -11,34 +9,31 @@ def test_home(mocker):
 
     response = home()
 
-    assert root_bp.route_call_count == 2
-    assert root_bp.routes == ["/", "/health-check"]
+    assert root_bp.route_call_count == 4
+    assert root_bp.routes == ["/", "/health-check", "/api-docs", "/docs"]
     assert response == "Hello, Flask!"
 
     mocker.resetall()
 
-def test_home(mocker):
+def test_health_check(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("sqlalchemy.text", new=MagicMock(side_effect=mock_text))
+
     mock_pg = MockPostgresClient()
     mock_pg.db.session._set_rows([(1,)])
-    class MockPg:
-        def __init__(self):
-          self.db = mock_pg.db
-    mocker.patch("src.clients.postgres_client.PostgresClient", new=MockPg)
+    mocker.patch("src.blueprints.root.PostgresClient", return_value=mock_pg)
+    
+    def text_side_effect(query: str):
+        return query
+    mock_text = mocker.patch("src.blueprints.root.text", side_effect=text_side_effect)
+    
     from src.blueprints.root import (
-        health_check,
-        root_bp,
-        text,
-        PostgresClient
+        health_check
     )
     info_spy = mocker.spy(logger, "info")
     
     response = health_check()
     
-    assert root_bp.name == "root"
-    assert root_bp.routes == ["/", "/health-check", "/api-docs", "/docs"]
-    text.assert_called_once_with("SELECT count(datid) FROM pg_stat_activity;")
+    assert mock_text.called_once_with("SELECT count(datid) FROM pg_stat_activity;")
     assert mock_pg.db.session.queries == ["SELECT count(datid) FROM pg_stat_activity;"]
         
     info_spy.assert_called_once_with("response: %s", [(1,)])

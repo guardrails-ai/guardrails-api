@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from operator import attrgetter
 from lxml.etree import _Element, SubElement
 from guardrails.datatypes import DataType, registry
-from guardrails.schema import FormatAttr
+from guardrails.validatorsattr import ValidatorsAttr
 from src.classes.schema_element_struct import SchemaElementStruct
 from src.classes.element_stub import ElementStub
 from src.utils.pluck import pluck
@@ -65,7 +65,7 @@ class DataTypeStruct:
 
         format = "; ".join(self.formatters)
         plugins = "; ".join(self.plugins) if self.plugins is not None else None
-        format_attr = FormatAttr(format, element, plugins)
+        format_attr = ValidatorsAttr(format, element, plugins)
         # TODO: Pass tracer here if to_rail is ever used
         format_attr.get_validators(self.element.strict)
 
@@ -171,17 +171,17 @@ class DataTypeStruct:
 
     @classmethod
     def from_request(cls, data_type: dict):
-        if data_type is not None:
+        if data_type:
             children, formatters, element, plugins = pluck(
                 data_type, ["children", "formatters", "element", "plugins"]
-            )
+            ) 
             children_data_types = None
-            if children is not None:
+            if children:
                 class_children = {}
-                elem_type = element["type"] if element is not None else None
+                elem_type = element.get("type") if element is not None else None
                 elem_is_list = elem_type == "list"
                 child_entries = (
-                    children.get("item", {}) if elem_is_list else children
+                    children.get("item", {}).get("children", {}) if elem_is_list else children
                 )
                 for child_key in child_entries:
                     class_children[child_key] = cls.from_request(
@@ -263,7 +263,7 @@ class DataTypeStruct:
             element = parent
             elem_attribs: ElementStub = self.element.to_element()
             for k, v in elem_attribs.attrib.items():
-                element.set(k, v)
+                element.set(k, str(v))
         else:
             element = self.element.to_element()
 
@@ -278,10 +278,14 @@ class DataTypeStruct:
         if plugins is not None:
             element.attrib["plugins"] = plugins
 
+
+        stringified_attribs = {}
+        for k, v in element.attrib.items():
+            stringified_attribs[k] = str(v)
         xml_data_type = (
             element
             if as_parent
-            else SubElement(parent, element.tag, element.attrib)
+            else SubElement(parent, element.tag, stringified_attribs)
         )
 
         self_is_list = self.element.type == "list"

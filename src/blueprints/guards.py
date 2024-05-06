@@ -1,9 +1,10 @@
 import os
 import json
+from string import Template
 from flask import Blueprint, request
 from urllib.parse import unquote_plus
 from guardrails import Guard
-from guardrails.utils.logs_utils import GuardLogs
+from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import get_tracer
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
@@ -90,7 +91,7 @@ def validate(guard_name: str):
 
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
-    prompt_params = payload.pop("promptParams", None)
+    prompt_params = payload.pop("promptParams", {})
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
 
@@ -125,65 +126,46 @@ def validate(guard_name: str):
                 ),
             )
 
-        result: bool = False
-        validated_output: dict = None
-        raw_llm_response: str = None
-
         if llm_output is not None:
-            validated_output = guard.parse(
+            result: ValidationOutcome = guard.parse(
                 llm_output=llm_output,
                 num_reasks=num_reasks,
                 prompt_params=prompt_params,
                 llm_api=llm_api,
+                api_key=openai_api_key,
                 *args,
                 **payload,
             )
         else:
-            raw_llm_response, validated_output = guard(
+            result: ValidationOutcome = guard(
                 llm_api=llm_api,
                 prompt_params=prompt_params,
                 num_reasks=num_reasks,
+                api_key=openai_api_key,
                 *args,
                 **payload,
             )
 
-        guard_history = guard.state.most_recent_call
-        last_step_logs: GuardLogs = guard_history.history[-1]
-        validation_logs = last_step_logs.field_validation_logs.validator_logs
-        failed_validations = list(
-            [
-                log
-                for log in validation_logs
-                if log.validation_result.outcome == "fail"
-            ]
-        )
-
-        result = len(failed_validations) == 0
-        raw_output = guard_history.output or raw_llm_response
-
+        # TODO: Just make this a ValidationOutcome with history
         validation_output = ValidationOutput(
-            result, validated_output, guard.state.all_histories, raw_output
+            result.validation_passed,
+            result.validated_output,
+            guard.history,
+            result.raw_llm_output
         )
 
-        prompt = (
-            guard.rail.prompt.format(**(prompt_params or {})).source
-            if guard.rail.prompt
-            else None
-        )
+        prompt = guard.history.last.inputs.prompt
         if prompt:
+            prompt = Template(prompt).safe_substitute(**prompt_params)
             validate_span.set_attribute("prompt", prompt)
 
-        instructions = (
-            guard.rail.instructions.format(**(prompt_params or {})).source
-            if guard.rail.instructions
-            else None
-        )
+        instructions = guard.history.last.inputs.instructions
         if instructions:
+            instructions = Template(instructions).safe_substitute(**prompt_params)
             validate_span.set_attribute("instructions", instructions)
 
-        validation_status = "pass" if result is True else "fail"
-        validate_span.set_attribute("validation_status", validation_status)
-        validate_span.set_attribute("raw_llm_ouput", raw_output)
+        validate_span.set_attribute("validation_status", guard.history.last.status)
+        validate_span.set_attribute("raw_llm_ouput", result.raw_llm_output)
 
         # Use the serialization from the class instead of re-writing it
         valid_output: str = (
@@ -193,16 +175,11 @@ def validate(guard_name: str):
         )
         validate_span.set_attribute("validated_output", valid_output)
 
-        final_step_logs: GuardLogs = guard_history.history[-1]
-        final_response = final_step_logs.llm_response
-        prompt_token_count = final_response.prompt_token_count or 0
-        response_token_count = final_response.response_token_count or 0
-        total_token_count = prompt_token_count + response_token_count
-        validate_span.set_attribute("tokens_consumed", total_token_count)
+        validate_span.set_attribute("tokens_consumed", guard.history.last.tokens_consumed)
 
         num_of_reasks = (
-            len(guard_history.history) - 1
-            if len(guard_history.history) > 0
+            guard.history.last.iterations.length - 1
+            if guard.history.last.iterations.length > 0
             else 0
         )
         validate_span.set_attribute("num_of_reasks", num_of_reasks)

@@ -1,6 +1,6 @@
-from typing import List, Union, Dict
-from guardrails import Instructions
-from guardrails.utils.logs_utils import GuardHistory
+from typing import Union, Dict
+from guardrails.classes.generic import Stack
+from guardrails.classes.history import Call
 from guardrails.utils.reask_utils import ReAsk
 
 
@@ -8,41 +8,53 @@ class ValidationOutput:
     def __init__(
         self,
         result: bool,
-        validated_output: Union[str, Dict, ReAsk],
-        histories: List[GuardHistory] = None,
+        validated_output: Union[str, Dict, None],
+        calls: Stack[Call] = Stack(),
         raw_llm_response: str = None,
     ):
         self.result = result
-        self.validated_output = (
-            validated_output.dict()
-            if isinstance(validated_output, ReAsk)
-            else validated_output
-        )
+        self.validated_output = validated_output
         self.session_history = [
             {
                 "history": [
                     {
-                        "instructions": h.instructions.source
-                        if isinstance(h.instructions, Instructions)
-                        else h.instructions,
-                        "output": h.output,
-                        "parsedOutput": h.parsed_output.dict()
-                        if isinstance(h.parsed_output, ReAsk)
-                        else h.parsed_output,
+                        "instructions": i.inputs.instructions.source
+                        if i.inputs.instructions is not None
+                        else None,
+                        "output": i.outputs.raw_output or i.outputs.llm_response_info.output,
+                        "parsedOutput": i.parsed_output,
                         "prompt": {
-                            "source": h.prompt.source
-                            if h.prompt is not None
+                            "source": i.inputs.prompt.source
+                            if i.inputs.prompt is not None
                             else None
                         },
-                        "reasks": list(r.dict() for r in h.reasks),
-                        "validatedOutput": h.validated_output.dict()
-                        if isinstance(h.validated_output, ReAsk)
-                        else h.validated_output,
+                        "reasks": list(r.model_dump() for r in i.reasks),
+                        "validatedOutput": i.guarded_output.model_dump()
+                        if isinstance(i.guarded_output, ReAsk)
+                        else i.guarded_output,
+                        "failedValidations": list(
+                            {
+                                "validatorName": fv.validator_name,
+                                "registeredName": fv.registered_name,
+                                "valueBeforeValidation": fv.value_before_validation,
+                                "validationResult": {
+                                    "outcome": fv.validation_result.outcome,
+                                    # Don't include metadata bc it could contain api keys
+                                    # "metadata": fv.validation_result.metadata
+                                },
+                                "valueAfterValidation": fv.value_after_validation,
+                                "startTime": fv.start_time,
+                                "endTime": fv.end_time,
+                                "instanceId": fv.instance_id,
+                                "propertyPath": fv.property_path,
+                            }
+                            for fv in i.failed_validations
+                        )
                     }
-                    for h in x.history
+                    for i in c.iterations
                 ]
             }
-            for x in histories
+            for c in calls
         ]
         self.raw_llm_response = raw_llm_response
 

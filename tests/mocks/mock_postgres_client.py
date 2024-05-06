@@ -18,6 +18,30 @@ class MockSession:
   
     def _set_rows(self, rows: List[Any]):
         self.rows = rows
+        
+    def query(self, *args, **kwargs):
+        return self
+
+    def filter_by(self, *args, **kwargs):
+        return self
+
+    def filter(self, *args, **kwargs):
+        return self
+
+    def order_by(self, *args, **kwargs):
+        return self
+
+    def first(self, *args, **kwargs):
+        return self
+    
+    def add(self, *args, **kwargs):
+        return self
+
+    def delete(self, *args, **kwargs):
+        return self
+
+    def commit(self, *args, **kwargs):
+        return self
 
 class MockDb:
     def __init__(self) -> None:

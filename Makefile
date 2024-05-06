@@ -2,7 +2,6 @@
 install:
 	pip install -r requirements.txt;
 	opentelemetry-bootstrap -a install
-	pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry;
 
 # Installs development dependencies
 install-dev:
@@ -10,18 +9,13 @@ install-dev:
 	pip install -r requirements-dev.txt;
 
 lock:
-	pip freeze --exclude guardrails-ai --exclude guard-rails-api-client > requirements-lock.txt
+	pip freeze --exclude guardrails-api-client > requirements-lock.txt
 
 install-lock:
 	pip install -r requirements-lock.txt
 
-build-sdk:
-	bash build-sdk.sh
-
 build:
 	make install
-	make build-sdk;
-	pip install ./guard-rails-api-client
 
 dev:
 	bash ./dev.sh
@@ -31,6 +25,15 @@ local:
 
 env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
+
+refresh:
+	echo "Removing old virtual environment"
+	rm -rf ./.venv;
+	echo "Creating new virtual environment"
+	python3 -m venv ./.venv;
+	echo "Sourcing and installing"
+	source ./.venv/bin/activate && make install-lock;
+
 
 format:
 	black -l 80 ./src app.py wsgi.py
@@ -51,7 +54,7 @@ test:
 
 test-cov:
 	coverage run --source=./src -m pytest ./tests
-	coverage report --fail-under=0 ## TODO: Update with real coverage threshold after tests are backfilled
+	coverage report --fail-under=70
 
 view-test-cov:
 	coverage run --source=./src -m pytest ./tests

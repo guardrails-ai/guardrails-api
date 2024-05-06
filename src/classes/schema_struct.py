@@ -20,8 +20,8 @@ class SchemaStruct:
         if isinstance(schema, StringSchema):
             serialized_schema = DataTypeStruct.from_data_type(schema)
         else:
-            for key in schema._schema:
-                schema_element = schema._schema[key]
+            for key in schema.root_datatype:
+                schema_element = schema.root_datatype[key]
                 serialized_schema[key] = DataTypeStruct.from_data_type(
                     schema_element
                 )
