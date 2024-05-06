@@ -26,6 +26,15 @@ local:
 env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
 
+refresh:
+	echo "Removing old virtual environment"
+	rm -rf ./.venv;
+	echo "Creating new virtual environment"
+	python3 -m venv ./.venv;
+	echo "Sourcing and installing"
+	source ./.venv/bin/activate && make install-lock;
+
+
 format:
 	black -l 80 ./src app.py wsgi.py
 
