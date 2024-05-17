@@ -63,9 +63,7 @@ def guard(guard_name: str):
             405,
             "Method Not Allowed",
             "/guard/<guard_name> only supports the GET, PUT, and DELETE methods."
-            " You specified {request_method}".format(
-                request_method=request.method
-            ),
+            " You specified {request_method}".format(request_method=request.method),
         )
 
 
@@ -151,7 +149,7 @@ def validate(guard_name: str):
             result.validation_passed,
             result.validated_output,
             guard.history,
-            result.raw_llm_output
+            result.raw_llm_output,
         )
 
         prompt = guard.history.last.inputs.prompt
@@ -175,7 +173,9 @@ def validate(guard_name: str):
         )
         validate_span.set_attribute("validated_output", valid_output)
 
-        validate_span.set_attribute("tokens_consumed", guard.history.last.tokens_consumed)
+        validate_span.set_attribute(
+            "tokens_consumed", guard.history.last.tokens_consumed
+        )
 
         num_of_reasks = (
             guard.history.last.iterations.length - 1

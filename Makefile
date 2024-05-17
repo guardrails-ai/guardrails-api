@@ -36,10 +36,13 @@ refresh:
 
 
 format:
-	black -l 80 ./src app.py wsgi.py
+	ruff check app.py wsgi.py src/ tests/ --fix
+	ruff format app.py wsgi.py src/ tests/
+
 
 lint:
-	flake8 --count ./src app.py wsgi.py
+	ruff check app.py wsgi.py src/ tests/
+	ruff format app.py wsgi.py src/ tests/
 
 qa:
 	make lint

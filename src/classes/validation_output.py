@@ -21,7 +21,8 @@ class ValidationOutput:
                         "instructions": i.inputs.instructions.source
                         if i.inputs.instructions is not None
                         else None,
-                        "output": i.outputs.raw_output or i.outputs.llm_response_info.output,
+                        "output": i.outputs.raw_output
+                        or i.outputs.llm_response_info.output,
                         "parsedOutput": i.parsed_output,
                         "prompt": {
                             "source": i.inputs.prompt.source
@@ -49,7 +50,7 @@ class ValidationOutput:
                                 "propertyPath": fv.property_path,
                             }
                             for fv in i.failed_validations
-                        )
+                        ),
                     }
                     for i in c.iterations
                 ]

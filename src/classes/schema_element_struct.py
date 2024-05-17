@@ -41,9 +41,9 @@ class SchemaElementStruct:
             for validator_on_fail in self.on_fails:
                 validator_tag = validator_on_fail.get("validatorTag", "")
                 escaped_validator_tag = validator_tag.replace("/", "_")
-                elem_dict[
-                    f"on-fail-{escaped_validator_tag}"
-                ] = validator_on_fail.get("method")
+                elem_dict[f"on-fail-{escaped_validator_tag}"] = validator_on_fail.get(
+                    "method"
+                )
         elem_dict.pop("date_format", None)
         elem_dict.pop("time_format", None)
         elem_dict.pop("on_fails", None)
@@ -184,11 +184,7 @@ class SchemaElementStruct:
         strict = None
         strict_tag = xml.get("strict", "False")
         if strict_tag:
-            strict = (
-                True
-                if strict_tag.lower() == "true"
-                else False
-            )
+            strict = True if strict_tag.lower() == "true" else False
         date_format = xml.get("date-format")
         time_format = xml.get("time-format")
         on_fail = xml.get("on-fail")
@@ -209,9 +205,7 @@ class SchemaElementStruct:
             if attr_key.startswith("on-fail") and attr_key != "on-fail":
                 on_fail_method = xml.get(attr_key)
                 on_fail_tag = attr_key
-                on_fails.append(
-                    {"validatorTag": on_fail_tag, "method": on_fail_method}
-                )
+                on_fails.append({"validatorTag": on_fail_tag, "method": on_fail_method})
             elif attr_key not in handled_keys:
                 kwargs[attr_key] = xml.get(attr_key)
         model = xml.get("model")

@@ -52,9 +52,7 @@ class PostgresClient:
             else f"{pg_host}:{pg_port}"
         )
 
-        conf = (
-            f"postgresql://{pg_user}:{pg_password}@{pg_endpoint}/{pg_database}"
-        )
+        conf = f"postgresql://{pg_user}:{pg_password}@{pg_endpoint}/{pg_database}"
 
         if os.environ.get("NODE_ENV") == "production":
             conf = f"{conf}?sslmode=verify-ca&sslrootcert=global-bundle.pem"
