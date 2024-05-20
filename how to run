@@ -10,7 +10,7 @@ Lite-build.sh
 Docker run - lite-run.sh
 
 
-pyenv exec -m venv .venv
+pyenv exec python -m venv .venv
 source .venv/bin/activate
 
 make install-lock
