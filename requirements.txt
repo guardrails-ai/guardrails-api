@@ -206,7 +206,7 @@ readtime==3.0.0
 redis==5.0.1
 referencing==0.29.1
 regex==2023.8.8
-requests==2.31.0
+requests==2.32.0
 requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==13.4.2
