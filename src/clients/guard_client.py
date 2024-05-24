@@ -9,9 +9,6 @@ class GuardClient:
     def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
         raise NotImplementedError
 
-    def get_guard_item(self, guard_name: str) -> GuardItem:
-        raise NotImplementedError
-
     def get_guards(self) -> List[GuardStruct]:
         raise NotImplementedError
 

@@ -1,4 +1,3 @@
-import os
 import json
 from guardrails.hub import *  # noqa
 from string import Template
@@ -7,11 +6,11 @@ from flask import Blueprint, Response, request, stream_with_context
 from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.classes import ValidationOutcome
-from opentelemetry.trace import get_tracer, Span
+from opentelemetry.trace import Span
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
-from src.clients.guard_client import GuardClient
+from src.clients.memory_guard_client import MemoryGuardClient
 from src.utils.handle_error import handle_error
 from src.utils.gather_request_metrics import gather_request_metrics
 from src.utils.get_llm_callable import get_llm_callable
@@ -19,7 +18,8 @@ from src.utils.prep_environment import cleanup_environment, prep_environment
 
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
-guard_client = GuardClient()
+# can use PGMemoryGuardClient to persist to Postgres instance
+guard_client = MemoryGuardClient()
 
 
 @guards_bp.after_request
