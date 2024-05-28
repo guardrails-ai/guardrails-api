@@ -1,11 +1,11 @@
-import yaml
-from typing import Dict
+import json
 from jsonschema import Draft202012Validator, ValidationError
 from referencing import Registry, jsonschema as jsonschema_ref
 from src.classes.http_error import HttpError
+from src.utils.remove_nones import remove_nones
 
-with open("./open-api-spec.yml", "r") as open_api_spec:
-    api_spec: Dict = yaml.safe_load(open_api_spec)
+with open("./open-api-spec.json") as api_spec_file:
+    api_spec = json.loads(api_spec_file.read())
 
 registry = Registry().with_resources(
     [
@@ -25,9 +25,10 @@ guard_validator = Draft202012Validator(
 
 
 def validate_payload(payload: dict):
+    filtered_payload = remove_nones(payload)
     fields = {}
     error: ValidationError
-    for error in guard_validator.iter_errors(payload):
+    for error in guard_validator.iter_errors(filtered_payload):
         fields[error.json_path] = fields.get(error.json_path, [])
         fields[error.json_path].append(error.message)
 

@@ -50,11 +50,6 @@ export class ComputeService extends Construct {
       retentionInDays: 180
     });
 
-    this._task = new Task(this, `${id}-task`, {
-      ...config,
-      logGroup: this._logGroup
-    });
-
     this._securityGroup = new SecurityGroup(this, `${id}-security-group`, {
       vpcId: vpc.id,
       ingress: [
@@ -85,6 +80,19 @@ export class ComputeService extends Construct {
       serviceDiscoveryNamespace,
       serviceName,
       vpcLink
+    });
+
+    const taskConfig = { ...config };
+    taskConfig.containers.forEach((container) => {
+      container.environmentVariables?.push({
+        name: 'SELF_ENDPOINT',
+        value: this.gateway.api.apiEndpoint
+      });
+    });
+
+    this._task = new Task(this, `${id}-task`, {
+      ...config,
+      logGroup: this._logGroup
     });
 
     this._service = new EcsService(this, `${id}-ecs-service`, {

@@ -13,9 +13,7 @@ class GuardClient:
 
     def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
         latest_guard_item = (
-            self.pgClient.db.session.query(GuardItem)
-            .filter_by(name=guard_name)
-            .first()
+            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
         )
         audit_item = None
         if as_of_date is not None:
@@ -31,17 +29,13 @@ class GuardClient:
             raise HttpError(
                 status=404,
                 message="NotFound",
-                cause="A Guard with the name {guard_name} does not exist!".format(
-                    guard_name=guard_name
-                ),
+                cause=f"A Guard with the name {guard_name} does not exist!",
             )
         return GuardStruct.from_guard_item(guard_item)
 
     def get_guard_item(self, guard_name: str) -> GuardItem:
         return (
-            self.pgClient.db.session.query(GuardItem)
-            .filter_by(name=guard_name)
-            .first()
+            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
         )
 
     def get_guards(self) -> List[GuardStruct]:
@@ -66,9 +60,7 @@ class GuardClient:
             raise HttpError(
                 status=404,
                 message="NotFound",
-                cause="A Guard with the name {guard_name} does not exist!".format(
-                    guard_name=guard_name
-                ),
+                cause=f"A Guard with the name {guard_name} does not exist!",
             )
         guard_item.railspec = guard.railspec.to_dict()
         guard_item.num_reasks = guard.num_reasks
@@ -80,6 +72,7 @@ class GuardClient:
         if guard_item is not None:
             guard_item.railspec = guard.railspec.to_dict()
             guard_item.num_reasks = guard.num_reasks
+            guard_item.description = guard.description
             self.pgClient.db.session.commit()
             return GuardStruct.from_guard_item(guard_item)
         else:

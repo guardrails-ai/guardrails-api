@@ -243,11 +243,11 @@ export class DeploymentPipeline extends Construct {
             value: clusterArn
           },
           {
-            name: 'ECS_CLUSTER_NAME',
+            name: 'CLUSTER_NAME',
             value: clusterName
           },
           {
-            name: 'ECS_SERVICE_NAME',
+            name: 'SERVICE_NAME',
             value: serviceName
           },
           {

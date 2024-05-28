@@ -1,11 +1,21 @@
-build-sdk:
-	bash build-sdk.sh
+# Installs production dependencies
+install:
+	pip install -r requirements.txt;
+	opentelemetry-bootstrap -a install
+
+# Installs development dependencies
+install-dev:
+	make install
+	pip install -r requirements-dev.txt;
+
+lock:
+	pip freeze --exclude guardrails-api-client > requirements-lock.txt
+
+install-lock:
+	pip install -r requirements-lock.txt
 
 build:
-	pip install -r requirements.txt;
-	pip install git+https://github.com/guardrails-ai/guardrails-internal.git@telemetry;
-	make build-sdk;
-	pip install ./guard-rails-api-client
+	make install
 
 dev:
 	bash ./dev.sh
@@ -16,14 +26,23 @@ local:
 env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
 
-format:
-	black -l 80 ./src app.py wsgi.py
+refresh:
+	echo "Removing old virtual environment"
+	rm -rf ./.venv;
+	echo "Creating new virtual environment"
+	python3 -m venv ./.venv;
+	echo "Sourcing and installing"
+	source ./.venv/bin/activate && make install-lock;
 
-install:
-	pip install -r requirements.txt
+
+format:
+	ruff check app.py wsgi.py src/ tests/ --fix
+	ruff format app.py wsgi.py src/ tests/
+
 
 lint:
-	flake8 --count ./src app.py wsgi.py
+	ruff check app.py wsgi.py src/ tests/
+	ruff format app.py wsgi.py src/ tests/
 
 qa:
 	make lint
@@ -38,7 +57,7 @@ test:
 
 test-cov:
 	coverage run --source=./src -m pytest ./tests
-	coverage report --fail-under=0 ## TODO: Update with real coverage threshold after tests are backfilled
+	coverage report --fail-under=70
 
 view-test-cov:
 	coverage run --source=./src -m pytest ./tests

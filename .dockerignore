@@ -6,4 +6,5 @@ tests
 docker*
 Docker*
 *.sh
+!buildspecs/hub-install.sh
 ingestion-service-spec.yml

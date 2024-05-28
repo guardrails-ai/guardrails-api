@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from operator import attrgetter
 from lxml.etree import _Element, SubElement
 from guardrails.datatypes import DataType, registry
-from guardrails.schema import FormatAttr
+from guardrails.validatorsattr import ValidatorsAttr
 from src.classes.schema_element_struct import SchemaElementStruct
 from src.classes.element_stub import ElementStub
 from src.utils.pluck import pluck
@@ -65,7 +65,7 @@ class DataTypeStruct:
 
         format = "; ".join(self.formatters)
         plugins = "; ".join(self.plugins) if self.plugins is not None else None
-        format_attr = FormatAttr(format, element, plugins)
+        format_attr = ValidatorsAttr(format, element, plugins)
         # TODO: Pass tracer here if to_rail is ever used
         format_attr.get_validators(self.element.strict)
 
@@ -125,13 +125,9 @@ class DataTypeStruct:
                 class_children = {}
                 elem_type = element["type"] if element is not None else None
                 elem_is_list = elem_type == "list"
-                child_entries = (
-                    children.get("item", {}) if elem_is_list else children
-                )
+                child_entries = children.get("item", {}) if elem_is_list else children
                 for child_key in child_entries:
-                    class_children[child_key] = cls.from_dict(
-                        child_entries[child_key]
-                    )
+                    class_children[child_key] = cls.from_dict(child_entries[child_key])
                 children_data_types = (
                     {"item": class_children} if elem_is_list else class_children
                 )
@@ -155,13 +151,9 @@ class DataTypeStruct:
                 self.children.get("item", {}) if elem_is_list else self.children
             )
             for child_key in child_entries:
-                serialized_children[child_key] = child_entries[
-                    child_key
-                ].to_dict()
+                serialized_children[child_key] = child_entries[child_key].to_dict()
             response["children"] = (
-                {"item": serialized_children}
-                if elem_is_list
-                else serialized_children
+                {"item": serialized_children} if elem_is_list else serialized_children
             )
 
         if self.plugins is not None:
@@ -171,17 +163,19 @@ class DataTypeStruct:
 
     @classmethod
     def from_request(cls, data_type: dict):
-        if data_type is not None:
+        if data_type:
             children, formatters, element, plugins = pluck(
                 data_type, ["children", "formatters", "element", "plugins"]
             )
             children_data_types = None
-            if children is not None:
+            if children:
                 class_children = {}
-                elem_type = element["type"] if element is not None else None
+                elem_type = element.get("type") if element is not None else None
                 elem_is_list = elem_type == "list"
                 child_entries = (
-                    children.get("item", {}) if elem_is_list else children
+                    children.get("item", {}).get("children", {})
+                    if elem_is_list
+                    else children
                 )
                 for child_key in child_entries:
                     class_children[child_key] = cls.from_request(
@@ -211,13 +205,9 @@ class DataTypeStruct:
                 self.children.get("item", {}) if elem_is_list else self.children
             )
             for child_key in child_entries:
-                serialized_children[child_key] = child_entries[
-                    child_key
-                ].to_response()
+                serialized_children[child_key] = child_entries[child_key].to_response()
             response["children"] = (
-                {"item": serialized_children}
-                if elem_is_list
-                else serialized_children
+                {"item": serialized_children} if elem_is_list else serialized_children
             )
 
         if self.plugins is not None:
@@ -255,21 +245,17 @@ class DataTypeStruct:
 
         return cls(children, formatters, element, plugins)
 
-    def to_xml(
-        self, parent: _Element, as_parent: Optional[bool] = False
-    ) -> _Element:
+    def to_xml(self, parent: _Element, as_parent: Optional[bool] = False) -> _Element:
         element = None
         if as_parent:
             element = parent
             elem_attribs: ElementStub = self.element.to_element()
             for k, v in elem_attribs.attrib.items():
-                element.set(k, v)
+                element.set(k, str(v))
         else:
             element = self.element.to_element()
 
-        format = (
-            "; ".join(self.formatters) if len(self.formatters) > 0 else None
-        )
+        format = "; ".join(self.formatters) if len(self.formatters) > 0 else None
         if format is not None:
             element.attrib["format"] = format
 
@@ -278,10 +264,13 @@ class DataTypeStruct:
         if plugins is not None:
             element.attrib["plugins"] = plugins
 
+        stringified_attribs = {}
+        for k, v in element.attrib.items():
+            stringified_attribs[k] = str(v)
         xml_data_type = (
             element
             if as_parent
-            else SubElement(parent, element.tag, element.attrib)
+            else SubElement(parent, element.tag, stringified_attribs)
         )
 
         self_is_list = self.element.type == "list"
@@ -291,8 +280,7 @@ class DataTypeStruct:
             )
             _parent = xml_data_type
             if self_is_list and (
-                len(child_entries) > 0
-                or child_entries[0].element.name is not None
+                len(child_entries) > 0 or child_entries[0].element.name is not None
             ):
                 _parent = SubElement(xml_data_type, "object")
             for child_key in child_entries:
@@ -305,9 +293,7 @@ class DataTypeStruct:
 
         self_is_list = self.element.type == "list"
         if self.children is not None:
-            children = (
-                self.children.get("item", {}) if self_is_list else self.children
-            )
+            children = self.children.get("item", {}) if self_is_list else self.children
             for child_key in children:
                 plugins.extend(children[child_key].get_all_plugins())
         return plugins

@@ -20,11 +20,9 @@ class SchemaStruct:
         if isinstance(schema, StringSchema):
             serialized_schema = DataTypeStruct.from_data_type(schema)
         else:
-            for key in schema._schema:
-                schema_element = schema._schema[key]
-                serialized_schema[key] = DataTypeStruct.from_data_type(
-                    schema_element
-                )
+            for key in schema.root_datatype:
+                schema_element = schema.root_datatype[key]
+                serialized_schema[key] = DataTypeStruct.from_data_type(schema_element)
         return cls({"schema": serialized_schema})
 
     def to_schema(self) -> Schema:
@@ -34,9 +32,7 @@ class SchemaStruct:
         if isinstance(inner_schema, DataTypeStruct):
             string_schema = StringSchema()
             string_schema.string_key = inner_schema.element.name
-            string_schema[
-                string_schema.string_key
-            ] = inner_schema.to_data_type()
+            string_schema[string_schema.string_key] = inner_schema.to_data_type()
             return string_schema
 
         for key in inner_schema:
@@ -55,9 +51,7 @@ class SchemaStruct:
             else:
                 for key in inner_schema:
                     schema_element = inner_schema[key]
-                    serialized_schema[key] = DataTypeStruct.from_dict(
-                        schema_element
-                    )
+                    serialized_schema[key] = DataTypeStruct.from_dict(schema_element)
             return cls({"schema": serialized_schema})
 
     def to_dict(self):
@@ -84,9 +78,7 @@ class SchemaStruct:
                 # JsonSchema
                 for key in inner_schema:
                     schema_element = inner_schema[key]
-                    serialized_schema[key] = DataTypeStruct.from_request(
-                        schema_element
-                    )
+                    serialized_schema[key] = DataTypeStruct.from_request(schema_element)
             return cls({"schema": serialized_schema})
 
     def to_response(self):

@@ -20,3 +20,7 @@ guardrails-api-client
 guardrails
 *.env
 opentelemetry-lambda-layer
+open-api-spec.json
+open-api-spec.yml
+.python-version
+requirements-lock-old.txt

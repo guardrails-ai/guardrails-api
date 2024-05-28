@@ -9,7 +9,7 @@
                "description": "Generate a pet name.",
                "onFail": "fix"
             },
-            "formatters": ["length: 1 10"]
+            "formatters": ["hub://guardrails/valid_length: 1 10"]
         }
      },
      "prompt": "Generate a random pet name between 1 and 10 characters.  Return only the generated pet name and nothing else. Don't talk, just go.",
