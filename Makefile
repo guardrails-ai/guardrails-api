@@ -1,7 +1,11 @@
 # Installs production dependencies
 install:
 	pip install -r requirements.txt;
+	# This is a workaround because of this issue: https://github.com/open-telemetry/opentelemetry-python-contrib/issues/2053
+	pip uninstall aiohttp -y
+	pip install opentelemetry-distro
 	opentelemetry-bootstrap -a install
+	pip install aiohttp
 
 # Installs development dependencies
 install-dev:

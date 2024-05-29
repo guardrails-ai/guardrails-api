@@ -12,7 +12,6 @@ from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
 from src.clients.memory_guard_client import MemoryGuardClient
 from src.utils.handle_error import handle_error
-from src.utils.gather_request_metrics import gather_request_metrics
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
 
@@ -31,7 +30,6 @@ def after_request_func(response):
 
 @guards_bp.route("/", methods=["GET", "POST"])
 @handle_error
-@gather_request_metrics
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
@@ -52,7 +50,6 @@ def guards():
 
 @guards_bp.route("/<guard_name>", methods=["GET", "PUT", "DELETE"])
 @handle_error
-@gather_request_metrics
 def guard(guard_name: str):
     decoded_guard_name = unquote_plus(guard_name)
     if request.method == "GET":
@@ -120,7 +117,6 @@ def collect_telemetry(
 
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
-@gather_request_metrics
 def validate(guard_name: str):
     from rich import print 
     
