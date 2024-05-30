@@ -47,6 +47,8 @@ def guards():
             return [g._to_request() for g in guards]
         return [g.to_response() for g in guards]
     elif request.method == "POST":
+        if pg_host is None:
+            raise HttpError(501, 'NotImplemented', 'POST /guards is not implemented for in-memory guards.')
         payload = request.json
         guard = GuardStruct.from_request(payload)
         new_guard = guard_client.create_guard(guard)
@@ -82,6 +84,8 @@ def guard(guard_name: str):
             return guard._to_request()
         return guard.to_response()
     elif request.method == "PUT":
+        if pg_host is None:
+            raise HttpError(501, 'NotImplemented', 'PUT /<guard_name> is not implemented for in-memory guards.')
         payload = request.json
         guard = GuardStruct.from_request(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
@@ -89,6 +93,8 @@ def guard(guard_name: str):
             return updated_guard._to_request()
         return updated_guard.to_response()
     elif request.method == "DELETE":
+        if pg_host is None:
+            raise HttpError(501, 'NotImplemented', 'DELETE /<guard_name> is not implemented for in-memory guards.')
         guard = guard_client.delete_guard(decoded_guard_name)
         if isinstance(guard, Guard):
             return guard._to_request()
@@ -163,7 +169,9 @@ def validate(guard_name: str):
     openai_api_key = request.headers.get("x-openai-api-key", None)
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
-    prep_environment(guard_struct)
+    if isinstance(guard_struct, GuardStruct):
+        # TODO: is there a way to do this with Guard?
+        prep_environment(guard_struct)
 
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
@@ -181,8 +189,10 @@ def validate(guard_name: str):
     #     f"validate-{decoded_guard_name}"
     # ) as validate_span:
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-    guard: Guard = guard_struct.to_guard(openai_api_key)
-
+    if isinstance(guard_struct, GuardStruct):
+        guard: Guard = guard_struct.to_guard(openai_api_key)
+    elif isinstance(guard_struct, Guard):
+        guard = guard_struct
     # validate_span.set_attribute("guardName", decoded_guard_name)
     if llm_api is not None:
         llm_api = get_llm_callable(llm_api)
@@ -307,6 +317,6 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-
-    cleanup_environment(guard_struct)
+    if isinstance(guard_struct, GuardStruct):
+        cleanup_environment(guard_struct)
     return validation_output.to_response()

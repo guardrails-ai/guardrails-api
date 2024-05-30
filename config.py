@@ -14,3 +14,7 @@ from guardrails.hub import RegexMatch
 regex_guard = Guard(name='regex_guard').use(
     RegexMatch(regex="^[A-Z][a-z]*$")
 )
+
+regex_guard2 = Guard(name='regex_guard2').use(
+    RegexMatch(regex="^[A-Z]*$")
+)

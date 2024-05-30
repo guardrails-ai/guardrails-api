@@ -27,6 +27,10 @@ def home():
 @handle_error
 @gather_request_metrics
 def health_check():
+    # If we're not using postgres, just return Ok
+    pg_host = os.environ.get("PGHOST", None)
+    if pg_host is None: 
+      return HealthCheck(200, "Ok").to_dict()
     # Make sure we're connected to the database and can run queries
     pg_client = PostgresClient()
     query = text("SELECT count(datid) FROM pg_stat_activity;")
