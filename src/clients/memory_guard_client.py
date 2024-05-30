@@ -1,5 +1,6 @@
 from typing import List
-from src.classes.guard_struct import GuardStruct
+
+from guardrails import Guard
 from src.classes.http_error import HttpError
 from src.clients.guard_client import GuardClient
 from src.models.guard_item import GuardItem
@@ -8,25 +9,24 @@ from src.models.guard_item_audit import GuardItemAudit
 
 
 class MemoryGuardClient(GuardClient):
-    # key value pair of guard_name to guard_struct
+    # key value pair of guard_name to guard
     guards = {}
     def __init__(self):
         self.initialized = True
 
 
-    def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
-        # TODO: should this throw if it isn't found?
+    def get_guard(self, guard_name: str, as_of_date: str = None) -> Guard:
         guard = self.guards.get(guard_name, None)
         return guard
 
-    def get_guards(self) -> List[GuardStruct]:
+    def get_guards(self) -> List[Guard]:
         return list(self.guards.values())
 
-    def create_guard(self, guard: GuardStruct) -> GuardStruct:
+    def create_guard(self, guard: Guard) -> Guard:
         self.guards[guard.name] = guard
         return guard 
 
-    def update_guard(self, guard_name: str, new_guard: GuardStruct) -> GuardStruct:
+    def update_guard(self, guard_name: str, new_guard: Guard) -> Guard:
         old_guard = self.get_guard(guard_name)
         if old_guard is None:
             raise HttpError(
@@ -36,22 +36,14 @@ class MemoryGuardClient(GuardClient):
                     guard_name=guard_name
                 ),
             )
-        old_guard.railspec = new_guard.railspec.to_dict()
-        old_guard.num_reasks = new_guard.num_reasks
-        self.guards[guard_name] = old_guard
-        return old_guard 
+        self.guards[guard_name] = new_guard
+        return new_guard
 
-    def upsert_guard(self, guard_name: str, new_guard: GuardStruct) -> GuardStruct:
-        old_guard = self.get_guard(guard_name)
-        if old_guard is not None:
-            old_guard.railspec = new_guard.railspec.to_dict()
-            old_guard.num_reasks = new_guard.num_reasks
-            self.guards[guard_name] = old_guard
-            return old_guard 
-        else:
-            return self.create_guard(new_guard)
+    def upsert_guard(self, guard_name: str, new_guard: Guard) -> Guard:
+        self.create_guard(new_guard)
+        return new_guard
 
-    def delete_guard(self, guard_name: str) -> GuardStruct:
+    def delete_guard(self, guard_name: str) -> Guard:
         deleted_guard = self.get_guard(guard_name)
         if deleted_guard is None:
             raise HttpError(

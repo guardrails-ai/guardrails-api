@@ -9,7 +9,7 @@ class GuardClient:
     def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
         raise NotImplementedError
 
-    def get_guards(self) -> List[GuardStruct]:
+    def get_guards(self) -> List[Union[GuardStruct, GuardItem]]:
         raise NotImplementedError
 
     def create_guard(self, guard: GuardStruct) -> GuardStruct:
