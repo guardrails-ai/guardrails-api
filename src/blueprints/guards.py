@@ -38,15 +38,12 @@ def guards():
         guards = guard_client.get_guards()
         return [g.to_response() for g in guards]
     elif request.method == "POST":
-        payload = request.json
-        guard = GuardStruct.from_request(payload)
-        new_guard = guard_client.create_guard(guard)
-        return new_guard.to_response()
+        raise HttpError(501, "Not Implemented", "POST /guards is not implemented.")
     else:
         raise HttpError(
             405,
             "Method Not Allowed",
-            "/guards only supports the GET and POST methods. You specified"
+            "/guards only supports the GET methods. You specified"
             " {request_method}".format(request_method=request.method),
         )
 
@@ -59,15 +56,19 @@ def guard(guard_name: str):
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
         guard = guard_client.get_guard(decoded_guard_name, as_of_query)
+        if guard is None:
+            raise HttpError(
+                404,
+                "NotFound",
+                "A Guard with the name {guard_name} does not exist!".format(
+                    guard_name=decoded_guard_name
+                ),
+            )
         return guard.to_response()
     elif request.method == "PUT":
-        payload = request.json
-        guard = GuardStruct.from_request(payload)
-        updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
-        return updated_guard.to_response()
+        raise HttpError(501, "Not Implemented", "PUT /<guard_name> is not implemented.")
     elif request.method == "DELETE":
-        guard = guard_client.delete_guard(decoded_guard_name)
-        return guard.to_response()
+        raise HttpError(501, "Not Implemented", "DELETE /<guard_name> is not implemented.")
     else:
         raise HttpError(
             405,
