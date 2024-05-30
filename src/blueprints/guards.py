@@ -22,12 +22,19 @@ from src.utils.prep_environment import cleanup_environment, prep_environment
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 
 pg_host = os.environ.get("PGHOST", None)
-print('pg_host', pg_host)
 # if no pg_host is set, use in memory guards
 if pg_host is not None:
     guard_client = PGGuardClient()
 else:
     guard_client = MemoryGuardClient()
+    # read in guards from file
+    import config
+    exports = config.__dir__()
+    for export_name in exports:
+        export = getattr(config, export_name) 
+        is_guard = isinstance(export, Guard)
+        if is_guard:
+            guard_client.create_guard(export)
 
 
 @guards_bp.route("/", methods=["GET", "POST"])
@@ -36,6 +43,8 @@ else:
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
+        if len(guards)>0 and (isinstance(guards[0], Guard)):
+            return [g._to_request() for g in guards]
         return [g.to_response() for g in guards]
     elif request.method == "POST":
         raise HttpError(501, "Not Implemented", "POST /guards is not implemented.")
@@ -64,6 +73,8 @@ def guard(guard_name: str):
                     guard_name=decoded_guard_name
                 ),
             )
+        if isinstance(guard, Guard):
+            return guard._to_request()
         return guard.to_response()
     elif request.method == "PUT":
         raise HttpError(501, "Not Implemented", "PUT /<guard_name> is not implemented.")
