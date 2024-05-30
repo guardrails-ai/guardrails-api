@@ -53,14 +53,10 @@ class ValidationOutput:
                                 },
                                 "valueAfterValidation": fv.value_after_validation,
                                 "startTime": (
-                                    fv.start_time.isoformat()
-                                    if fv.start_time
-                                    else None
+                                    fv.start_time.isoformat() if fv.start_time else None
                                 ),
                                 "endTime": (
-                                    fv.end_time.isoformat()
-                                    if fv.end_time
-                                    else None
+                                    fv.end_time.isoformat() if fv.end_time else None
                                 ),
                                 "instanceId": fv.instance_id,
                                 "propertyPath": fv.property_path,
@@ -80,7 +76,7 @@ class ValidationOutput:
                 "validation_errors": [
                     try_json_loads(fv.validation_result.error_message)
                     for fv in c.iterations.last.failed_validations
-                ]
+                ],
             }
             for c in calls
         ]

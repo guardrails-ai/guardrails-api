@@ -35,7 +35,7 @@ def get_llm_callable(
             return litellm.completion
         elif model is ValidatePayloadLlmApi.LITELLM_ACOMPLETION:
             return litellm.acompletion
-            
+
         else:
             pass
     except Exception:

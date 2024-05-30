@@ -1,4 +1,3 @@
-import os
 import json
 from guardrails.hub import *  # noqa
 from string import Template
@@ -7,7 +6,7 @@ from flask import Blueprint, Response, request, stream_with_context
 from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.classes import ValidationOutcome
-from opentelemetry.trace import get_tracer, Span
+from opentelemetry.trace import Span
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
@@ -77,14 +76,14 @@ def guard(guard_name: str):
 
 
 def collect_telemetry(
-        *,
-        guard: Guard,
-        validate_span: Span,
-        validation_output: ValidationOutput,
-        prompt_params: Dict[str, Any],
-        result: ValidationOutcome
-    ):
-    # Below is all telemetry collection and 
+    *,
+    guard: Guard,
+    validate_span: Span,
+    validation_output: ValidationOutput,
+    prompt_params: Dict[str, Any],
+    result: ValidationOutcome,
+):
+    # Below is all telemetry collection and
     # should have no impact on what is returned to the user
     prompt = guard.history.last.inputs.prompt
     if prompt:
@@ -116,12 +115,13 @@ def collect_telemetry(
     )
     validate_span.set_attribute("num_of_reasks", num_of_reasks)
 
+
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
 @gather_request_metrics
 def validate(guard_name: str):
-    from rich import print 
-    
+    from rich import print
+
     # Do we actually need a child span here?
     # We could probably use the existing span from the request unless we forsee
     #   capturing the same attributes on non-GaaS Guard runs.
@@ -147,7 +147,7 @@ def validate(guard_name: str):
 
     # service_name = os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
     # otel_tracer = get_tracer(service_name)
-    
+
     payload["api_key"] = payload.get("api_key", openai_api_key)
 
     # with otel_tracer.start_as_current_span(
@@ -186,7 +186,7 @@ def validate(guard_name: str):
                 message="BadRequest",
                 cause="Streaming is not supported for parse calls!",
             )
-            
+
         result: ValidationOutcome = guard.parse(
             llm_output=llm_output,
             num_reasks=num_reasks,
@@ -198,7 +198,8 @@ def validate(guard_name: str):
         )
     else:
         if stream:
-            def guard_streamer ():
+
+            def guard_streamer():
                 guard_stream = guard(
                     llm_api=llm_api,
                     prompt_params=prompt_params,
@@ -208,24 +209,24 @@ def validate(guard_name: str):
                     *args,
                     **payload,
                 )
-                
+
                 for result in guard_stream:
                     # TODO: Just make this a ValidationOutcome with history
                     validation_output: ValidationOutput = ValidationOutput(
                         result.validation_passed,
                         result.validated_output,
                         guard.history,
-                        result.raw_llm_output
+                        result.raw_llm_output,
                     )
-                    
+
                     yield validation_output, cast(ValidationOutcome, result)
 
             def validate_streamer(guard_iter):
                 next_result = None
-                next_validation_output = None
+                # next_validation_output = None
                 for validation_output, result in guard_iter:
                     next_result = result
-                    next_validation_output = validation_output
+                    # next_validation_output = validation_output
                     fragment = json.dumps(validation_output.to_response())
                     print("yielding fragment")
                     yield f"{fragment}\n"
@@ -234,9 +235,9 @@ def validate(guard_name: str):
                     next_result.validation_passed,
                     next_result.validated_output,
                     guard.history,
-                    next_result.raw_llm_output
+                    next_result.raw_llm_output,
                 )
-                # I don't know if these are actually making it to OpenSearch 
+                # I don't know if these are actually making it to OpenSearch
                 # because the span may be ended already
                 # collect_telemetry(
                 #     guard=guard,
@@ -248,12 +249,13 @@ def validate(guard_name: str):
                 final_output_json = json.dumps(final_validation_output.to_response())
                 print("Yielding final output.")
                 yield f"{final_output_json}\n"
+
             return Response(
                 stream_with_context(validate_streamer(guard_streamer())),
-                content_type="application/json"
+                content_type="application/json",
                 # content_type="text/event-stream"
             )
-        
+
         result: ValidationOutcome = guard(
             llm_api=llm_api,
             prompt_params=prompt_params,
@@ -268,7 +270,7 @@ def validate(guard_name: str):
         result.validation_passed,
         result.validated_output,
         guard.history,
-        result.raw_llm_output
+        result.raw_llm_output,
     )
 
     # collect_telemetry(
