@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Union
+
+from guardrails import Guard
 from src.classes.guard_struct import GuardStruct
 from src.models.guard_item import GuardItem
 
@@ -6,20 +8,20 @@ from src.models.guard_item import GuardItem
 class GuardClient:
     def __init__(self):
         self.initialized = True
-    def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
+    def get_guard(self, guard_name: str, as_of_date: str = None) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def get_guards(self) -> List[Union[GuardStruct, GuardItem]]:
+    def get_guards(self) -> List[Union[GuardStruct, Guard]]:
         raise NotImplementedError
 
-    def create_guard(self, guard: GuardStruct) -> GuardStruct:
+    def create_guard(self, guard: Union[GuardStruct, Guard]) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def update_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
+    def update_guard(self, guard_name: str, guard: Union[GuardStruct, Guard]) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def upsert_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
+    def upsert_guard(self, guard_name: str, guard: Union[GuardStruct, Guard]) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def delete_guard(self, guard_name: str) -> GuardStruct:
+    def delete_guard(self, guard_name: str) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
