@@ -66,7 +66,7 @@ class ValidationOutput:
                                 "propertyPath": fv.property_path,
                             }
                             for fv in i.failed_validations
-                        )
+                        ),
                     }
                     for i in c.iterations
                 ]

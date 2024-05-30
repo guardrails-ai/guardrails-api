@@ -72,9 +72,7 @@ def guard(guard_name: str):
             405,
             "Method Not Allowed",
             "/guard/<guard_name> only supports the GET, PUT, and DELETE methods."
-            " You specified {request_method}".format(
-                request_method=request.method
-            ),
+            " You specified {request_method}".format(request_method=request.method),
         )
 
 
