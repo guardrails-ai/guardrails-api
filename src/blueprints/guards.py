@@ -90,8 +90,8 @@ def guard(guard_name: str):
         return updated_guard.to_response()
     elif request.method == "DELETE":
         guard = guard_client.delete_guard(decoded_guard_name)
-        if isinstance(updated_guard, Guard):
-            return updated_guard._to_request()
+        if isinstance(guard, Guard):
+            return guard._to_request()
         return guard.to_response()
     else:
         raise HttpError(
