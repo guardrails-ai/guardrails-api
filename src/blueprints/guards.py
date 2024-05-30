@@ -21,7 +21,6 @@ from src.utils.prep_environment import cleanup_environment, prep_environment
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 
 pg_host = os.environ.get("PGHOST", None)
-print('pg_host', pg_host)
 # if no pg_host is set, use in memory guards
 if pg_host is not None:
     guard_client = PGGuardClient()

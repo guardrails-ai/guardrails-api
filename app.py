@@ -37,17 +37,13 @@ def create_app():
     configure_logging(log_level=guardrails_log_level)
 
     
-    print("otel_is_enabled: ", enable_otel)
-    print("instrumentor: ", instrumentor)
     if enable_otel and instrumentor:
         instrumentor.instrument_app(app)
         initialize()
 
     pg_host = os.environ.get("PGHOST", None)
-    print('pg_host', pg_host)
     # if no pg_host is set, don't set up postgres 
     if pg_host is not None:
-        print('setting up postgres!')
         from src.clients.postgres_client import PostgresClient
         pg_client = PostgresClient()
         pg_client.initialize(app)
