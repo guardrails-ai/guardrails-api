@@ -17,7 +17,7 @@ class GuardItem(db.Model):
         name,
         railspec,
         num_reasks,
-        description
+        description,
         # owner = None
     ):
         self.name = name

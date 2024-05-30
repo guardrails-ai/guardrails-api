@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+
 class MockRequest:
     method: str
     json: Optional[Dict]
@@ -11,7 +12,7 @@ class MockRequest:
         method: str,
         json: Optional[Dict] = {},
         args: Optional[Dict] = {},
-        headers: Optional[Dict] = {}
+        headers: Optional[Dict] = {},
     ):
         self.method = method
         self.json = json

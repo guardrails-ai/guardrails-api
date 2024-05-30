@@ -39,7 +39,9 @@ class MockTracer:
     def start_as_current_span(self, *args, **kwargs):
         return self.span
 
+
 class MockContext:
-     _id: str
-     def __init__(self):
-        self._id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    _id: str
+
+    def __init__(self):
+        self._id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
