@@ -17,9 +17,7 @@ def handle_error(fn):
         except HTTPException as http_exception:
             logger.error(http_exception)
             traceback.print_exception(http_exception)
-            http_error = HttpError(
-                http_exception.code, http_exception.description
-            )
+            http_error = HttpError(http_exception.code, http_exception.description)
             return http_error.to_dict(), http_error.status
         except Exception as e:
             logger.error(e)

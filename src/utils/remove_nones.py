@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 
-def remove_nones (dictionary: Dict[str, Any]) -> Dict[str, Any]:
+
+def remove_nones(dictionary: Dict[str, Any]) -> Dict[str, Any]:
     filtered = {}
     for key, value in list(dictionary.items()):
         if isinstance(value, Dict):

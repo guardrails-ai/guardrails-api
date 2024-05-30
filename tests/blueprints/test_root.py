@@ -15,29 +15,29 @@ def test_home(mocker):
 
     mocker.resetall()
 
+
 def test_health_check(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
 
     mock_pg = MockPostgresClient()
     mock_pg.db.session._set_rows([(1,)])
     mocker.patch("src.blueprints.root.PostgresClient", return_value=mock_pg)
-    
+
     def text_side_effect(query: str):
         return query
+
     mock_text = mocker.patch("src.blueprints.root.text", side_effect=text_side_effect)
-    
-    from src.blueprints.root import (
-        health_check
-    )
+
+    from src.blueprints.root import health_check
+
     info_spy = mocker.spy(logger, "info")
-    
+
     response = health_check()
-    
+
     assert mock_text.called_once_with("SELECT count(datid) FROM pg_stat_activity;")
     assert mock_pg.db.session.queries == ["SELECT count(datid) FROM pg_stat_activity;"]
-        
+
     info_spy.assert_called_once_with("response: %s", [(1,)])
-    assert response == { "status": 200, "message": "Ok" }
+    assert response == {"status": 200, "message": "Ok"}
 
     mocker.resetall()
-

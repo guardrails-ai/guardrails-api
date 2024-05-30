@@ -4,9 +4,9 @@ from referencing import Registry, jsonschema as jsonschema_ref
 from src.classes.http_error import HttpError
 from src.utils.remove_nones import remove_nones
 
-with open('./open-api-spec.json') as api_spec_file:
+with open("./open-api-spec.json") as api_spec_file:
     api_spec = json.loads(api_spec_file.read())
-    
+
 registry = Registry().with_resources(
     [
         (

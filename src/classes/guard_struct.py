@@ -14,7 +14,7 @@ class GuardStruct:
         name: str,
         railspec: RailSpecStruct,
         num_reasks: int = None,
-        description: str = None
+        description: str = None,
         # base_model: dict = None,
     ):
         self.name = name
@@ -52,9 +52,7 @@ class GuardStruct:
         name, railspec, num_reasks, description = pluck(
             guard, ["name", "railspec", "num_reasks", "description"]
         )
-        return cls(
-            name, RailSpecStruct.from_dict(railspec), num_reasks, description
-        )
+        return cls(name, RailSpecStruct.from_dict(railspec), num_reasks, description)
 
     def to_dict(self) -> dict:
         return {
@@ -100,6 +98,4 @@ class GuardStruct:
         num_reasks: int = None,
         description: str = None,
     ):
-        return cls(
-            name, RailSpecStruct.from_xml(railspec), num_reasks, description
-        )
+        return cls(name, RailSpecStruct.from_xml(railspec), num_reasks, description)

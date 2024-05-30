@@ -14,25 +14,19 @@ class ReverseProxied(object):
     def __call__(self, environ, start_response):
         self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
         url = urlparse(self_endpoint)
-        environ['wsgi.url_scheme'] = url.scheme
+        environ["wsgi.url_scheme"] = url.scheme
         return self.app(environ, start_response)
 
 
 def create_app():
     app = Flask(__name__)
 
-    app.config['APPLICATION_ROOT'] = '/'
+    app.config["APPLICATION_ROOT"] = "/"
     app.config["PREFERRED_URL_SCHEME"] = "https"
     app.wsgi_app = ReverseProxied(app.wsgi_app)
     CORS(app)
 
-    app.wsgi_app = ProxyFix(
-        app.wsgi_app,
-        x_for=1,
-        x_proto=1,
-        x_host=1,
-        x_port=1
-    )
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)

@@ -1,5 +1,4 @@
-black
-flake8
+ruff
 pytest
 coverage
 pytest-mock
