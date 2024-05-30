@@ -20,10 +20,6 @@ class ReverseProxied(object):
 
 
 def create_app():
-    enable_otel = otel_is_enabled()
-    instrumentor = None
-    if enable_otel:
-        instrumentor = FlaskInstrumentor()
     app = Flask(__name__)
 
     app.config["APPLICATION_ROOT"] = "/"
@@ -37,8 +33,8 @@ def create_app():
     configure_logging(log_level=guardrails_log_level)
 
     
-    if enable_otel and instrumentor:
-        instrumentor.instrument_app(app)
+    if otel_is_enabled():
+        FlaskInstrumentor().instrument_app(app)
         initialize()
 
     pg_host = os.environ.get("PGHOST", None)
