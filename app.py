@@ -49,10 +49,14 @@ def create_app():
         instrumentor.instrument_app(app)
         initialize()
 
-    from src.clients.postgres_client import PostgresClient
-
-    pg_client = PostgresClient()
-    pg_client.initialize(app)
+    pg_host = os.environ.get("PGHOST", None)
+    print('pg_host', pg_host)
+    # if no pg_host is set, don't set up postgres 
+    if pg_host is not None:
+        print('setting up postgres!')
+        from src.clients.postgres_client import PostgresClient
+        pg_client = PostgresClient()
+        pg_client.initialize(app)
 
     from src.blueprints.root import root_bp
     from src.blueprints.guards import guards_bp
