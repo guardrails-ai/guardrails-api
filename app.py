@@ -22,8 +22,9 @@ class ReverseProxied(object):
 def create_app():
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
+
         load_dotenv()
-    
+
     app = Flask(__name__)
 
     app.config["APPLICATION_ROOT"] = "/"
@@ -36,15 +37,15 @@ def create_app():
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)
 
-    
     if otel_is_enabled():
         FlaskInstrumentor().instrument_app(app)
         initialize()
 
     pg_host = os.environ.get("PGHOST", None)
-    # if no pg_host is set, don't set up postgres 
+    # if no pg_host is set, don't set up postgres
     if pg_host is not None:
         from src.clients.postgres_client import PostgresClient
+
         pg_client = PostgresClient()
         pg_client.initialize(app)
 

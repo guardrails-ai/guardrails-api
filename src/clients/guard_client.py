@@ -2,25 +2,33 @@ from typing import List, Union
 
 from guardrails import Guard
 from src.classes.guard_struct import GuardStruct
-from src.models.guard_item import GuardItem
 
 
 class GuardClient:
     def __init__(self):
         self.initialized = True
-    def get_guard(self, guard_name: str, as_of_date: str = None) -> Union[GuardStruct, Guard]:
+
+    def get_guard(
+        self, guard_name: str, as_of_date: str = None
+    ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
     def get_guards(self) -> List[Union[GuardStruct, Guard]]:
         raise NotImplementedError
 
-    def create_guard(self, guard: Union[GuardStruct, Guard]) -> Union[GuardStruct, Guard]:
+    def create_guard(
+        self, guard: Union[GuardStruct, Guard]
+    ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def update_guard(self, guard_name: str, guard: Union[GuardStruct, Guard]) -> Union[GuardStruct, Guard]:
+    def update_guard(
+        self, guard_name: str, guard: Union[GuardStruct, Guard]
+    ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def upsert_guard(self, guard_name: str, guard: Union[GuardStruct, Guard]) -> Union[GuardStruct, Guard]:
+    def upsert_guard(
+        self, guard_name: str, guard: Union[GuardStruct, Guard]
+    ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
     def delete_guard(self, guard_name: str) -> Union[GuardStruct, Guard]:

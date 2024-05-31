@@ -8,13 +8,13 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
     ConsoleSpanExporter,
     SpanExporter,
-    SpanProcessor
+    SpanProcessor,
 )
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-    OTLPSpanExporter as HttpSpanExporter
+    OTLPSpanExporter as HttpSpanExporter,
 )
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-    OTLPSpanExporter as GrpcSpanExporter
+    OTLPSpanExporter as GrpcSpanExporter,
 )
 from src.otel.constants import none
 
@@ -22,13 +22,14 @@ from src.otel.constants import none
 def traces_are_enabled() -> bool:
     otel_traces_exporter = os.environ.get("OTEL_TRACES_EXPORTER", none)
     return otel_traces_exporter != none
-    
-    
+
+
 def get_tracer(name: Optional[str] = None) -> Tracer:
     tracer_name = name or os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
     tracer = trace.get_tracer(tracer_name)
-    
+
     return tracer
+
 
 def get_span_exporter(exporter_type: str) -> SpanExporter:
     if exporter_type == "otlp":
@@ -55,17 +56,17 @@ def set_span_processors(
 def initialize_tracer():
     if traces_are_enabled():
         tracer_provider = trace.get_tracer_provider()
-        
-        trace_exporter_settings = os.environ.get("OTEL_TRACES_EXPORTER", "none").split(",")
+
+        trace_exporter_settings = os.environ.get("OTEL_TRACES_EXPORTER", "none").split(
+            ","
+        )
         trace_exporters = [
-            get_span_exporter(e)
-            for e in trace_exporter_settings
-            if e != "none"
+            get_span_exporter(e) for e in trace_exporter_settings if e != "none"
         ]
-        
+
         use_batch = os.environ.get("OTEL_PROCESS_IN_BATCH", "true") == "true"
         for exporter in trace_exporters:
             set_span_processors(tracer_provider, exporter, use_batch)
-        
+
         # Initialize singleton
         get_tracer()

@@ -57,7 +57,7 @@ source:
 	source ./.venv/bin/activate
 
 test:
-	python3 -m pytest ./tests
+	pytest ./tests
 
 test-cov:
 	coverage run --source=./src -m pytest ./tests

@@ -3,17 +3,14 @@ from typing import List
 from guardrails import Guard
 from src.classes.http_error import HttpError
 from src.clients.guard_client import GuardClient
-from src.models.guard_item import GuardItem
-from src.clients.postgres_client import PostgresClient
-from src.models.guard_item_audit import GuardItemAudit
 
 
 class MemoryGuardClient(GuardClient):
     # key value pair of guard_name to guard
     guards = {}
+
     def __init__(self):
         self.initialized = True
-
 
     def get_guard(self, guard_name: str, as_of_date: str = None) -> Guard:
         guard = self.guards.get(guard_name, None)
@@ -24,7 +21,7 @@ class MemoryGuardClient(GuardClient):
 
     def create_guard(self, guard: Guard) -> Guard:
         self.guards[guard.name] = guard
-        return guard 
+        return guard
 
     def update_guard(self, guard_name: str, new_guard: Guard) -> Guard:
         old_guard = self.get_guard(guard_name)

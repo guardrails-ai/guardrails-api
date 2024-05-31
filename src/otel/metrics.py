@@ -5,15 +5,14 @@ from opentelemetry.metrics import Meter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     ConsoleMetricExporter,
-    MetricReader,
     PeriodicExportingMetricReader,
-    MetricExporter
+    MetricExporter,
 )
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
-    OTLPMetricExporter as HttpMetricExporter
+    OTLPMetricExporter as HttpMetricExporter,
 )
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-    OTLPMetricExporter as GrpcMetricExporter
+    OTLPMetricExporter as GrpcMetricExporter,
 )
 from src.otel.constants import none
 
@@ -26,7 +25,7 @@ def metrics_are_enabled() -> bool:
 def get_meter(name: Optional[str] = None) -> Meter:
     meter_name = name or os.environ.get("OTEL_SERVICE_NAME", "guardrails-api")
     meter = metrics.get_meter(meter_name)
-    
+
     return meter
 
 
@@ -39,24 +38,21 @@ def get_metrics_exporter(exporter_type: str) -> MetricExporter:
         return metrics_exporter
     elif exporter_type == "console":
         return ConsoleMetricExporter()
-    
 
 
 def initialize_metrics_collector():
     if metrics_are_enabled():
-        metrics_exporter_settings = os.environ.get("OTEL_METRICS_EXPORTER", "none").split(",")
+        metrics_exporter_settings = os.environ.get(
+            "OTEL_METRICS_EXPORTER", "none"
+        ).split(",")
         metric_exporters = [
-            get_metrics_exporter(e)
-            for e in metrics_exporter_settings
-            if e != "none"
+            get_metrics_exporter(e) for e in metrics_exporter_settings if e != "none"
         ]
-        
+
         metric_readers = []
         for exporter in metric_exporters:
-            metric_readers.append(
-                PeriodicExportingMetricReader(exporter)
-            )
-            
+            metric_readers.append(PeriodicExportingMetricReader(exporter))
+
         provider = MeterProvider(metric_readers=metric_readers)
         metrics.set_meter_provider(provider)
 

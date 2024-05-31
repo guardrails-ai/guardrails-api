@@ -7,7 +7,6 @@ from sqlalchemy import text
 from src.classes.health_check import HealthCheck
 from src.clients.postgres_client import PostgresClient
 from src.utils.handle_error import handle_error
-from src.utils.gather_request_metrics import gather_request_metrics
 from src.utils.logger import logger
 
 # from src.modules.otel_logger import logger
@@ -27,8 +26,8 @@ def home():
 def health_check():
     # If we're not using postgres, just return Ok
     pg_host = os.environ.get("PGHOST", None)
-    if pg_host is None: 
-      return HealthCheck(200, "Ok").to_dict()
+    if pg_host is None:
+        return HealthCheck(200, "Ok").to_dict()
     # Make sure we're connected to the database and can run queries
     pg_client = PostgresClient()
     query = text("SELECT count(datid) FROM pg_stat_activity;")

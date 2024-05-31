@@ -28,9 +28,10 @@ else:
     guard_client = MemoryGuardClient()
     # read in guards from file
     import config
+
     exports = config.__dir__()
     for export_name in exports:
-        export = getattr(config, export_name) 
+        export = getattr(config, export_name)
         is_guard = isinstance(export, Guard)
         if is_guard:
             guard_client.create_guard(export)
@@ -41,12 +42,16 @@ else:
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
-        if len(guards)>0 and (isinstance(guards[0], Guard)):
+        if len(guards) > 0 and (isinstance(guards[0], Guard)):
             return [g._to_request() for g in guards]
         return [g.to_response() for g in guards]
     elif request.method == "POST":
         if pg_host is None:
-            raise HttpError(501, 'NotImplemented', 'POST /guards is not implemented for in-memory guards.')
+            raise HttpError(
+                501,
+                "NotImplemented",
+                "POST /guards is not implemented for in-memory guards.",
+            )
         payload = request.json
         guard = GuardStruct.from_request(payload)
         new_guard = guard_client.create_guard(guard)
@@ -82,7 +87,11 @@ def guard(guard_name: str):
         return guard.to_response()
     elif request.method == "PUT":
         if pg_host is None:
-            raise HttpError(501, 'NotImplemented', 'PUT /<guard_name> is not implemented for in-memory guards.')
+            raise HttpError(
+                501,
+                "NotImplemented",
+                "PUT /<guard_name> is not implemented for in-memory guards.",
+            )
         payload = request.json
         guard = GuardStruct.from_request(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
@@ -91,7 +100,11 @@ def guard(guard_name: str):
         return updated_guard.to_response()
     elif request.method == "DELETE":
         if pg_host is None:
-            raise HttpError(501, 'NotImplemented', 'DELETE /<guard_name> is not implemented for in-memory guards.')
+            raise HttpError(
+                501,
+                "NotImplemented",
+                "DELETE /<guard_name> is not implemented for in-memory guards.",
+            )
         guard = guard_client.delete_guard(decoded_guard_name)
         if isinstance(guard, Guard):
             return guard._to_request()

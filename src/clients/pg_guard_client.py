@@ -14,9 +14,7 @@ class PGGuardClient(GuardClient):
 
     def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
         latest_guard_item = (
-            self.pgClient.db.session.query(GuardItem)
-            .filter_by(name=guard_name)
-            .first()
+            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
         )
         audit_item = None
         if as_of_date is not None:
@@ -40,9 +38,7 @@ class PGGuardClient(GuardClient):
 
     def get_guard_item(self, guard_name: str) -> GuardItem:
         return (
-            self.pgClient.db.session.query(GuardItem)
-            .filter_by(name=guard_name)
-            .first()
+            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
         )
 
     def get_guards(self) -> List[GuardStruct]:
