@@ -5,7 +5,7 @@ from string import Template
 from flask import Blueprint
 from sqlalchemy import text
 from src.classes.health_check import HealthCheck
-from src.clients.postgres_client import PostgresClient
+from src.clients.postgres_client import PostgresClient, postgres_is_enabled
 from src.utils.handle_error import handle_error
 from src.utils.logger import logger
 
@@ -25,8 +25,7 @@ def home():
 @handle_error
 def health_check():
     # If we're not using postgres, just return Ok
-    pg_host = os.environ.get("PGHOST", None)
-    if pg_host is None:
+    if not postgres_is_enabled():
         return HealthCheck(200, "Ok").to_dict()
     # Make sure we're connected to the database and can run queries
     pg_client = PostgresClient()

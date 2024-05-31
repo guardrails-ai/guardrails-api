@@ -1,3 +1,4 @@
+import os
 from src.utils.logger import logger
 from tests.mocks.mock_blueprint import MockBlueprint
 from tests.mocks.mock_postgres_client import MockPostgresClient
@@ -17,6 +18,7 @@ def test_home(mocker):
 
 
 def test_health_check(mocker):
+    os.environ["PGHOST"] = "localhost"
     mocker.patch("flask.Blueprint", new=MockBlueprint)
 
     mock_pg = MockPostgresClient()
@@ -34,10 +36,11 @@ def test_health_check(mocker):
 
     response = health_check()
 
-    assert mock_text.called_once_with("SELECT count(datid) FROM pg_stat_activity;")
+    mock_text.assert_called_once_with("SELECT count(datid) FROM pg_stat_activity;")
     assert mock_pg.db.session.queries == ["SELECT count(datid) FROM pg_stat_activity;"]
 
     info_spy.assert_called_once_with("response: %s", [(1,)])
     assert response == {"status": 200, "message": "Ok"}
 
     mocker.resetall()
+    del os.environ["PGHOST"]
