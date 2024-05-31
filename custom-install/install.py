@@ -106,7 +106,7 @@ https://hub.guardrailsai.com/validator/${id}
     logger.log(level=LEVELS.get("SPAM"), msg=success_message_logger)  # type: ignore
     
 
-custom_install("hub://guardrails/provenance_llm")
+# custom_install("hub://guardrails/provenance_llm")
 custom_install("hub://tryolabs/restricttotopic")
 # custom_install("hub://guardrails/detect_pii")
 # custom_install("hub://guardrails/competitor_check")

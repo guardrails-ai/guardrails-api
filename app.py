@@ -20,6 +20,10 @@ class ReverseProxied(object):
 
 
 def create_app():
+    if os.environ.get("APP_ENVIRONMENT") != "production":
+        from dotenv import load_dotenv
+        load_dotenv()
+    
     app = Flask(__name__)
 
     app.config["APPLICATION_ROOT"] = "/"
