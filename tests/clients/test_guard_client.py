@@ -3,7 +3,6 @@ from unittest.mock import ANY as AnyMatcher
 from src.classes.http_error import HttpError
 
 # from src.clients.memory_guard_client import MemoryGuardClient
-from src.clients.pg_guard_client import PGGuardClient
 from src.models.guard_item import GuardItem
 from src.models.guard_item_audit import GuardItemAudit
 from tests.mocks.mock_postgres_client import MockPostgresClient
@@ -14,6 +13,8 @@ from unittest.mock import call
 def test_init(mocker):
     mock_pg_client = MockPostgresClient()
     mocker.patch("src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client)
+
+    from src.clients.pg_guard_client import PGGuardClient
 
     pg_guard_client = PGGuardClient()
     # mem_guard_client = MemoryGuardClient()
@@ -40,6 +41,9 @@ class TestGetGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = latest_guard
+        
+        from src.clients.pg_guard_client import PGGuardClient
+        
 
         guard_client = PGGuardClient()
 
@@ -71,6 +75,8 @@ class TestGetGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = previous_guard
+        
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
@@ -108,6 +114,8 @@ class TestGetGuard:
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
+        
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
@@ -132,6 +140,8 @@ def test_get_guard_item(mocker):
     mock_first = mocker.patch.object(mock_pg_client.db.session, "first")
     latest_guard = MockGuardStruct("latest")
     mock_first.return_value = latest_guard
+    
+    from src.clients.pg_guard_client import PGGuardClient
 
     guard_client = PGGuardClient()
 
@@ -159,6 +169,8 @@ def test_get_guards(mocker):
         "src.clients.pg_guard_client.GuardStruct.from_guard_item"
     )
     mock_from_guard_item.side_effect = [guard_one, guard_two]
+
+    from src.clients.pg_guard_client import PGGuardClient
 
     guard_client = PGGuardClient()
 
@@ -188,6 +200,8 @@ def test_create_guard(mocker):
         "src.clients.pg_guard_client.GuardStruct.from_guard_item"
     )
     mock_from_guard_item.return_value = mock_guard
+
+    from src.clients.pg_guard_client import PGGuardClient
 
     guard_client = PGGuardClient()
 
@@ -229,6 +243,8 @@ class TestUpdateGuard:
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
+        
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
@@ -263,6 +279,8 @@ class TestUpdateGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = updated_guard
+
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
@@ -301,6 +319,8 @@ class TestUpsertGuard:
             "src.clients.pg_guard_client.PGGuardClient.create_guard"
         )
         mock_create_guard.return_value = new_guard
+        
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
@@ -331,6 +351,8 @@ class TestUpsertGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = updated_guard
+        
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
@@ -363,6 +385,8 @@ class TestDeleteGuard:
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
+        
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
@@ -396,6 +420,8 @@ class TestDeleteGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = old_guard
+        
+        from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
 
