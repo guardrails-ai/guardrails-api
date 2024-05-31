@@ -1,0 +1,77 @@
+{
+  "name": "Restrict to Topic",
+  "author": {
+      "name": "Tryolabs",
+      "email": "hello@tryolabs.com"
+  },
+  "maintainers": {
+      "name": "Paz",
+      "email": "paz@tyrolabs.com"
+  },
+  "repository": {
+      "url": "https://github.com/guardrails-ai/restricttotopic.git"
+  },
+  "index": "./__init__.py",
+  "exports": [
+      "RestrictToTopic"
+  ],
+  "tags": {
+      "language": [
+          "en"
+      ],
+      "certification": [
+          "Guardrails Certified"
+      ],
+      "contentType": [
+          "string"
+      ],
+      "infrastructureRequirements": [
+          "LLM",
+          "ML"
+      ],
+      "riskCategory": [
+          "Etiquette",
+          "Jailbreaking",
+          "Brand risk"
+      ],
+      "useCases": [
+          "Chatbots",
+          "Customer Support"
+      ]
+  },
+  "id": "tryolabs/restricttotopic",
+  "namespace": "tryolabs",
+  "packageName": "restricttotopic",
+  "moduleName": "validator",
+  "requiresAuth": false,
+  "featured": true,
+  "parameters": [
+      {
+          "name": "valid_topics",
+          "description": "topics that the text should be about",
+          "type": "list",
+          "default": [
+              "food"
+          ],
+          "required": true
+      },
+      {
+          "name": "invalid_topics",
+          "description": "topics that the text can not be about",
+          "type": "list",
+          "default": [
+              "cars"
+          ],
+          "required": false
+      },
+      {
+          "name": "model_threshold",
+          "description": "The threshold used to determine whether to accept a topic from the Zero-Shot model. Must be a number between 0 and 1.",
+          "type": "number",
+          "default": 0.5,
+          "required": false
+      }
+  ],
+  "playgroundEnabled": false,
+  "postInstall": "post-install.py"
+}
