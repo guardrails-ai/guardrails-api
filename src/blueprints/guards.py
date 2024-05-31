@@ -1,5 +1,4 @@
 import json
-import os
 from guardrails.hub import *  # noqa
 from string import Template
 from typing import Any, Dict, cast
@@ -13,6 +12,7 @@ from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
 from src.clients.memory_guard_client import MemoryGuardClient
 from src.clients.pg_guard_client import PGGuardClient
+from src.clients.postgres_client import postgres_is_enabled
 from src.utils.handle_error import handle_error
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
@@ -20,9 +20,9 @@ from src.utils.prep_environment import cleanup_environment, prep_environment
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 
-pg_host = os.environ.get("PGHOST", None)
+
 # if no pg_host is set, use in memory guards
-if pg_host is not None:
+if postgres_is_enabled():
     guard_client = PGGuardClient()
 else:
     guard_client = MemoryGuardClient()
@@ -46,7 +46,7 @@ def guards():
             return [g._to_request() for g in guards]
         return [g.to_response() for g in guards]
     elif request.method == "POST":
-        if pg_host is None:
+        if not postgres_is_enabled():
             raise HttpError(
                 501,
                 "NotImplemented",
@@ -86,7 +86,7 @@ def guard(guard_name: str):
             return guard._to_request()
         return guard.to_response()
     elif request.method == "PUT":
-        if pg_host is None:
+        if not postgres_is_enabled():
             raise HttpError(
                 501,
                 "NotImplemented",
@@ -99,7 +99,7 @@ def guard(guard_name: str):
             return updated_guard._to_request()
         return updated_guard.to_response()
     elif request.method == "DELETE":
-        if pg_host is None:
+        if not postgres_is_enabled():
             raise HttpError(
                 501,
                 "NotImplemented",
@@ -198,6 +198,7 @@ def validate(guard_name: str):
     #     f"validate-{decoded_guard_name}"
     # ) as validate_span:
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
+    guard: Guard = Guard()
     if isinstance(guard_struct, GuardStruct):
         guard: Guard = guard_struct.to_guard(openai_api_key)
     elif isinstance(guard_struct, Guard):

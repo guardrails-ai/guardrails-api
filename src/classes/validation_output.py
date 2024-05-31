@@ -76,7 +76,9 @@ class ValidationOutput:
                 "validation_errors": [
                     try_json_loads(fv.validation_result.error_message)
                     for fv in c.iterations.last.failed_validations
-                ],
+                ]
+                if c.iterations.length > 0
+                else [],
             }
             for c in calls
         ]

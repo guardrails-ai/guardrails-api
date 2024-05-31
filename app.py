@@ -5,6 +5,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from urllib.parse import urlparse
 from guardrails import configure_logging
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from src.clients.postgres_client import postgres_is_enabled
 from src.otel import otel_is_enabled, initialize
 
 
@@ -41,9 +42,8 @@ def create_app():
         FlaskInstrumentor().instrument_app(app)
         initialize()
 
-    pg_host = os.environ.get("PGHOST", None)
     # if no pg_host is set, don't set up postgres
-    if pg_host is not None:
+    if postgres_is_enabled():
         from src.clients.postgres_client import PostgresClient
 
         pg_client = PostgresClient()
