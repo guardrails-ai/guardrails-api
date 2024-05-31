@@ -17,7 +17,8 @@ jobs:
       - uses: actions/setup-python@v4
       - name: Quality Checks
         run: |
-          python -m pip install --upgrade pip;
+          python -m venv ./.venv
+          source ./.venv/bin/activate
           make install-lock;
           make install-dev;
 
