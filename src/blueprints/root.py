@@ -18,15 +18,17 @@ cached_api_spec = None
 
 @root_bp.route("/")
 @handle_error
-@gather_request_metrics
 def home():
     return "Hello, Flask!"
 
 
 @root_bp.route("/health-check")
 @handle_error
-@gather_request_metrics
 def health_check():
+    # If we're not using postgres, just return Ok
+    pg_host = os.environ.get("PGHOST", None)
+    if pg_host is None: 
+      return HealthCheck(200, "Ok").to_dict()
     # Make sure we're connected to the database and can run queries
     pg_client = PostgresClient()
     query = text("SELECT count(datid) FROM pg_stat_activity;")
@@ -42,7 +44,6 @@ def health_check():
 
 @root_bp.route("/api-docs")
 @handle_error
-@gather_request_metrics
 def api_docs():
     global cached_api_spec
     if not cached_api_spec:
@@ -53,7 +54,6 @@ def api_docs():
 
 @root_bp.route("/docs")
 @handle_error
-@gather_request_metrics
 def docs():
     host = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
     swagger_ui = Template("""<!DOCTYPE html>

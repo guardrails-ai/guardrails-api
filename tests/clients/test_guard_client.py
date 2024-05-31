@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import ANY as AnyMatcher
 from src.classes.http_error import HttpError
+from src.clients.memory_guard_client import MemoryGuardClient
+from src.clients.pg_guard_client import PGGuardClient
 from src.models.guard_item import GuardItem
 from src.models.guard_item_audit import GuardItemAudit
 from src.clients.guard_client import GuardClient
@@ -13,11 +15,13 @@ def test_init(mocker):
     mock_pg_client = MockPostgresClient()
     mocker.patch("src.clients.guard_client.PostgresClient", return_value=mock_pg_client)
 
-    guard_client = GuardClient()
-
-    assert guard_client.initialized is True
-    assert isinstance(guard_client.pgClient, MockPostgresClient)
-    assert guard_client.pgClient == mock_pg_client
+    
+    pg_guard_client = PGGuardClient()
+    mem_guard_client = MemoryGuardClient()
+        
+    assert pg_guard_client.initialized is True
+    assert isinstance(pg_guard_client.pgClient, MockPostgresClient)
+    assert pg_guard_client.pgClient == mock_pg_client
 
 
 class TestGetGuard:

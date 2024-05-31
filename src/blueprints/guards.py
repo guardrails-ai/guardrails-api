@@ -1,4 +1,5 @@
 import json
+import os
 from guardrails.hub import *  # noqa
 from string import Template
 from typing import Any, Dict, cast
@@ -10,35 +11,47 @@ from opentelemetry.trace import Span
 from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
-from src.clients.guard_client import GuardClient
+from src.clients.memory_guard_client import MemoryGuardClient
+from src.clients.pg_guard_client import PGGuardClient
 from src.utils.handle_error import handle_error
-from src.utils.gather_request_metrics import gather_request_metrics
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
 
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
-guard_client = GuardClient()
 
-
-@guards_bp.after_request
-def after_request_func(response):
-    print("after_request executing...")
-    print("status code: ", response.status_code)
-    return response
+pg_host = os.environ.get("PGHOST", None)
+# if no pg_host is set, use in memory guards
+if pg_host is not None:
+    guard_client = PGGuardClient()
+else:
+    guard_client = MemoryGuardClient()
+    # read in guards from file
+    import config
+    exports = config.__dir__()
+    for export_name in exports:
+        export = getattr(config, export_name) 
+        is_guard = isinstance(export, Guard)
+        if is_guard:
+            guard_client.create_guard(export)
 
 
 @guards_bp.route("/", methods=["GET", "POST"])
 @handle_error
-@gather_request_metrics
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
+        if len(guards)>0 and (isinstance(guards[0], Guard)):
+            return [g._to_request() for g in guards]
         return [g.to_response() for g in guards]
     elif request.method == "POST":
+        if pg_host is None:
+            raise HttpError(501, 'NotImplemented', 'POST /guards is not implemented for in-memory guards.')
         payload = request.json
         guard = GuardStruct.from_request(payload)
         new_guard = guard_client.create_guard(guard)
+        if isinstance(new_guard, Guard):
+            return new_guard._to_request()
         return new_guard.to_response()
     else:
         raise HttpError(
@@ -51,20 +64,37 @@ def guards():
 
 @guards_bp.route("/<guard_name>", methods=["GET", "PUT", "DELETE"])
 @handle_error
-@gather_request_metrics
 def guard(guard_name: str):
     decoded_guard_name = unquote_plus(guard_name)
     if request.method == "GET":
         as_of_query = request.args.get("asOf")
         guard = guard_client.get_guard(decoded_guard_name, as_of_query)
+        if guard is None:
+            raise HttpError(
+                404,
+                "NotFound",
+                "A Guard with the name {guard_name} does not exist!".format(
+                    guard_name=decoded_guard_name
+                ),
+            )
+        if isinstance(guard, Guard):
+            return guard._to_request()
         return guard.to_response()
     elif request.method == "PUT":
+        if pg_host is None:
+            raise HttpError(501, 'NotImplemented', 'PUT /<guard_name> is not implemented for in-memory guards.')
         payload = request.json
         guard = GuardStruct.from_request(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
+        if isinstance(updated_guard, Guard):
+            return updated_guard._to_request()
         return updated_guard.to_response()
     elif request.method == "DELETE":
+        if pg_host is None:
+            raise HttpError(501, 'NotImplemented', 'DELETE /<guard_name> is not implemented for in-memory guards.')
         guard = guard_client.delete_guard(decoded_guard_name)
+        if isinstance(guard, Guard):
+            return guard._to_request()
         return guard.to_response()
     else:
         raise HttpError(
@@ -118,7 +148,6 @@ def collect_telemetry(
 
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
-@gather_request_metrics
 def validate(guard_name: str):
     from rich import print
 
@@ -136,7 +165,9 @@ def validate(guard_name: str):
     openai_api_key = request.headers.get("x-openai-api-key", None)
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
-    prep_environment(guard_struct)
+    if isinstance(guard_struct, GuardStruct):
+        # TODO: is there a way to do this with Guard?
+        prep_environment(guard_struct)
 
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
@@ -154,8 +185,10 @@ def validate(guard_name: str):
     #     f"validate-{decoded_guard_name}"
     # ) as validate_span:
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-    guard: Guard = guard_struct.to_guard(openai_api_key)
-
+    if isinstance(guard_struct, GuardStruct):
+        guard: Guard = guard_struct.to_guard(openai_api_key)
+    elif isinstance(guard_struct, Guard):
+        guard = guard_struct
     # validate_span.set_attribute("guardName", decoded_guard_name)
     if llm_api is not None:
         llm_api = get_llm_callable(llm_api)
@@ -280,6 +313,6 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-
-    cleanup_environment(guard_struct)
+    if isinstance(guard_struct, GuardStruct):
+        cleanup_environment(guard_struct)
     return validation_output.to_response()

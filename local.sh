@@ -4,7 +4,7 @@ export AWS_PROFILE=dev
 export AWS_DEFAULT_REGION=us-east-1
 export PGPORT=5432
 export PGDATABASE=postgres
-export PGHOST=localhost
+# export PGHOST=localhost
 export PGUSER=${PGUSER:-postgres}
 export PGPASSWORD=${PGPASSWORD:-changeme}
 
@@ -13,14 +13,17 @@ export PGPASSWORD=${PGPASSWORD:-changeme}
 export PYTHONUNBUFFERED=1
 export OTEL_PYTHON_TRACER_PROVIDER=sdk_tracer_provider
 export OTEL_SERVICE_NAME=guardrails-api
-export OTEL_TRACES_EXPORTER=none # otlp #,console
+export OTEL_TRACES_EXPORTER=otlp #,console
 export OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST="Accept-Encoding,User-Agent,Referer"
 export OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE="Last-Modified,Content-Type"
 export OTEL_METRICS_EXPORTER=none #otlp #,console
 
-export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+# export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 # export OTEL_EXPORTER_OTLP_ENDPOINT=https://hty0gc1ok3.execute-api.us-east-1.amazonaws.com
+export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+
+export OTEL_SDK_DISABLED=true
 
 # export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://hty0gc1ok3.execute-api.us-east-1.amazonaws.com/v1/traces
 # export OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=https://hty0gc1ok3.execute-api.us-east-1.amazonaws.com/v1/metrics
@@ -44,7 +47,6 @@ npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json 
 
 
 
-# opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
 # For running https locally
 # gunicorn --keyfile ~/certificates/local.key --certfile ~/certificates/local.cert --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
-opentelemetry-instrument gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
+gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
