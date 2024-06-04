@@ -1,14 +1,13 @@
-import litellm
 from typing import Any, Awaitable, Callable, Union
+
+import litellm
 from guardrails.utils.openai_utils import (
-    get_static_openai_create_func,
-    get_static_openai_chat_create_func,
     get_static_openai_acreate_func,
     get_static_openai_chat_acreate_func,
-)
-from guardrails_api_client.models.validate_payload_llm_api import (
-    ValidatePayloadLlmApi,
-)
+    get_static_openai_chat_create_func,
+    get_static_openai_create_func,
+from guardrails_api_client.models.validate_payload_llm_api import \
+    ValidatePayloadLlmApi
 
 
 def get_llm_callable(
