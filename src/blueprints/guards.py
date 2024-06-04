@@ -216,7 +216,7 @@ def validate(guard_name: str):
                     " OPENAI_API_KEY environment variable."
                 ),
             )
-    elif num_reasks > 1:
+    elif num_reasks and num_reasks > 1:
         raise HttpError(
             status=400,
             message="BadRequest",
