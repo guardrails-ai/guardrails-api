@@ -25,3 +25,4 @@ open-api-spec.yml
 .python-version
 requirements-lock-old.txt
 models
+opensearch

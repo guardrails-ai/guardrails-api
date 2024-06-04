@@ -18,14 +18,11 @@ lock:
 install-lock:
 	pip install -r requirements-lock.txt
 
-build:
-	make install
+start:
+	bash ./local.sh
 
-dev:
-	bash ./dev.sh
-
-local:
-	python3 ./wsgi.py
+infra:
+	docker compose --profile infra up --build
 
 env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;

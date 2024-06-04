@@ -4,7 +4,9 @@ export AWS_PROFILE=dev
 export AWS_DEFAULT_REGION=us-east-1
 export PGPORT=5432
 export PGDATABASE=postgres
-# export PGHOST=localhstgres} export PGPASSWORD=${PGPASSWORD:-changeme}
+export PGHOST=localhost
+export PGUSER=${PGUSER:-postgres}
+export PGPASSWORD=${PGPASSWORD:-changeme}
 
 # export AWS_EXECUTION_ENV=AWS_ECS_Fargate
 
@@ -29,7 +31,7 @@ export OTEL_SDK_DISABLED=true
 export LOGLEVEL="INFO"
 export GUARDRAILS_LOG_LEVEL="INFO"
 export GUARDRAILS_PROCESS_COUNT=1
-export SELF_ENDPOINT=http://localhost:8001
+export SELF_ENDPOINT=http://localhost:8000
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export HF_API_KEY=${HF_TOKEN}
 
@@ -47,4 +49,4 @@ npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json 
 
 # For running https locally
 # gunicorn --keyfile ~/certificates/local.key --certfile ~/certificates/local.cert --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
-gunicorn --bind 0.0.0.0:8001 --timeout=5 --threads=10 "app:create_app()"
+gunicorn --bind 0.0.0.0:8000 --timeout=5 --threads=10 "app:create_app()"
