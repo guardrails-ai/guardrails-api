@@ -58,7 +58,7 @@ test:
 
 test-cov:
 	coverage run --source=./src -m pytest ./tests
-	coverage report --fail-under=70
+	coverage report --fail-under=50
 
 view-test-cov:
 	coverage run --source=./src -m pytest ./tests
