@@ -1,24 +1,24 @@
 import os
-from src.otel.logs import logs_are_enabled
+from src.otel.logs import logs_are_disabled
 from src.otel.metrics import (
     initialize_metrics_collector,
-    metrics_are_enabled,
+    metrics_are_disabled,
     get_meter,  # noqa
 )
 from src.otel.traces import (
-    traces_are_enabled,
+    traces_are_disabled,
     initialize_tracer,
     get_tracer,  # noqa
 )
 
 
-def otel_is_enabled() -> bool:
+def otel_is_disabled() -> bool:
     sdk_is_disabled = os.environ.get("OTEL_SDK_DISABLED") == "true"
 
-    any_signals_enabled = (
-        traces_are_enabled() or metrics_are_enabled() or logs_are_enabled()
+    all_signals_disabled = (
+        traces_are_disabled() and metrics_are_disabled() and logs_are_disabled()
     )
-    return False if sdk_is_disabled else any_signals_enabled
+    return sdk_is_disabled or all_signals_disabled
 
 
 def initialize():

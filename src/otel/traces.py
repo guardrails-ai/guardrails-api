@@ -19,9 +19,9 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
 from src.otel.constants import none
 
 
-def traces_are_enabled() -> bool:
+def traces_are_disabled() -> bool:
     otel_traces_exporter = os.environ.get("OTEL_TRACES_EXPORTER", none)
-    return otel_traces_exporter != none
+    return otel_traces_exporter == none
 
 
 def get_tracer(name: Optional[str] = None) -> Tracer:
@@ -54,7 +54,7 @@ def set_span_processors(
 
 
 def initialize_tracer():
-    if traces_are_enabled():
+    if not traces_are_disabled():
         tracer_provider = trace.get_tracer_provider()
 
         trace_exporter_settings = os.environ.get("OTEL_TRACES_EXPORTER", "none").split(

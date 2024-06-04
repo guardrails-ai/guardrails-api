@@ -17,9 +17,9 @@ from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
 from src.otel.constants import none
 
 
-def metrics_are_enabled() -> bool:
+def metrics_are_disabled() -> bool:
     otel_metrics_exporter = os.environ.get("OTEL_METRICS_EXPORTER", none)
-    return otel_metrics_exporter != none
+    return otel_metrics_exporter == none
 
 
 def get_meter(name: Optional[str] = None) -> Meter:
@@ -41,7 +41,7 @@ def get_metrics_exporter(exporter_type: str) -> MetricExporter:
 
 
 def initialize_metrics_collector():
-    if metrics_are_enabled():
+    if not metrics_are_disabled():
         metrics_exporter_settings = os.environ.get(
             "OTEL_METRICS_EXPORTER", "none"
         ).split(",")

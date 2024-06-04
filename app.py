@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from guardrails import configure_logging
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from src.clients.postgres_client import postgres_is_enabled
-from src.otel import otel_is_enabled, initialize
+from src.otel import otel_is_disabled, initialize
 
 
 class ReverseProxied(object):
@@ -38,7 +38,8 @@ def create_app():
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)
 
-    if otel_is_enabled():
+    print("otel_is_disabled: ", otel_is_disabled())
+    if not otel_is_disabled():
         FlaskInstrumentor().instrument_app(app)
         initialize()
 
