@@ -8,7 +8,6 @@ from guardrails import Guard
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
 from src.classes.http_error import HttpError
-from src.classes.validation_output import ValidationOutput
 from src.clients.memory_guard_client import MemoryGuardClient
 from src.clients.pg_guard_client import PGGuardClient
 from src.clients.postgres_client import postgres_is_enabled
@@ -122,7 +121,7 @@ def collect_telemetry(
     *,
     guard: Guard,
     validate_span: Span,
-    validation_output: ValidationOutput,
+    validation_output: ValidationOutcome,
     prompt_params: Dict[str, Any],
     result: ValidationOutcome,
 ):
@@ -259,7 +258,7 @@ def validate(guard_name: str):
 
                 for result in guard_stream:
                     # TODO: Just make this a ValidationOutcome with history
-                    validation_output: ValidationOutput = ValidationOutput(
+                    validation_output: ValidationOutcome = ValidationOutcome(
                         result.validation_passed,
                         result.validated_output,
                         guard.history,
@@ -278,7 +277,7 @@ def validate(guard_name: str):
                     print("yielding fragment")
                     yield f"{fragment}\n"
 
-                final_validation_output: ValidationOutput = ValidationOutput(
+                final_validation_output: ValidationOutcome = ValidationOutcome(
                     next_result.validation_passed,
                     next_result.validated_output,
                     guard.history,
@@ -313,7 +312,7 @@ def validate(guard_name: str):
         )
 
     # TODO: Just make this a ValidationOutcome with history
-    validation_output = ValidationOutput(
+    validation_output = ValidationOutcome(
         result.validation_passed,
         result.validated_output,
         guard.history,
