@@ -12,7 +12,9 @@ from unittest.mock import call
 
 def test_init(mocker):
     mock_pg_client = MockPostgresClient()
-    mocker.patch("src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client)
+    mocker.patch(
+        "src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client
+    )
 
     from src.clients.pg_guard_client import PGGuardClient
 
@@ -41,9 +43,8 @@ class TestGetGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = latest_guard
-        
+
         from src.clients.pg_guard_client import PGGuardClient
-        
 
         guard_client = PGGuardClient()
 
@@ -75,7 +76,7 @@ class TestGetGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = previous_guard
-        
+
         from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
@@ -114,7 +115,7 @@ class TestGetGuard:
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
-        
+
         from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
@@ -133,14 +134,16 @@ class TestGetGuard:
 
 def test_get_guard_item(mocker):
     mock_pg_client = MockPostgresClient()
-    mocker.patch("src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client)
+    mocker.patch(
+        "src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client
+    )
 
     query_spy = mocker.spy(mock_pg_client.db.session, "query")
     filter_by_spy = mocker.spy(mock_pg_client.db.session, "filter_by")
     mock_first = mocker.patch.object(mock_pg_client.db.session, "first")
     latest_guard = MockGuardStruct("latest")
     mock_first.return_value = latest_guard
-    
+
     from src.clients.pg_guard_client import PGGuardClient
 
     guard_client = PGGuardClient()
@@ -156,7 +159,9 @@ def test_get_guard_item(mocker):
 
 def test_get_guards(mocker):
     mock_pg_client = MockPostgresClient()
-    mocker.patch("src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client)
+    mocker.patch(
+        "src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client
+    )
 
     query_spy = mocker.spy(mock_pg_client.db.session, "query")
     mock_all = mocker.patch.object(mock_pg_client.db.session, "all")
@@ -190,7 +195,9 @@ def test_create_guard(mocker):
     mock_guard = MockGuardStruct()
     mock_pg_client = MockPostgresClient()
     mock_guard_struct_init_spy = mocker.spy(MockGuardStruct, "__init__")
-    mocker.patch("src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client)
+    mocker.patch(
+        "src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client
+    )
     mocker.patch("src.clients.pg_guard_client.GuardItem", new=MockGuardStruct)
 
     add_spy = mocker.spy(mock_pg_client.db.session, "add")
@@ -243,7 +250,7 @@ class TestUpdateGuard:
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
-        
+
         from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
@@ -319,7 +326,7 @@ class TestUpsertGuard:
             "src.clients.pg_guard_client.PGGuardClient.create_guard"
         )
         mock_create_guard.return_value = new_guard
-        
+
         from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
@@ -351,7 +358,7 @@ class TestUpsertGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = updated_guard
-        
+
         from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
@@ -385,7 +392,7 @@ class TestDeleteGuard:
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
-        
+
         from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
@@ -420,7 +427,7 @@ class TestDeleteGuard:
             "src.clients.pg_guard_client.GuardStruct.from_guard_item"
         )
         mock_from_guard_item.return_value = old_guard
-        
+
         from src.clients.pg_guard_client import PGGuardClient
 
         guard_client = PGGuardClient()
