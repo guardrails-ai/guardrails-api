@@ -7,7 +7,6 @@ from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
-from src.classes.guard_struct import GuardStruct
 from src.classes.http_error import HttpError
 from src.classes.validation_output import ValidationOutput
 from src.clients.memory_guard_client import MemoryGuardClient
@@ -16,6 +15,7 @@ from src.clients.postgres_client import postgres_is_enabled
 from src.utils.handle_error import handle_error
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
+from guardrails_api_client import Guard as GuardStruct
 
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")

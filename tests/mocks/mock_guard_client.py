@@ -1,5 +1,4 @@
-from src.classes.guard_struct import GuardStruct
-
+from guardrails_api_client import Guard as GuardStruct
 
 class MockRailspec:
     def to_dict(self, *args, **kwargs):
