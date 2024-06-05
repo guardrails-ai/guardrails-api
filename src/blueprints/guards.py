@@ -278,7 +278,6 @@ def validate(guard_name: str):
                     next_result = result
                     # next_validation_output = validation_output
                     fragment = json.dumps(validation_output.to_response())
-                    print("yielding fragment")
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutput = ValidationOutput(
@@ -297,7 +296,6 @@ def validate(guard_name: str):
                 #     result=next_result
                 # )
                 final_output_json = json.dumps(final_validation_output.to_response())
-                print("Yielding final output.")
                 yield f"{final_output_json}\n"
 
             return Response(

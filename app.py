@@ -38,7 +38,6 @@ def create_app():
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)
 
-    print("otel_is_disabled: ", otel_is_disabled())
     if not otel_is_disabled():
         FlaskInstrumentor().instrument_app(app)
         initialize()
