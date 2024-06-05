@@ -25,5 +25,6 @@ open-api-spec.json
 open-api-spec.yml
 .python-version
 requirements-lock-old.txt
-models
 opensearch
+build
+*.egg-info

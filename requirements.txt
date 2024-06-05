@@ -1,12 +1,10 @@
-flask
-sqlalchemy
-lxml
 guardrails-ai @ git+https://github.com/guardrails-ai/guardrails.git@async_streaming
+flask
 # Let this come from guardrails-ai as a transient dependency.
 # Pip confuses tag versions with commit ids,
 # and claims a conflict even though it's the same thing.
 # guard-rails-api-client @ git+https://github.com/guardrails-ai/guardrails-api-client.git@v0.0.2#egg=guard-rails-api-client&subdirectory=guard-rails-api-client
-flask_sqlalchemy
+Flask-SQLAlchemy
 werkzeug
 jsonschema
 referencing
@@ -18,3 +16,8 @@ boto3
 gunicorn
 psycopg2-binary
 litellm
+opentelemetry-api>=1.0.0,<2
+opentelemetry-sdk>=1.0.0,<2
+opentelemetry-exporter-otlp-proto-grpc>=1.0.0,<2
+opentelemetry-exporter-otlp-proto-http>=1.0.0,<2
+opentelemetry-instrumentation-flask>=0.12b0,<1
