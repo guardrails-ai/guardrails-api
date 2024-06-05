@@ -1,4 +1,5 @@
 import json
+import os
 from guardrails.hub import *  # noqa
 from string import Template
 from typing import Any, Dict, cast
@@ -175,7 +176,9 @@ def validate(guard_name: str):
             " {request_method}".format(request_method=request.method),
         )
     payload = request.json
-    openai_api_key = request.headers.get("x-openai-api-key", None)
+    openai_api_key = request.headers.get(
+        "x-openai-api-key", os.environ.get("OPENAI_API_KEY")
+    )
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
     if isinstance(guard_struct, GuardStruct):

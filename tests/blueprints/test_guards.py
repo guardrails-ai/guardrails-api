@@ -2,6 +2,8 @@ import os
 from unittest.mock import PropertyMock
 from typing import Dict, Tuple
 
+import pytest
+
 from tests.mocks.mock_blueprint import MockBlueprint
 from tests.mocks.mock_guard_client import MockGuardStruct
 from tests.mocks.mock_request import MockRequest
@@ -9,6 +11,18 @@ from guardrails.classes import ValidationOutcome
 from guardrails.classes.generic import Stack
 from guardrails.classes.history import Call
 # from tests.mocks.mock_trace import MockTracer
+
+
+@pytest.fixture(autouse=True)
+def around_each():
+    # Code that will run before the test
+    openai_api_key_bak = os.environ.get("OPENAI_API_KEY")
+    if openai_api_key_bak:
+        del os.environ["OPENAI_API_KEY"]
+    yield
+    # Code that will run after the test
+    if openai_api_key_bak:
+        os.environ["OPENAI_API_KEY"] = openai_api_key_bak
 
 
 def test_route_setup(mocker):
