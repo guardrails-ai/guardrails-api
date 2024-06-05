@@ -163,8 +163,6 @@ def collect_telemetry(
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
 def validate(guard_name: str):
-    from rich import print
-
     # Do we actually need a child span here?
     # We could probably use the existing span from the request unless we forsee
     #   capturing the same attributes on non-GaaS Guard runs.
