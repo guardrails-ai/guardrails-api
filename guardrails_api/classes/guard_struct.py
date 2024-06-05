@@ -2,10 +2,10 @@ from typing import Optional
 from guardrails import Guard
 from opentelemetry.trace import Tracer
 from lxml.etree import tostring
-from src.classes.rail_spec_struct import RailSpecStruct
-from src.models.guard_item import GuardItem
-from src.utils.pluck import pluck
-from src.utils.payload_validator import validate_payload
+from guardrails_api.classes.rail_spec_struct import RailSpecStruct
+from guardrails_api.models.guard_item import GuardItem
+from guardrails_api.utils.pluck import pluck
+from guardrails_api.utils.payload_validator import validate_payload
 
 
 class GuardStruct:

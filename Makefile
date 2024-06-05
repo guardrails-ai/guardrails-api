@@ -37,13 +37,13 @@ refresh:
 
 
 format:
-	ruff check app.py wsgi.py src/ tests/ --fix
-	ruff format app.py wsgi.py src/ tests/
+	ruff check app.py src/ tests/ --fix
+	ruff format app.py src/ tests/
 
 
 lint:
-	ruff check app.py wsgi.py src/ tests/
-	ruff format app.py wsgi.py src/ tests/
+	ruff check app.py src/ tests/
+	ruff format app.py src/ tests/
 
 qa:
 	make lint

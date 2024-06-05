@@ -1,8 +1,8 @@
 from functools import wraps
 import traceback
 from werkzeug.exceptions import HTTPException
-from src.classes.http_error import HttpError
-from src.utils.logger import logger
+from guardrails_api.classes.http_error import HttpError
+from guardrails_api.utils.logger import logger
 
 
 def handle_error(fn):

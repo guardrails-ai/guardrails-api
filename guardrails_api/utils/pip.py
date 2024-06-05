@@ -3,8 +3,8 @@ import subprocess
 import pkg_resources as pkg
 from os import getcwd
 from typing import Optional, List
-from src.utils.logger import logger
-from src.utils.file import get_file_contents
+from guardrails_api.utils.logger import logger
+from guardrails_api.utils.file import get_file_contents
 
 
 def pip_process(action: str, package: str, flags: Optional[List[str]] = []):

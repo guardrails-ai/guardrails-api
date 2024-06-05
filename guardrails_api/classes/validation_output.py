@@ -3,7 +3,7 @@ from guardrails.classes.generic import Stack
 from guardrails.classes.history import Call
 from guardrails.utils.reask_utils import ReAsk
 
-from src.utils.try_json_loads import try_json_loads
+from guardrails_api.utils.try_json_loads import try_json_loads
 
 
 class ValidationOutput:

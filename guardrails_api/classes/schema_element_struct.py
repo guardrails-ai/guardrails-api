@@ -1,7 +1,7 @@
 from typing import List, Optional
 from lxml.etree import _Element
-from src.utils.pluck import pluck
-from src.classes.element_stub import ElementStub
+from guardrails_api.utils.pluck import pluck
+from guardrails_api.classes.element_stub import ElementStub
 
 
 class SchemaElementStruct:

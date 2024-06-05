@@ -14,7 +14,7 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter as GrpcMetricExporter,
 )
-from src.otel.constants import none
+from guardrails_api.otel.constants import none
 
 
 def metrics_are_disabled() -> bool:

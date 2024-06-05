@@ -1,11 +1,11 @@
 import os
-from src.otel.logs import logs_are_disabled
-from src.otel.metrics import (
+from guardrails_api.otel.logs import logs_are_disabled
+from guardrails_api.otel.metrics import (
     initialize_metrics_collector,
     metrics_are_disabled,
     get_meter,  # noqa
 )
-from src.otel.traces import (
+from guardrails_api.otel.traces import (
     traces_are_disabled,
     initialize_tracer,
     get_tracer,  # noqa

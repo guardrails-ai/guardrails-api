@@ -1,10 +1,10 @@
 from typing import List
-from src.classes.guard_struct import GuardStruct
-from src.classes.http_error import HttpError
-from src.clients.guard_client import GuardClient
-from src.models.guard_item import GuardItem
-from src.clients.postgres_client import PostgresClient
-from src.models.guard_item_audit import GuardItemAudit
+from guardrails_api.classes.guard_struct import GuardStruct
+from guardrails_api.classes.http_error import HttpError
+from guardrails_api.clients.guard_client import GuardClient
+from guardrails_api.models.guard_item import GuardItem
+from guardrails_api.clients.postgres_client import PostgresClient
+from guardrails_api.models.guard_item_audit import GuardItemAudit
 
 
 class PGGuardClient(GuardClient):

@@ -4,12 +4,11 @@ import flask
 from string import Template
 from flask import Blueprint
 from sqlalchemy import text
-from src.classes.health_check import HealthCheck
-from src.clients.postgres_client import PostgresClient, postgres_is_enabled
-from src.utils.handle_error import handle_error
-from src.utils.logger import logger
+from guardrails_api.classes.health_check import HealthCheck
+from guardrails_api.clients.postgres_client import PostgresClient, postgres_is_enabled
+from guardrails_api.utils.handle_error import handle_error
+from guardrails_api.utils.logger import logger
 
-# from src.modules.otel_logger import logger
 
 root_bp = Blueprint("root", __name__, url_prefix="/")
 cached_api_spec = None

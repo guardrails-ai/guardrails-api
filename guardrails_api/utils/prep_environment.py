@@ -1,9 +1,9 @@
 import importlib
 from os import getcwd
 from typing import List
-from src.classes.guard_struct import GuardStruct
-from src.utils.pip import install, is_frozen, uninstall, get_module_name
-from src.utils.logger import logger
+from guardrails_api.classes.guard_struct import GuardStruct
+from guardrails_api.utils.pip import install, is_frozen, uninstall, get_module_name
+from guardrails_api.utils.logger import logger
 
 
 def dynamic_import(package: str):

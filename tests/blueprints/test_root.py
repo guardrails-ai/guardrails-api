@@ -1,12 +1,12 @@
 import os
-from src.utils.logger import logger
+from guardrails_api.utils.logger import logger
 from tests.mocks.mock_blueprint import MockBlueprint
 from tests.mocks.mock_postgres_client import MockPostgresClient
 
 
 def test_home(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    from src.blueprints.root import home, root_bp
+    from guardrails_api.blueprints.root import home, root_bp
 
     response = home()
 
@@ -30,7 +30,7 @@ def test_health_check(mocker):
 
     mock_text = mocker.patch("src.blueprints.root.text", side_effect=text_side_effect)
 
-    from src.blueprints.root import health_check
+    from guardrails_api.blueprints.root import health_check
 
     info_spy = mocker.spy(logger, "info")
 

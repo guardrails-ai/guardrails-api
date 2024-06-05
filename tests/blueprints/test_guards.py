@@ -28,7 +28,7 @@ def around_each():
 def test_route_setup(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
 
-    from src.blueprints.guards import guards_bp
+    from guardrails_api.blueprints.guards import guards_bp
 
     assert guards_bp.route_call_count == 3
     assert guards_bp.routes == ["/", "/<guard_name>", "/<guard_name>/validate"]
@@ -51,7 +51,7 @@ def test_guards__get(mocker):
     # )
     # mocker.patch("src.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guards
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -74,7 +74,7 @@ def test_guards__post_pg(mocker):
         "src.blueprints.guards.guard_client.create_guard", return_value=mock_guard
     )
 
-    from src.blueprints.guards import guards
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -93,7 +93,7 @@ def test_guards__post_mem(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
 
-    from src.blueprints.guards import guards
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -110,7 +110,7 @@ def test_guards__raises(mocker):
     # mocker.patch("src.blueprints.guards.get_tracer")
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import guards
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -145,7 +145,7 @@ def test_guard__get_mem(mocker):
     # )
     # mocker.patch("src.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guard
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("My%20Guard's%20Name")
 
@@ -178,7 +178,7 @@ def test_guard__put_pg(mocker):
     # )
     # mocker.patch("src.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guard
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("My%20Guard's%20Name")
 
@@ -207,7 +207,7 @@ def test_guard__delete_pg(mocker):
     # )
     # mocker.patch("src.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guard
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("my-guard-name")
 
@@ -224,7 +224,7 @@ def test_guard__raises(mocker):
     # mocker.patch("src.blueprints.guards.get_tracer")
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import guard
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("guard")
 
@@ -248,7 +248,7 @@ def test_validate__raises_method_not_allowed(mocker):
     # mocker.patch("src.blueprints.guards.get_tracer")
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import validate
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("guard")
 
@@ -279,7 +279,7 @@ def test_validate__raises_bad_request__openai_api_key(mocker):
     # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import validate
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 
@@ -315,7 +315,7 @@ def test_validate__raises_bad_request__num_reasks(mocker):
     # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import validate
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 
@@ -370,7 +370,7 @@ def test_validate__parse(mocker):
     )
     mock_status.return_value = "pass"
     mock_guard.history = Stack(Call())
-    from src.blueprints.guards import validate
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 
@@ -460,7 +460,7 @@ def test_validate__call(mocker):
     )
     mock_status.return_value = "fail"
     mock_guard.history = Stack(Call())
-    from src.blueprints.guards import validate
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 

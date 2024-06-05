@@ -1,5 +1,5 @@
 import os
-from src.otel.constants import none
+from guardrails_api.otel.constants import none
 
 
 def logs_are_disabled() -> bool:

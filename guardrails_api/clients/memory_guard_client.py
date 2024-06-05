@@ -1,8 +1,8 @@
 from typing import List
 
 from guardrails import Guard
-from src.classes.http_error import HttpError
-from src.clients.guard_client import GuardClient
+from guardrails_api.classes.http_error import HttpError
+from guardrails_api.clients.guard_client import GuardClient
 
 
 class MemoryGuardClient(GuardClient):

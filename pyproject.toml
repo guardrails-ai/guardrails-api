@@ -1,0 +1,47 @@
+[project]
+name = "guardrails-api"
+version = "0.0.0"
+description = "Guardrails API"
+authors = [
+    {name = "Guardrails AI", email = "contact@guardrailsai.com"}
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+keywords = ["Guardrails", "Guardrails AI", "Guardrails API", "Guardrails API"]
+requires-python = ">= 3.8.1"
+dependencies = [
+    "flask",
+    "sqlalchemy",
+    "lxml",
+    "flask_sqlalchemy",
+    "werkzeug",
+    "jsonschema",
+    "referencing",
+    "flask_cors",
+    "numpy",
+    "faiss-cpu",
+    "nltk",
+    "boto3",
+    "gunicorn",
+    "psycopg2-binary",
+    "litellm",
+    "guardrails-ai@git+https://github.com/guardrails-ai/guardrails.git@async_streaming"
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "coverage",
+    "pytest-mock"
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-rP"
+testpaths = [
+    "tests"
+]
+
+[tool.pyright]
+include = ["guardrails_api"]

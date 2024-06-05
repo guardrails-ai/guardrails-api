@@ -8,15 +8,15 @@ from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
-from src.classes.guard_struct import GuardStruct
-from src.classes.http_error import HttpError
-from src.classes.validation_output import ValidationOutput
-from src.clients.memory_guard_client import MemoryGuardClient
-from src.clients.pg_guard_client import PGGuardClient
-from src.clients.postgres_client import postgres_is_enabled
-from src.utils.handle_error import handle_error
-from src.utils.get_llm_callable import get_llm_callable
-from src.utils.prep_environment import cleanup_environment, prep_environment
+from guardrails_api.classes.guard_struct import GuardStruct
+from guardrails_api.classes.http_error import HttpError
+from guardrails_api.classes.validation_output import ValidationOutput
+from guardrails_api.clients.memory_guard_client import MemoryGuardClient
+from guardrails_api.clients.pg_guard_client import PGGuardClient
+from guardrails_api.clients.postgres_client import postgres_is_enabled
+from guardrails_api.utils.handle_error import handle_error
+from guardrails_api.utils.get_llm_callable import get_llm_callable
+from guardrails_api.utils.prep_environment import cleanup_environment, prep_environment
 
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
@@ -164,8 +164,6 @@ def collect_telemetry(
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
 def validate(guard_name: str):
-    from rich import print
-
     # Do we actually need a child span here?
     # We could probably use the existing span from the request unless we forsee
     #   capturing the same attributes on non-GaaS Guard runs.
@@ -279,7 +277,6 @@ def validate(guard_name: str):
                     next_result = result
                     # next_validation_output = validation_output
                     fragment = json.dumps(validation_output.to_response())
-                    print("yielding fragment")
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutput = ValidationOutput(
@@ -298,7 +295,6 @@ def validate(guard_name: str):
                 #     result=next_result
                 # )
                 final_output_json = json.dumps(final_validation_output.to_response())
-                print("Yielding final output.")
                 yield f"{final_output_json}\n"
 
             return Response(

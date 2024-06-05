@@ -4,9 +4,9 @@ from operator import attrgetter
 from lxml.etree import _Element, SubElement
 from guardrails.datatypes import DataType, registry
 from guardrails.validatorsattr import ValidatorsAttr
-from src.classes.schema_element_struct import SchemaElementStruct
-from src.classes.element_stub import ElementStub
-from src.utils.pluck import pluck
+from guardrails_api.classes.schema_element_struct import SchemaElementStruct
+from guardrails_api.classes.element_stub import ElementStub
+from guardrails_api.utils.pluck import pluck
 
 
 class DataTypeStruct:

@@ -1,7 +1,7 @@
 from typing import Dict, List, Union
 from lxml.etree import _Element, _Comment, SubElement
 from guardrails.schema import Schema, StringSchema, JsonSchema
-from src.classes.data_type_struct import DataTypeStruct
+from guardrails_api.classes.data_type_struct import DataTypeStruct
 
 
 # TODO: Rather than a custom schema construct like what this is now

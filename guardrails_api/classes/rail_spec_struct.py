@@ -2,9 +2,9 @@ from typing import List
 from lxml.etree import _Element, Element, SubElement
 from guardrails import Instructions, Prompt, Rail
 from lxml import etree
-from src.classes.schema_struct import SchemaStruct
-from src.utils.pluck import pluck
-from src.utils.escape_curlys import escape_curlys, descape_curlys
+from guardrails_api.classes.schema_struct import SchemaStruct
+from guardrails_api.utils.pluck import pluck
+from guardrails_api.utils.escape_curlys import escape_curlys, descape_curlys
 
 
 class RailSpecStruct:

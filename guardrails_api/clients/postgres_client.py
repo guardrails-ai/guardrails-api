@@ -4,7 +4,7 @@ import os
 from flask import Flask
 from sqlalchemy import text
 from typing import Tuple
-from src.models.base import db, INIT_EXTENSIONS
+from guardrails_api.models.base import db, INIT_EXTENSIONS
 
 
 def postgres_is_enabled() -> bool:
@@ -68,8 +68,8 @@ class PostgresClient:
         self.app = app
         self.db = db
         db.init_app(app)
-        from src.models.guard_item import GuardItem  # NOQA
-        from src.models.guard_item_audit import (  # NOQA
+        from guardrails_api.models.guard_item import GuardItem  # NOQA
+        from guardrails_api.models.guard_item_audit import (  # NOQA
             GuardItemAudit,
             AUDIT_FUNCTION,
             AUDIT_TRIGGER,

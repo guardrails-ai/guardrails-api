@@ -16,7 +16,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcSpanExporter,
 )
-from src.otel.constants import none
+from guardrails_api.otel.constants import none
 
 
 def traces_are_disabled() -> bool:
