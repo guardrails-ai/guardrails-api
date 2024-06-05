@@ -19,6 +19,7 @@ guardrails-custom-validators
 guardrails-api-client
 guardrails
 *.env
+!default.env
 opentelemetry-lambda-layer
 open-api-spec.json
 open-api-spec.yml

@@ -1,8 +1,0 @@
-version: 0.2
-
-phases:
-  build:
-    commands:
-      - echo "Deploying $ECR_ENDPOINT:$IMAGE_VERSION_TAG to ECS Service $CLUSTER_ARN:$SERVICE_NAME"
-      - aws ecs update-service --service $SERVICE_NAME --cluster $CLUSTER_ARN --desired-count $TASK_COUNT --force-new-deployment
-      - echo "ECS Deployment started..."

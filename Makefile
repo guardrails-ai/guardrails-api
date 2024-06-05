@@ -19,7 +19,7 @@ install-lock:
 	pip install -r requirements-lock.txt
 
 start:
-	bash ./local.sh
+	bash start.sh
 
 infra:
 	docker compose --profile infra up --build
