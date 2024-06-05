@@ -27,6 +27,7 @@ if postgres_is_enabled():
     guard_client = PGGuardClient()
 else:
     guard_client = MemoryGuardClient()
+    # TODO: Accept file path as env var and dynamically import
     # read in guards from file
     import config
 

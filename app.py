@@ -24,6 +24,7 @@ def create_app():
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
 
+        # TODO: Accept this as an env var
         load_dotenv()
 
     app = Flask(__name__)
