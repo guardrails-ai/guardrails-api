@@ -1,3 +1,4 @@
+from typing import Any, List
 from guardrails_api_client import Guard as GuardStruct
 
 class MockRailspec:
@@ -9,7 +10,7 @@ class MockGuardStruct(GuardStruct):
     name: str
     description: str
     num_reasks: int
-    history = []
+    history:List[Any] = []
 
     def __init__(
         self,
