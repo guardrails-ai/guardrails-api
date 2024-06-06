@@ -1,5 +1,5 @@
- - [ ] Accept env file path as env var
- - [ ] Accept config file path as env var
- - [ ] Add pyproject toml and setup.py
- - [ ] Add cli command to start server with arguments
+ - [x] Accept env file path as env var
+ - [x] Accept config file path as env var
+ - [x] Add pyproject toml and setup.py
+ - [x] Add cli command to start server with arguments
  - [ ] Update merge github action to publish module
