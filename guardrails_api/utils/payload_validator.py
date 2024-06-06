@@ -1,12 +1,10 @@
-import json
 from jsonschema import Draft202012Validator, ValidationError
 from referencing import Registry, jsonschema as jsonschema_ref
+from guardrails_api.open_api_spec import get_open_api_spec
 from guardrails_api.classes.http_error import HttpError
 from guardrails_api.utils.remove_nones import remove_nones
 
-with open("./open-api-spec.json") as api_spec_file:
-    api_spec = json.loads(api_spec_file.read())
-
+api_spec = get_open_api_spec()
 registry = Registry().with_resources(
     [
         (

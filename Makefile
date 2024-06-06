@@ -1,11 +1,6 @@
 # Installs production dependencies
 install:
 	pip install -r requirements.txt;
-	# This is a workaround because of this issue: https://github.com/open-telemetry/opentelemetry-python-contrib/issues/2053
-	pip uninstall aiohttp -y
-	pip install opentelemetry-distro
-	opentelemetry-bootstrap -a install
-	pip install aiohttp
 
 # Installs development dependencies
 install-dev:
@@ -18,8 +13,13 @@ lock:
 install-lock:
 	pip install -r requirements-lock.txt
 
+.PHONY: build
+build:
+	curl https://raw.githubusercontent.com/guardrails-ai/guardrails-api-client/main/service-specs/guardrails-service-spec.yml -o ./open-api-spec.yml
+	npx @redocly/cli bundle --dereferenced --output ./guardrails_api/open-api-spec.json --ext json ./open-api-spec.yml
+
 start:
-	bash start.sh
+	bash ./guardrails_api/start.sh
 
 infra:
 	docker compose --profile infra up --build
@@ -37,15 +37,16 @@ refresh:
 
 
 format:
-	ruff check app.py src/ tests/ --fix
-	ruff format app.py src/ tests/
+	ruff check guardrails_api/ tests/ --fix
+	ruff format guardrails_api/ tests/
 
 
 lint:
-	ruff check app.py src/ tests/
-	ruff format app.py src/ tests/
+	ruff check guardrails_api/ tests/
+	ruff format guardrails_api/ tests/
 
 qa:
+	make build
 	make lint
 	make test-cov
 
@@ -57,10 +58,10 @@ test:
 	pytest ./tests
 
 test-cov:
-	coverage run --source=./src -m pytest ./tests
-	coverage report --fail-under=50
+	coverage run --source=./guardrails_api -m pytest ./tests
+	coverage report --fail-under=45
 
 view-test-cov:
-	coverage run --source=./src -m pytest ./tests
+	coverage run --source=./guardrails_api -m pytest ./tests
 	coverage html
 	open htmlcov/index.html

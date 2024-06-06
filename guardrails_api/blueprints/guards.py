@@ -16,7 +16,6 @@ from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.handle_error import handle_error
 from guardrails_api.utils.get_llm_callable import get_llm_callable
-from guardrails_api.utils.prep_environment import cleanup_environment, prep_environment
 
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
@@ -27,9 +26,8 @@ if postgres_is_enabled():
     guard_client = PGGuardClient()
 else:
     guard_client = MemoryGuardClient()
-    # TODO: Accept file path as env var and dynamically import
-    # read in guards from file
-    import config
+    # Will be defined at runtime
+    import config  # noqa
 
     exports = config.__dir__()
     for export_name in exports:
@@ -180,9 +178,6 @@ def validate(guard_name: str):
     )
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
-    if isinstance(guard_struct, GuardStruct):
-        # TODO: is there a way to do this with Guard?
-        prep_environment(guard_struct)
 
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
@@ -327,6 +322,4 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-    if isinstance(guard_struct, GuardStruct):
-        cleanup_environment(guard_struct)
     return validation_output.to_response()

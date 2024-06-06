@@ -3,6 +3,7 @@ import json
 import flask
 from string import Template
 from flask import Blueprint
+from guardrails_api.open_api_spec import get_open_api_spec
 from sqlalchemy import text
 from guardrails_api.classes.health_check import HealthCheck
 from guardrails_api.clients.postgres_client import PostgresClient, postgres_is_enabled
@@ -11,7 +12,6 @@ from guardrails_api.utils.logger import logger
 
 
 root_bp = Blueprint("root", __name__, url_prefix="/")
-cached_api_spec = None
 
 
 @root_bp.route("/")
@@ -42,11 +42,8 @@ def health_check():
 @root_bp.route("/api-docs")
 @handle_error
 def api_docs():
-    global cached_api_spec
-    if not cached_api_spec:
-        with open("./open-api-spec.json") as api_spec_file:
-            cached_api_spec = json.loads(api_spec_file.read())
-    return json.dumps(cached_api_spec)
+    api_spec = get_open_api_spec()
+    return json.dumps(api_spec)
 
 
 @root_bp.route("/docs")

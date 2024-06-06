@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from flask import Flask
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -20,12 +21,30 @@ class ReverseProxied(object):
         return self.app(environ, start_response)
 
 
-def create_app():
+def register_config(config: Optional[str] = None):
+    default_config_file = os.path.join(os.path.dirname(__file__), "default_config.py")
+
+    config_file = config or default_config_file
+    config_file_path = os.path.abspath(config_file)
+    if os.path.isfile(config_file_path):
+        from importlib.machinery import SourceFileLoader
+
+        # This creates a module named "validators" with the contents of the init file
+        # This allow statements like `from validators import StartsWith`
+        # But more importantly, it registers all of the validators imported in the init
+        SourceFileLoader("config", config_file_path).load_module()
+
+
+def create_app(env: Optional[str] = None, config: Optional[str] = None):
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
 
-        # TODO: Accept this as an env var
-        load_dotenv()
+        default_env_file = os.path.join(os.path.dirname(__file__), "default.env")
+        env_file = env or default_env_file
+        env_file_path = os.path.abspath(env_file)
+        load_dotenv(env_file_path)
+
+    register_config(config)
 
     app = Flask(__name__)
 

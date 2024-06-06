@@ -23,12 +23,14 @@ def test_health_check(mocker):
 
     mock_pg = MockPostgresClient()
     mock_pg.db.session._set_rows([(1,)])
-    mocker.patch("src.blueprints.root.PostgresClient", return_value=mock_pg)
+    mocker.patch("guardrails_api.blueprints.root.PostgresClient", return_value=mock_pg)
 
     def text_side_effect(query: str):
         return query
 
-    mock_text = mocker.patch("src.blueprints.root.text", side_effect=text_side_effect)
+    mock_text = mocker.patch(
+        "guardrails_api.blueprints.root.text", side_effect=text_side_effect
+    )
 
     from guardrails_api.blueprints.root import health_check
 
