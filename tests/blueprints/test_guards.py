@@ -49,12 +49,12 @@ def test_guards__get(mocker):
 def test_guards__post_pg(mocker):
     os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
-    mock_request = MockRequest("POST", mock_guard.to_response())
+    mock_request = MockRequest("POST", mock_guard.to_json())
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
     mock_from_request = mocker.patch(
-        "src.blueprints.guards.GuardStruct.from_request", return_value=mock_guard
+        "src.blueprints.guards.GuardStruct.from_json", return_value=mock_guard
     )
     mock_create_guard = mocker.patch(
         "src.blueprints.guards.guard_client.create_guard", return_value=mock_guard
@@ -64,10 +64,11 @@ def test_guards__post_pg(mocker):
 
     response = guards()
 
-    mock_from_request.assert_called_once_with(mock_guard.to_response())
+    mock_from_request.assert_called_once_with(mock_guard.to_json())
     mock_create_guard.assert_called_once_with(mock_guard)
 
-    assert response == {"name": "mock-guard"}
+    print('res', response)
+    assert response == '{"id": "mock-guard-id", "name": "mock-guard", "description": "mock guard description", "num_reasks": 0, "history": []}' 
 
     del os.environ["PGHOST"]
 
@@ -148,7 +149,7 @@ def test_guard__put_pg(mocker):
     mocker.patch("src.blueprints.guards.request", mock_request)
 
     mock_from_request = mocker.patch(
-        "src.blueprints.guards.GuardStruct.from_request", return_value=mock_guard
+        "src.blueprints.guards.GuardStruct.from_json", return_value=mock_guard
     )
     mock_upsert_guard = mocker.patch(
         "src.blueprints.guards.guard_client.upsert_guard", return_value=mock_guard

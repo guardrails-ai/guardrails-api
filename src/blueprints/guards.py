@@ -42,7 +42,7 @@ def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
         if len(guards) > 0 and (isinstance(guards[0], Guard)):
-            return [g._to_request() for g in guards]
+            return [g.to_json() for g in guards]
         return [g.to_response() for g in guards]
     elif request.method == "POST":
         if not postgres_is_enabled():
@@ -52,11 +52,11 @@ def guards():
                 "POST /guards is not implemented for in-memory guards.",
             )
         payload = request.json
-        guard = GuardStruct.from_request(payload)
+        guard = GuardStruct.from_json(payload)
         new_guard = guard_client.create_guard(guard)
         if isinstance(new_guard, Guard):
-            return new_guard._to_request()
-        return new_guard.to_response()
+            return new_guard.to_json()
+        return new_guard.to_json()
     else:
         raise HttpError(
             405,
@@ -82,8 +82,8 @@ def guard(guard_name: str):
                 ),
             )
         if isinstance(guard, Guard):
-            return guard._to_request()
-        return guard.to_response()
+            return guard.to_json()
+        return guard.to_json()
     elif request.method == "PUT":
         if not postgres_is_enabled():
             raise HttpError(
@@ -92,10 +92,10 @@ def guard(guard_name: str):
                 "PUT /<guard_name> is not implemented for in-memory guards.",
             )
         payload = request.json
-        guard = GuardStruct.from_request(payload)
+        guard = GuardStruct.from_json(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
         if isinstance(updated_guard, Guard):
-            return updated_guard._to_request()
+            return updated_guard.to_json()
         return updated_guard.to_response()
     elif request.method == "DELETE":
         if not postgres_is_enabled():
@@ -106,7 +106,7 @@ def guard(guard_name: str):
             )
         guard = guard_client.delete_guard(decoded_guard_name)
         if isinstance(guard, Guard):
-            return guard._to_request()
+            return guard.to_json()
         return guard.to_response()
     else:
         raise HttpError(
