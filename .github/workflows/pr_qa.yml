@@ -5,7 +5,9 @@ name: Pull Request Quality Checks
 # Controls when the workflow will run
 on:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - feat/*
   workflow_dispatch:
 
 jobs:
@@ -13,20 +15,26 @@ jobs:
     name: PR checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12.x
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Install Dependencies
         run: |
           python -m venv ./.venv
           source ./.venv/bin/activate
-          make install-lock;
           make install-dev;
-
-          curl https://raw.githubusercontent.com/guardrails-ai/guardrails-api-client/main/service-specs/guardrails-service-spec.yml -o ./open-api-spec.yml
-          npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
 
       - name: Run Quality Checks
         run: |
           source ./.venv/bin/activate
-
           make qa;

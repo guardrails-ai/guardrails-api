@@ -1,0 +1,45 @@
+name: Publish To PyPI
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12.x
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip;
+          pip install twine;
+          pip install build;
+        continue-on-error: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build the module
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          make build
+          python -m build
+        continue-on-error: false
+      
+      - name: Upload to PyPI
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          twine upload dist/* -u __token__ -p $PYPI_PASSWORD
