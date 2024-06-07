@@ -16,7 +16,7 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8, <4",
     install_requires=[
-        "guardrails-ai@git+https://github.com/guardrails-ai/guardrails.git@0.4.5-dev",
+        "guardrails-ai>=0.4.5",
         "flask>=3.0.3,<4",
         "Flask-SQLAlchemy>=3.1.1,<4",
         "Werkzeug>=3.0.3,<4",

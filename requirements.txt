@@ -1,4 +1,4 @@
-guardrails-ai @ git+https://github.com/guardrails-ai/guardrails.git@0.4.5-dev
+guardrails-ai
 flask
 # Let this come from guardrails-ai as a transient dependency.
 # Pip confuses tag versions with commit ids,
