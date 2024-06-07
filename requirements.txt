@@ -1,7 +1,7 @@
 flask
 sqlalchemy
 lxml
-guardrails-ai @ git+https://github.com/guardrails-ai/guardrails.git@async_streaming
+guardrails-ai
 # Let this come from guardrails-ai as a transient dependency.
 # Pip confuses tag versions with commit ids,
 # and claims a conflict even though it's the same thing.
