@@ -1,11 +1,10 @@
 # Installs production dependencies
 install:
-	pip install -r requirements.txt;
+	pip install .;
 
 # Installs development dependencies
 install-dev:
-	make install
-	pip install -r requirements-dev.txt;
+	pip install .[dev];
 
 lock:
 	pip freeze --exclude guardrails-api-client > requirements-lock.txt
