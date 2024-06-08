@@ -141,7 +141,7 @@ def test_get_guard_item(mocker):
     query_spy = mocker.spy(mock_pg_client.db.session, "query")
     filter_by_spy = mocker.spy(mock_pg_client.db.session, "filter_by")
     mock_first = mocker.patch.object(mock_pg_client.db.session, "first")
-    latest_guard = MockGuardStruct("latest")
+    latest_guard = MockGuardStruct(name="latest")
     mock_first.return_value = latest_guard
 
     from src.clients.pg_guard_client import PGGuardClient
@@ -165,8 +165,8 @@ def test_get_guards(mocker):
 
     query_spy = mocker.spy(mock_pg_client.db.session, "query")
     mock_all = mocker.patch.object(mock_pg_client.db.session, "all")
-    guard_one = MockGuardStruct("guard one")
-    guard_two = MockGuardStruct("guard two")
+    guard_one = MockGuardStruct(name="guard one")
+    guard_two = MockGuardStruct(name="guard two")
     guards = [guard_one, guard_two]
     mock_all.return_value = guards
 
