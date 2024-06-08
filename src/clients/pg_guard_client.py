@@ -6,6 +6,13 @@ from src.clients.postgres_client import PostgresClient
 from src.models.guard_item_audit import GuardItemAudit
 from guardrails_api_client import Guard as GuardStruct
 
+def from_guard_item(guard_item: GuardItem) -> GuardStruct: 
+    return GuardStruct(
+        id=guard_item.name,
+        name=guard_item.name,
+        description=guard_item.description,
+    )
+
 class PGGuardClient(GuardClient):
     def __init__(self):
         self.initialized = True
@@ -33,7 +40,8 @@ class PGGuardClient(GuardClient):
                     guard_name=guard_name
                 ),
             )
-        return GuardStruct.from_guard_item(guard_item)
+        print('guard!!!', guard_item)
+        return from_guard_item(guard_item)
 
     def get_guard_item(self, guard_name: str) -> GuardItem:
         return (
@@ -43,18 +51,18 @@ class PGGuardClient(GuardClient):
     def get_guards(self) -> List[GuardStruct]:
         guard_items = self.pgClient.db.session.query(GuardItem).all()
 
-        return [GuardStruct.from_guard_item(gi) for gi in guard_items]
+        return [from_guard_item(gi) for gi in guard_items]
 
     def create_guard(self, guard: GuardStruct) -> GuardStruct:
         guard_item = GuardItem(
             name=guard.name,
-            railspec=guard.railspec.to_dict(),
+            railspec=guard.to_dict(),
             num_reasks=guard.num_reasks,
             description=guard.description,
         )
         self.pgClient.db.session.add(guard_item)
         self.pgClient.db.session.commit()
-        return GuardStruct.from_guard_item(guard_item)
+        return from_guard_item(guard_item)
 
     def update_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
         guard_item = self.get_guard_item(guard_name)
@@ -66,18 +74,18 @@ class PGGuardClient(GuardClient):
                     guard_name=guard_name
                 ),
             )
-        guard_item.railspec = guard.railspec.to_dict()
+        guard_item.railspec = guard.to_dict()
         guard_item.num_reasks = guard.num_reasks
         self.pgClient.db.session.commit()
-        return GuardStruct.from_guard_item(guard_item)
+        return from_guard_item(guard_item)
 
     def upsert_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
         guard_item = self.get_guard_item(guard_name)
         if guard_item is not None:
-            guard_item.railspec = guard.railspec.to_dict()
+            guard_item.railspec = guard.to_dict()
             guard_item.num_reasks = guard.num_reasks
             self.pgClient.db.session.commit()
-            return GuardStruct.from_guard_item(guard_item)
+            return from_guard_item(guard_item)
         else:
             return self.create_guard(guard)
 
@@ -93,5 +101,5 @@ class PGGuardClient(GuardClient):
             )
         self.pgClient.db.session.delete(guard_item)
         self.pgClient.db.session.commit()
-        guard = GuardStruct.from_guard_item(guard_item)
+        guard = from_guard_item(guard_item)
         return guard

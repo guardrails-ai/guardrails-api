@@ -10,7 +10,6 @@ class MockGuardStruct(GuardStruct):
     id:str = 'mock-guard-id'
     name: str = "mock-guard"
     description: str = "mock guard description"
-    num_reasks: int = 0
     history:List[Any] = []
 
     def to_response(self):

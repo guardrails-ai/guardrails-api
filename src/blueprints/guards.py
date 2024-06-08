@@ -4,7 +4,8 @@ from string import Template
 from typing import Any, Dict, cast
 from flask import Blueprint, Response, request, stream_with_context
 from urllib.parse import unquote_plus
-from guardrails import Guard
+from guardrails import Guard 
+from guardrails.api_client import GuardrailsApiClient
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
 from src.classes.http_error import HttpError
@@ -14,7 +15,7 @@ from src.clients.postgres_client import postgres_is_enabled
 from src.utils.handle_error import handle_error
 from src.utils.get_llm_callable import get_llm_callable
 from src.utils.prep_environment import cleanup_environment, prep_environment
-from guardrails_api_client import Guard as GuardStruct
+from guardrails_api_client import Guard as GuardStruct 
 
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
@@ -41,9 +42,7 @@ else:
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
-        if len(guards) > 0 and (isinstance(guards[0], Guard)):
-            return [g.to_json() for g in guards]
-        return [g.to_response() for g in guards]
+        return [g.to_json() for g in guards]
     elif request.method == "POST":
         if not postgres_is_enabled():
             raise HttpError(
@@ -54,8 +53,6 @@ def guards():
         payload = request.json
         guard = GuardStruct.from_json(payload)
         new_guard = guard_client.create_guard(guard)
-        if isinstance(new_guard, Guard):
-            return new_guard.to_json()
         return new_guard.to_json()
     else:
         raise HttpError(
@@ -81,8 +78,6 @@ def guard(guard_name: str):
                     guard_name=decoded_guard_name
                 ),
             )
-        if isinstance(guard, Guard):
-            return guard.to_json()
         return guard.to_json()
     elif request.method == "PUT":
         if not postgres_is_enabled():
@@ -94,9 +89,7 @@ def guard(guard_name: str):
         payload = request.json
         guard = GuardStruct.from_json(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
-        if isinstance(updated_guard, Guard):
-            return updated_guard.to_json()
-        return updated_guard.to_response()
+        return updated_guard.to_json()
     elif request.method == "DELETE":
         if not postgres_is_enabled():
             raise HttpError(
@@ -105,9 +98,7 @@ def guard(guard_name: str):
                 "DELETE /<guard_name> is not implemented for in-memory guards.",
             )
         guard = guard_client.delete_guard(decoded_guard_name)
-        if isinstance(guard, Guard):
-            return guard.to_json()
-        return guard.to_response()
+        return guard.to_json()
     else:
         raise HttpError(
             405,
@@ -162,7 +153,6 @@ def collect_telemetry(
 @handle_error
 def validate(guard_name: str):
     from rich import print
-
     # Do we actually need a child span here?
     # We could probably use the existing span from the request unless we forsee
     #   capturing the same attributes on non-GaaS Guard runs.
@@ -175,14 +165,14 @@ def validate(guard_name: str):
         )
     payload = request.json
     openai_api_key = request.headers.get("x-openai-api-key", None)
+
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
-    if isinstance(guard_struct, GuardStruct):
-        # TODO: is there a way to do this with Guard?
-        prep_environment(guard_struct)
+    prep_environment(guard_struct)
 
     llm_output = payload.pop("llmOutput", None)
-    num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
+    # TODO: not sure if this is right - how do we get numReasks from new IGuard?
+    num_reasks = payload.pop("numReasks", 0)
     prompt_params = payload.pop("promptParams", {})
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
@@ -199,7 +189,14 @@ def validate(guard_name: str):
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
     guard: Guard = Guard()
     if isinstance(guard_struct, GuardStruct):
-        guard: Guard = guard_struct.to_guard(openai_api_key)
+        guard: Guard = Guard(
+            id=guard_struct.id,
+            name=guard_struct.name,
+            description=guard_struct.description,
+            validators=guard_struct.validators,
+            output_schema=guard_struct.output_schema,
+        )
+        guard._api_client = GuardrailsApiClient(api_key=openai_api_key)
     elif isinstance(guard_struct, Guard):
         guard = guard_struct
     # validate_span.set_attribute("guardName", decoded_guard_name)
@@ -232,14 +229,16 @@ def validate(guard_name: str):
                 message="BadRequest",
                 cause="Streaming is not supported for parse calls!",
             )
-
+        print('dump')
+        print(args)
+        print(payload)
+        print(llm_output)
         result: ValidationOutcome = guard.parse(
             llm_output=llm_output,
             num_reasks=num_reasks,
             prompt_params=prompt_params,
             llm_api=llm_api,
             # api_key=openai_api_key,
-            *args,
             **payload,
         )
     else:
@@ -326,6 +325,5 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-    if isinstance(guard_struct, GuardStruct):
-        cleanup_environment(guard_struct)
+    cleanup_environment(guard_struct)
     return validation_output.to_response()

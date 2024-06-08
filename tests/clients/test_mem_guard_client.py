@@ -34,9 +34,9 @@ class TestGetGuard:
         from src.clients.memory_guard_client import MemoryGuardClient
 
         guard_client = MemoryGuardClient()
-        new_guard = MockGuardStruct("test_guard")
+        new_guard = MockGuardStruct()
         guard_client.create_guard(new_guard)
-        result = guard_client.get_guard("test_guard")
+        result = guard_client.get_guard("mock-guard")
 
         assert result == new_guard
 
@@ -44,7 +44,7 @@ class TestGetGuard:
         from src.clients.memory_guard_client import MemoryGuardClient
 
         guard_client = MemoryGuardClient()
-        new_guard = MockGuardStruct("test_guard")
+        new_guard = MockGuardStruct()
         guard_client.create_guard(new_guard)
         result = guard_client.get_guard("guard_that_does_not_exist")
 

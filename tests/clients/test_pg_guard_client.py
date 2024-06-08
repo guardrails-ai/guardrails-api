@@ -36,11 +36,11 @@ class TestGetGuard:
         query_spy = mocker.spy(mock_pg_client.db.session, "query")
         filter_by_spy = mocker.spy(mock_pg_client.db.session, "filter_by")
         mock_first = mocker.patch.object(mock_pg_client.db.session, "first")
-        latest_guard = MockGuardStruct("latest")
+        latest_guard = MockGuardStruct()
         mock_first.return_value = latest_guard
 
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
         mock_from_guard_item.return_value = latest_guard
 
@@ -68,12 +68,12 @@ class TestGetGuard:
         filter_spy = mocker.spy(mock_pg_client.db.session, "filter")
         order_by_spy = mocker.spy(mock_pg_client.db.session, "order_by")
         mock_first = mocker.patch.object(mock_pg_client.db.session, "first")
-        latest_guard = MockGuardStruct("latest")
-        previous_guard = MockGuardStruct("previous")
+        latest_guard = MockGuardStruct(name="latest")
+        previous_guard = MockGuardStruct(name="previous")
         mock_first.side_effect = [latest_guard, previous_guard]
 
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
         mock_from_guard_item.return_value = previous_guard
 
@@ -113,7 +113,7 @@ class TestGetGuard:
         mock_first = mocker.patch.object(mock_pg_client.db.session, "first")
         mock_first.return_value = None
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
 
         from src.clients.pg_guard_client import PGGuardClient
@@ -171,7 +171,7 @@ def test_get_guards(mocker):
     mock_all.return_value = guards
 
     mock_from_guard_item = mocker.patch(
-        "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+        "src.clients.pg_guard_client.from_guard_item"
     )
     mock_from_guard_item.side_effect = [guard_one, guard_two]
 
@@ -204,7 +204,7 @@ def test_create_guard(mocker):
     commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
 
     mock_from_guard_item = mocker.patch(
-        "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+        "src.clients.pg_guard_client.from_guard_item"
     )
     mock_from_guard_item.return_value = mock_guard
 
@@ -248,7 +248,7 @@ class TestUpdateGuard:
 
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
 
         from src.clients.pg_guard_client import PGGuardClient
@@ -283,7 +283,7 @@ class TestUpdateGuard:
         to_dict_spy = mocker.spy(updated_guard.railspec, "to_dict")
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
         mock_from_guard_item.return_value = updated_guard
 
@@ -320,7 +320,7 @@ class TestUpsertGuard:
 
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
         mock_create_guard = mocker.patch(
             "src.clients.pg_guard_client.PGGuardClient.create_guard"
@@ -355,7 +355,7 @@ class TestUpsertGuard:
         to_dict_spy = mocker.spy(updated_guard.railspec, "to_dict")
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
         mock_from_guard_item.return_value = updated_guard
 
@@ -390,7 +390,7 @@ class TestDeleteGuard:
 
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
 
         from src.clients.pg_guard_client import PGGuardClient
@@ -424,7 +424,7 @@ class TestDeleteGuard:
         delete_spy = mocker.spy(mock_pg_client.db.session, "delete")
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
-            "src.clients.pg_guard_client.GuardStruct.from_guard_item"
+            "src.clients.pg_guard_client.from_guard_item"
         )
         mock_from_guard_item.return_value = old_guard
 

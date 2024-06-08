@@ -11,6 +11,8 @@ from guardrails.classes.history import Call
 # from tests.mocks.mock_trace import MockTracer
 
 
+MOCK_GUARD_STRING = '{"id": "mock-guard-id", "name": "mock-guard", "description": "mock guard description", "history": []}'
+
 def test_route_setup(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
 
@@ -43,7 +45,7 @@ def test_guards__get(mocker):
 
     assert mock_get_guards.call_count == 1
 
-    assert response == [{"name": "mock-guard"}]
+    assert response == [ MOCK_GUARD_STRING ]
 
 
 def test_guards__post_pg(mocker):
@@ -68,7 +70,7 @@ def test_guards__post_pg(mocker):
     mock_create_guard.assert_called_once_with(mock_guard)
 
     print('res', response)
-    assert response == '{"id": "mock-guard-id", "name": "mock-guard", "description": "mock guard description", "num_reasks": 0, "history": []}' 
+    assert response == MOCK_GUARD_STRING
 
     del os.environ["PGHOST"]
 
@@ -137,7 +139,7 @@ def test_guard__get_mem(mocker):
     response = guard("My%20Guard's%20Name")
 
     mock_get_guard.assert_called_once_with("My Guard's Name", timestamp)
-    assert response == {"name": "mock-guard"}
+    assert response == MOCK_GUARD_STRING
 
 
 def test_guard__put_pg(mocker):
@@ -171,7 +173,7 @@ def test_guard__put_pg(mocker):
 
     mock_from_request.assert_called_once_with(mock_guard.to_response())
     mock_upsert_guard.assert_called_once_with("My Guard's Name", mock_guard)
-    assert response == {"name": "mock-guard"}
+    assert response == MOCK_GUARD_STRING
     del os.environ["PGHOST"]
 
 
@@ -199,7 +201,7 @@ def test_guard__delete_pg(mocker):
     response = guard("my-guard-name")
 
     mock_delete_guard.assert_called_once_with("my-guard-name")
-    assert response == {"name": "mock-guard"}
+    assert response == MOCK_GUARD_STRING
     del os.environ["PGHOST"]
 
 
@@ -262,16 +264,17 @@ def test_validate__raises_bad_request__openai_api_key(mocker):
     mock_get_guard = mocker.patch(
         "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
     )
+
     mock_prep_environment = mocker.patch("src.blueprints.guards.prep_environment")
     # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
     from src.blueprints.guards import validate
 
-    response = validate("My%20Guard's%20Name")
+    response = validate("mock-guard")
 
     assert mock_prep_environment.call_count == 1
-    mock_get_guard.assert_called_once_with("My Guard's Name")
+    mock_get_guard.assert_called_once_with("mock-guard")
 
     assert isinstance(response, Tuple)
     error, status = response
@@ -304,10 +307,10 @@ def test_validate__raises_bad_request__num_reasks(mocker):
     mocker.patch("src.utils.handle_error.traceback.print_exception")
     from src.blueprints.guards import validate
 
-    response = validate("My%20Guard's%20Name")
+    response = validate("mock-guard")
 
     assert mock_prep_environment.call_count == 1
-    mock_get_guard.assert_called_once_with("My Guard's Name")
+    mock_get_guard.assert_called_once_with("mock-guard")
 
     assert isinstance(response, Tuple)
     error, status = response
