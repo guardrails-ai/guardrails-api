@@ -217,8 +217,8 @@ def test_create_guard(mocker):
     mock_guard_struct_init_spy.assert_called_once_with(
         AnyMatcher,
         name="mock-guard",
-        num_reasks=0,
         description="mock guard description",
+        railspec=mock_guard.to_dict(),
     )
 
     assert add_spy.call_count == 1
@@ -226,7 +226,6 @@ def test_create_guard(mocker):
     assert isinstance(mock_guard_item, MockGuardStruct)
     assert mock_guard_item.name == "mock-guard"
     # assert isinstance(mock_guard_item.railspec, MockRailspec)
-    assert mock_guard_item.num_reasks == 0
     assert mock_guard_item.description == "mock guard description"
     assert commit_spy.call_count == 1
 
