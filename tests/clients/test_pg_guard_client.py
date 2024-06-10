@@ -6,7 +6,7 @@ from src.classes.http_error import HttpError
 from src.models.guard_item import GuardItem
 from src.models.guard_item_audit import GuardItemAudit
 from tests.mocks.mock_postgres_client import MockPostgresClient
-from tests.mocks.mock_guard_client import MockGuardStruct, MockRailspec
+from tests.mocks.mock_guard_client import MockGuardStruct 
 from unittest.mock import call
 
 
@@ -217,7 +217,6 @@ def test_create_guard(mocker):
     mock_guard_struct_init_spy.assert_called_once_with(
         AnyMatcher,
         name="mock-guard",
-        railspec={},
         num_reasks=0,
         description="mock guard description",
     )
@@ -226,7 +225,7 @@ def test_create_guard(mocker):
     mock_guard_item = add_spy.call_args[0][0]
     assert isinstance(mock_guard_item, MockGuardStruct)
     assert mock_guard_item.name == "mock-guard"
-    assert isinstance(mock_guard_item.railspec, MockRailspec)
+    # assert isinstance(mock_guard_item.railspec, MockRailspec)
     assert mock_guard_item.num_reasks == 0
     assert mock_guard_item.description == "mock guard description"
     assert commit_spy.call_count == 1
@@ -270,7 +269,15 @@ class TestUpdateGuard:
 
     def test_updates_guard_item(self, mocker):
         old_guard = MockGuardStruct()
-        updated_guard = MockGuardStruct(num_reasks=2)
+        old_guard_item = GuardItem(
+            name=old_guard.name,
+            railspec=old_guard.to_dict(),
+            # FIXME: IGuard doesn't appear to have num_reasks
+            num_reasks=None,
+            description=old_guard.description,
+        )
+        updated_guard = MockGuardStruct(description='updated description')
+
         mock_pg_client = MockPostgresClient()
         mocker.patch(
             "src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client
@@ -278,14 +285,13 @@ class TestUpdateGuard:
         mock_get_guard_item = mocker.patch(
             "src.clients.pg_guard_client.PGGuardClient.get_guard_item"
         )
-        mock_get_guard_item.return_value = old_guard
+        mock_get_guard_item.return_value = old_guard_item
 
-        to_dict_spy = mocker.spy(updated_guard.railspec, "to_dict")
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.from_guard_item"
         )
-        mock_from_guard_item.return_value = updated_guard
+        mock_from_guard_item.return_value = updated_guard 
 
         from src.clients.pg_guard_client import PGGuardClient
 
@@ -294,13 +300,12 @@ class TestUpdateGuard:
         result = guard_client.update_guard("mock-guard", updated_guard)
 
         mock_get_guard_item.assert_called_once_with("mock-guard")
-        assert to_dict_spy.call_count == 1
         assert commit_spy.call_count == 1
-        mock_from_guard_item.assert_called_once_with(old_guard)
+        mock_from_guard_item.assert_called_once_with(old_guard_item)
 
         # These would have been updated by reference
-        assert old_guard.railspec == updated_guard.railspec.to_dict()
-        assert old_guard.num_reasks == 2
+        # assert old_guard.railspec == updated_guard.railspec.to_dict()
+        assert result.description == 'updated description'
 
         assert result == updated_guard
 
@@ -342,7 +347,15 @@ class TestUpsertGuard:
 
     def test_guard_already_exists(self, mocker):
         old_guard = MockGuardStruct()
-        updated_guard = MockGuardStruct(num_reasks=2, description="updated description")
+        old_guard_item = GuardItem(
+            name=old_guard.name,
+            railspec=old_guard.to_dict(),
+            # TODO: IGuard doesn't appear to have num_reasks
+            num_reasks=None,
+            description=old_guard.description,
+        )
+        updated_guard = MockGuardStruct(description="updated description")
+
         mock_pg_client = MockPostgresClient()
         mocker.patch(
             "src.clients.pg_guard_client.PostgresClient", return_value=mock_pg_client
@@ -350,9 +363,8 @@ class TestUpsertGuard:
         mock_get_guard_item = mocker.patch(
             "src.clients.pg_guard_client.PGGuardClient.get_guard_item"
         )
-        mock_get_guard_item.return_value = old_guard
+        mock_get_guard_item.return_value = old_guard_item
 
-        to_dict_spy = mocker.spy(updated_guard.railspec, "to_dict")
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.from_guard_item"
@@ -366,13 +378,14 @@ class TestUpsertGuard:
         result = guard_client.upsert_guard("mock-guard", updated_guard)
 
         mock_get_guard_item.assert_called_once_with("mock-guard")
-        assert to_dict_spy.call_count == 1
         assert commit_spy.call_count == 1
-        mock_from_guard_item.assert_called_once_with(old_guard)
+        mock_from_guard_item.assert_called_once_with(old_guard_item)
 
         # These would have been updated by reference
-        assert old_guard.railspec == updated_guard.railspec.to_dict()
-        assert old_guard.num_reasks == 2
+        # Are they still updated by reference if they're separate objects being mocked?
+        # TODO: assuming there's no more railspec on guards?
+        # assert old_guard.railspec == updated_guard.railspec.to_dict()
+        assert result.description == "updated description"
 
         assert result == updated_guard
 

@@ -77,7 +77,7 @@ def test_guards__post_pg(mocker):
 
 def test_guards__post_mem(mocker):
     mock_guard = MockGuardStruct()
-    mock_request = MockRequest("POST", mock_guard.to_response())
+    mock_request = MockRequest("POST", mock_guard.to_json())
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
@@ -145,7 +145,8 @@ def test_guard__get_mem(mocker):
 def test_guard__put_pg(mocker):
     os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
-    mock_request = MockRequest("PUT", json={"name": "mock-guard"})
+    json_guard = {"name": "mock-guard", "id":"mock-guard-id", "description":"mock guard description", "history":[]}
+    mock_request = MockRequest("PUT", json=json_guard)
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
@@ -171,7 +172,7 @@ def test_guard__put_pg(mocker):
 
     response = guard("My%20Guard's%20Name")
 
-    mock_from_request.assert_called_once_with(mock_guard.to_response())
+    mock_from_request.assert_called_once_with(json_guard)
     mock_upsert_guard.assert_called_once_with("My Guard's Name", mock_guard)
     assert response == MOCK_GUARD_STRING
     del os.environ["PGHOST"]

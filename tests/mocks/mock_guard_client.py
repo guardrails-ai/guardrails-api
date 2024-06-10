@@ -1,10 +1,6 @@
 from typing import Any, List
 from guardrails_api_client import Guard as GuardStruct
 
-class MockRailspec:
-    def to_dict(self, *args, **kwargs):
-        return {}
-
 
 class MockGuardStruct(GuardStruct):
     id:str = 'mock-guard-id'
@@ -12,8 +8,6 @@ class MockGuardStruct(GuardStruct):
     description: str = "mock guard description"
     history:List[Any] = []
 
-    def to_response(self):
-        return {"name": "mock-guard"}
 
     def to_guard(self, *args):
         return self

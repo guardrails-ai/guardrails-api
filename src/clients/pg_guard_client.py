@@ -74,7 +74,6 @@ class PGGuardClient(GuardClient):
                     guard_name=guard_name
                 ),
             )
-        guard_item.railspec = guard.to_dict()
         # guard_item.num_reasks = guard.num_reasks
         self.pgClient.db.session.commit()
         return from_guard_item(guard_item)
@@ -83,6 +82,7 @@ class PGGuardClient(GuardClient):
         guard_item = self.get_guard_item(guard_name)
         if guard_item is not None:
             guard_item.railspec = guard.to_dict()
+            guard_item.description = guard.description
             # guard_item.num_reasks = guard.num_reasks
             self.pgClient.db.session.commit()
             return from_guard_item(guard_item)
