@@ -31,7 +31,7 @@ def test_guards__get(mocker):
     mock_get_guards = mocker.patch(
         "src.blueprints.guards.guard_client.get_guards", return_value=[mock_guard]
     )
-    mocker.patch("src.blueprints.guards.collect_telemetry")
+    # mocker.patch("src.blueprints.guards.collect_telemetry")
 
     # >>> Conflict
     # mock_get_guards = mocker.patch(
