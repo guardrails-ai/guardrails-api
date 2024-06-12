@@ -229,10 +229,6 @@ def validate(guard_name: str):
                 message="BadRequest",
                 cause="Streaming is not supported for parse calls!",
             )
-        print('dump')
-        print(args)
-        print(payload)
-        print(llm_output)
         result: ValidationOutcome = guard.parse(
             llm_output=llm_output,
             num_reasks=num_reasks,
@@ -291,7 +287,7 @@ def validate(guard_name: str):
                 #     prompt_params=prompt_params,
                 #     result=next_result
                 # )
-                final_output_json = json.dumps(final_validation_output.to_json())
+                final_output_json = final_validation_output.to_json()
                 print("Yielding final output.")
                 yield f"{final_output_json}\n"
 
@@ -301,9 +297,6 @@ def validate(guard_name: str):
                 # content_type="text/event-stream"
             )
 
-        print('dumping')
-        print(args)
-        print(payload)
         result: ValidationOutcome = guard(
             llm_api=llm_api,
             prompt_params=prompt_params,

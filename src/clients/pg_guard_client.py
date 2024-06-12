@@ -40,7 +40,6 @@ class PGGuardClient(GuardClient):
                     guard_name=guard_name
                 ),
             )
-        print('guard!!!', guard_item)
         return from_guard_item(guard_item)
 
     def get_guard_item(self, guard_name: str) -> GuardItem:
