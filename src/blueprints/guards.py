@@ -246,7 +246,7 @@ def validate(guard_name: str):
 
             def guard_streamer():
                 guard_stream = guard(
-                    llm_api=llm_api,
+                    # llm_api=llm_api,
                     prompt_params=prompt_params,
                     num_reasks=num_reasks,
                     stream=stream,
@@ -301,6 +301,9 @@ def validate(guard_name: str):
                 # content_type="text/event-stream"
             )
 
+        print('dumping')
+        print(args)
+        print(payload)
         result: ValidationOutcome = guard(
             llm_api=llm_api,
             prompt_params=prompt_params,

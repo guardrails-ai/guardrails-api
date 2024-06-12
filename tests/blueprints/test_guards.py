@@ -407,7 +407,7 @@ def test_validate__parse(mocker):
 
 def test_validate__call(mocker):
     os.environ["PGHOST"] = "localhost"
-    mock___call__ = mocker.patch.object(MockGuardStruct, "__call__")
+    mock___call__ = mocker.patch('guardrails.guard.Guard.__call__') 
     mock___call__.return_value = ValidationOutcome(
         raw_llm_output="Hello world!", validated_output=None, validation_passed=False
     )
@@ -420,6 +420,7 @@ def test_validate__call(mocker):
             "promptParams": {"p1": "bar"},
             "args": [1, 2, 3],
             "some_kwarg": "foo",
+            "prompt":"Hello world!"
         },
         headers={"x-openai-api-key": "mock-key"},
     )
@@ -466,6 +467,7 @@ def test_validate__call(mocker):
         num_reasks=0,
         some_kwarg="foo",
         api_key="mock-key",
+        prompt="Hello world!"
     )
 
     # Temporarily Disabled
@@ -485,11 +487,9 @@ def test_validate__call(mocker):
     assert mock_cleanup_environment.call_count == 1
 
     assert response == {
-        "result": False,
+        "validationPassed": False,
         "validatedOutput": None,
-        "sessionHistory": [{"history": []}],
-        "rawLlmResponse": "Hello world!",
-        "validatedStream": [{"chunk": "Hello world!", "validation_errors": []}],
+        "rawLlmOutput": "Hello world!",
     }
 
     del os.environ["PGHOST"]
