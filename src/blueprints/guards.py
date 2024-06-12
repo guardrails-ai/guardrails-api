@@ -277,10 +277,10 @@ def validate(guard_name: str):
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutcome = ValidationOutcome(
-                    next_result.validation_passed,
-                    next_result.validated_output,
-                    guard.history,
-                    next_result.raw_llm_output,
+                    validation_passed=next_result.validation_passed,
+                    validated_output=next_result.validated_output,
+                    history=guard.history,
+                    raw_llm_output=next_result.raw_llm_output,
                 )
                 # I don't know if these are actually making it to OpenSearch
                 # because the span may be ended already
@@ -291,7 +291,7 @@ def validate(guard_name: str):
                 #     prompt_params=prompt_params,
                 #     result=next_result
                 # )
-                final_output_json = json.dumps(final_validation_output.to_response())
+                final_output_json = json.dumps(final_validation_output.to_json())
                 print("Yielding final output.")
                 yield f"{final_output_json}\n"
 
@@ -311,12 +311,12 @@ def validate(guard_name: str):
         )
 
     # TODO: Just make this a ValidationOutcome with history
-    validation_output = ValidationOutcome(
-        result.validation_passed,
-        result.validated_output,
-        guard.history,
-        result.raw_llm_output,
-    )
+    # validation_output = ValidationOutcome(
+    #     validation_passed = result.validation_passed,
+    #     validated_output=result.validated_output,
+    #     history=guard.history,
+    #     raw_llm_output=result.raw_llm_output,
+    # )
 
     # collect_telemetry(
     #     guard=guard,
@@ -326,4 +326,4 @@ def validate(guard_name: str):
     #     result=result
     # )
     cleanup_environment(guard_struct)
-    return validation_output.to_response()
+    return result.to_dict()

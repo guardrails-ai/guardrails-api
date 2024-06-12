@@ -8,6 +8,7 @@ from tests.mocks.mock_request import MockRequest
 from guardrails.classes import ValidationOutcome
 from guardrails.classes.generic import Stack
 from guardrails.classes.history import Call
+from guardrails_api_client.models.validation_outcome_validated_output import ValidationOutcomeValidatedOutput
 # from tests.mocks.mock_trace import MockTracer
 
 
@@ -328,12 +329,13 @@ def test_validate__raises_bad_request__num_reasks(mocker):
 
 def test_validate__parse(mocker):
     os.environ["PGHOST"] = "localhost"
-    mock_parse = mocker.patch.object(MockGuardStruct, "parse")
-    mock_parse.return_value = ValidationOutcome(
+    mock_outcome = ValidationOutcome(
         raw_llm_output="Hello world!",
         validated_output="Hello world!",
         validation_passed=True,
     )
+    mock_parse = mocker.patch('guardrails.guard.Guard.parse')
+    mock_parse.return_value = mock_outcome
     mock_guard = MockGuardStruct()
     # mock_tracer = MockTracer()
     mock_request = MockRequest(
@@ -371,9 +373,6 @@ def test_validate__parse(mocker):
     assert mock_parse.call_count == 1
 
     mock_parse.assert_called_once_with(
-        1,
-        2,
-        3,
         llm_output="Hello world!",
         num_reasks=0,
         prompt_params={},
@@ -398,11 +397,9 @@ def test_validate__parse(mocker):
     assert mock_cleanup_environment.call_count == 1
 
     assert response == {
-        "result": True,
         "validatedOutput": "Hello world!",
-        "sessionHistory": [{"history": []}],
-        "rawLlmResponse": "Hello world!",
-        "validatedStream": [{"chunk": "Hello world!", "validation_errors": []}],
+        "validationPassed":True,
+        "rawLlmOutput": "Hello world!",
     }
 
     del os.environ["PGHOST"]
