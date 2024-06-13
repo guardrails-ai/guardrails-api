@@ -15,7 +15,6 @@ from src.clients.pg_guard_client import PGGuardClient
 from src.clients.postgres_client import postgres_is_enabled
 from src.utils.handle_error import handle_error
 from src.utils.get_llm_callable import get_llm_callable
-from src.utils.prep_environment import cleanup_environment, prep_environment
 from guardrails_api_client import Guard as GuardStruct 
 
 
@@ -43,7 +42,7 @@ else:
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
-        return [g.to_json() for g in guards]
+        return [g.to_dict() for g in guards]
     elif request.method == "POST":
         if not postgres_is_enabled():
             raise HttpError(
@@ -54,7 +53,7 @@ def guards():
         payload = request.json
         guard = GuardStruct.from_json(payload)
         new_guard = guard_client.create_guard(guard)
-        return new_guard.to_json()
+        return new_guard.to_dict()
     else:
         raise HttpError(
             405,
@@ -79,7 +78,7 @@ def guard(guard_name: str):
                     guard_name=decoded_guard_name
                 ),
             )
-        return guard.to_json()
+        return guard.to_dict()
     elif request.method == "PUT":
         if not postgres_is_enabled():
             raise HttpError(
@@ -90,7 +89,7 @@ def guard(guard_name: str):
         payload = request.json
         guard = GuardStruct.from_json(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
-        return updated_guard.to_json()
+        return updated_guard.to_dict()
     elif request.method == "DELETE":
         if not postgres_is_enabled():
             raise HttpError(
@@ -99,7 +98,7 @@ def guard(guard_name: str):
                 "DELETE /<guard_name> is not implemented for in-memory guards.",
             )
         guard = guard_client.delete_guard(decoded_guard_name)
-        return guard.to_json()
+        return guard.to_dict()
     else:
         raise HttpError(
             405,
@@ -169,7 +168,6 @@ def validate(guard_name: str):
     )
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
-    prep_environment(guard_struct)
 
     llm_output = payload.pop("llmOutput", None)
     # TODO: not sure if this is right - how do we get numReasks from new IGuard?
@@ -188,18 +186,10 @@ def validate(guard_name: str):
     #     f"validate-{decoded_guard_name}"
     # ) as validate_span:
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-    guard: Guard = Guard()
-    if isinstance(guard_struct, GuardStruct):
-        guard: Guard = Guard(
-            id=guard_struct.id,
-            name=guard_struct.name,
-            description=guard_struct.description,
-            validators=guard_struct.validators,
-            output_schema=guard_struct.output_schema,
-        )
-        guard._api_client = GuardrailsApiClient(api_key=openai_api_key)
-    elif isinstance(guard_struct, Guard):
-        guard = guard_struct
+    guard = guard_struct
+    if not isinstance(guard_struct, Guard):
+        guard: Guard = Guard.from_dict(guard_struct.to_dict())
+        
     # validate_span.set_attribute("guardName", decoded_guard_name)
     if llm_api is not None:
         llm_api = get_llm_callable(llm_api)
@@ -320,5 +310,4 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-    cleanup_environment(guard_struct)
     return result.to_dict()

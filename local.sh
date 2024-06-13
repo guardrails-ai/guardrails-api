@@ -35,10 +35,6 @@ export SELF_ENDPOINT=http://localhost:8000
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export HF_API_KEY=${HF_TOKEN}
 
-
-curl https://raw.githubusercontent.com/guardrails-ai/guardrails-api-client/main/service-specs/guardrails-service-spec.yml -o ./open-api-spec.yml
-npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
-
 # For running https locally
 # mkdir -p ~/certificates
 # if [ ! -f ~/certificates/local.key ]; then
