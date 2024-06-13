@@ -47,12 +47,14 @@ services:
       PGUSER: ${PGUSER:-postgres}
       PGPASSWORD: ${PGPASSWORD:-changeme}
       NLTK_DATA: /opt/nltk_data
+      OTEL_PYTHON_TRACER_PROVIDER: sdk_tracer_provider
       OTEL_SERVICE_NAME: guardrails-api
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp #,console
       OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST: "Accept-Encoding,User-Agent,Referer"
       OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE: "Last-Modified,Content-Type"
       OTEL_METRICS_EXPORTER: otlp #,console
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       # # Disable logging for now to reduce noise
       # OTEL_LOGS_EXPORTER: otlp,console
       # OTEL_PYTHON_LOG_CORRELATION: true

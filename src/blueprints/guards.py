@@ -1,4 +1,5 @@
 import json
+import os
 from guardrails.hub import *  # noqa
 from string import Template
 from typing import Any, Dict, cast
@@ -152,7 +153,6 @@ def collect_telemetry(
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
 def validate(guard_name: str):
-    from rich import print
     # Do we actually need a child span here?
     # We could probably use the existing span from the request unless we forsee
     #   capturing the same attributes on non-GaaS Guard runs.
@@ -164,8 +164,9 @@ def validate(guard_name: str):
             " {request_method}".format(request_method=request.method),
         )
     payload = request.json
-    openai_api_key = request.headers.get("x-openai-api-key", None)
-
+    openai_api_key = request.headers.get(
+        "x-openai-api-key", os.environ.get("OPENAI_API_KEY")
+    )
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
     prep_environment(guard_struct)
@@ -269,7 +270,6 @@ def validate(guard_name: str):
                     next_result = result
                     # next_validation_output = validation_output
                     fragment = json.dumps(validation_output.to_response())
-                    print("yielding fragment")
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutcome = ValidationOutcome(
@@ -288,7 +288,6 @@ def validate(guard_name: str):
                 #     result=next_result
                 # )
                 final_output_json = final_validation_output.to_json()
-                print("Yielding final output.")
                 yield f"{final_output_json}\n"
 
             return Response(
