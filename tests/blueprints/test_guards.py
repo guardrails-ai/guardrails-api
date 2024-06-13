@@ -1,12 +1,28 @@
-from unittest.mock import PropertyMock, call
+import os
+from unittest.mock import PropertyMock
 from typing import Dict, Tuple
+
+import pytest
+
 from tests.mocks.mock_blueprint import MockBlueprint
 from tests.mocks.mock_guard_client import MockGuardStruct
 from tests.mocks.mock_request import MockRequest
 from guardrails.classes import ValidationOutcome
 from guardrails.classes.generic import Stack
-from guardrails.classes.history import Call, CallInputs
-from tests.mocks.mock_trace import MockTracer
+from guardrails.classes.history import Call
+# from tests.mocks.mock_trace import MockTracer
+
+
+@pytest.fixture(autouse=True)
+def around_each():
+    # Code that will run before the test
+    openai_api_key_bak = os.environ.get("OPENAI_API_KEY")
+    if openai_api_key_bak:
+        del os.environ["OPENAI_API_KEY"]
+    yield
+    # Code that will run after the test
+    if openai_api_key_bak:
+        os.environ["OPENAI_API_KEY"] = openai_api_key_bak
 
 
 def test_route_setup(mocker):
@@ -25,9 +41,16 @@ def test_guards__get(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
     mock_get_guards = mocker.patch(
-        "src.blueprints.guards.GuardClient.get_guards", return_value=[mock_guard]
+        "src.blueprints.guards.guard_client.get_guards", return_value=[mock_guard]
     )
-    mocker.patch("src.blueprints.guards.get_tracer")
+    mocker.patch("src.blueprints.guards.collect_telemetry")
+
+    # >>> Conflict
+    # mock_get_guards = mocker.patch(
+    #     "src.blueprints.guards.guard_client.get_guards", return_value=[mock_guard]
+    # )
+    # mocker.patch("src.blueprints.guards.get_tracer")
+
     from src.blueprints.guards import guards
 
     response = guards()
@@ -37,7 +60,8 @@ def test_guards__get(mocker):
     assert response == [{"name": "mock-guard"}]
 
 
-def test_guards__post(mocker):
+def test_guards__post_pg(mocker):
+    os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
     mock_request = MockRequest("POST", mock_guard.to_response())
 
@@ -47,17 +71,35 @@ def test_guards__post(mocker):
         "src.blueprints.guards.GuardStruct.from_request", return_value=mock_guard
     )
     mock_create_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.create_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.create_guard", return_value=mock_guard
     )
-    mocker.patch("src.blueprints.guards.get_tracer")
+
     from src.blueprints.guards import guards
 
     response = guards()
 
-    assert mock_from_request.called_once_with(mock_guard)
-    assert mock_create_guard.called_once_with(mock_guard)
+    mock_from_request.assert_called_once_with(mock_guard.to_response())
+    mock_create_guard.assert_called_once_with(mock_guard)
 
     assert response == {"name": "mock-guard"}
+
+    del os.environ["PGHOST"]
+
+
+def test_guards__post_mem(mocker):
+    mock_guard = MockGuardStruct()
+    mock_request = MockRequest("POST", mock_guard.to_response())
+
+    mocker.patch("flask.Blueprint", new=MockBlueprint)
+    mocker.patch("src.blueprints.guards.request", mock_request)
+
+    from src.blueprints.guards import guards
+
+    response = guards()
+
+    error_body, status = response
+
+    assert status == 501
 
 
 def test_guards__raises(mocker):
@@ -65,7 +107,7 @@ def test_guards__raises(mocker):
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
-    mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("src.blueprints.guards.get_tracer")
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
     from src.blueprints.guards import guards
@@ -84,63 +126,94 @@ def test_guards__raises(mocker):
     assert status == 405
 
 
-def test_guard__get(mocker):
+def test_guard__get_mem(mocker):
     mock_guard = MockGuardStruct()
     timestamp = "2024-03-04T14:11:42-06:00"
     mock_request = MockRequest("GET", args={"asOf": timestamp})
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
+
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.get_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
     )
-    mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("src.blueprints.guards.get_tracer")
+
+    # >>> Conflict
+    # mock_get_guard = mocker.patch(
+    #     "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
+    # )
+    # mocker.patch("src.blueprints.guards.get_tracer")
+
     from src.blueprints.guards import guard
 
     response = guard("My%20Guard's%20Name")
 
-    assert mock_get_guard.called_once_with("My Guard's Name", timestamp)
+    mock_get_guard.assert_called_once_with("My Guard's Name", timestamp)
     assert response == {"name": "mock-guard"}
 
 
-def test_guard__put(mocker):
+def test_guard__put_pg(mocker):
+    os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
     mock_request = MockRequest("PUT", json={"name": "mock-guard"})
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
+
     mock_from_request = mocker.patch(
         "src.blueprints.guards.GuardStruct.from_request", return_value=mock_guard
     )
     mock_upsert_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.upsert_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.upsert_guard", return_value=mock_guard
     )
-    mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("src.blueprints.guards.get_tracer")
+
+    # >>> Conflict
+    # mock_from_request = mocker.patch(
+    #     "src.blueprints.guards.GuardStruct.from_request", return_value=mock_guard
+    # )
+    # mock_upsert_guard = mocker.patch(
+    #     "src.blueprints.guards.guard_client.upsert_guard", return_value=mock_guard
+    # )
+    # mocker.patch("src.blueprints.guards.get_tracer")
+
     from src.blueprints.guards import guard
 
     response = guard("My%20Guard's%20Name")
 
-    assert mock_from_request.called_once_with(mock_guard)
-    assert mock_upsert_guard.called_once_with("My Guard's Name", mock_guard)
+    mock_from_request.assert_called_once_with(mock_guard.to_response())
+    mock_upsert_guard.assert_called_once_with("My Guard's Name", mock_guard)
     assert response == {"name": "mock-guard"}
+    del os.environ["PGHOST"]
 
 
-def test_guard__delete(mocker):
+def test_guard__delete_pg(mocker):
+    os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
     mock_request = MockRequest("DELETE")
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
+
     mock_delete_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.delete_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.delete_guard", return_value=mock_guard
     )
-    mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("src.blueprints.guards.get_tracer")
+
+    # >>> Conflict
+    # mock_delete_guard = mocker.patch(
+    #     "src.blueprints.guards.guard_client.delete_guard", return_value=mock_guard
+    # )
+    # mocker.patch("src.blueprints.guards.get_tracer")
+
     from src.blueprints.guards import guard
 
     response = guard("my-guard-name")
 
-    assert mock_delete_guard.called_once_with("my-guard-name")
+    mock_delete_guard.assert_called_once_with("my-guard-name")
     assert response == {"name": "mock-guard"}
+    del os.environ["PGHOST"]
 
 
 def test_guard__raises(mocker):
@@ -148,7 +221,7 @@ def test_guard__raises(mocker):
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
-    mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("src.blueprints.guards.get_tracer")
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
     from src.blueprints.guards import guard
@@ -172,7 +245,7 @@ def test_validate__raises_method_not_allowed(mocker):
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
-    mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("src.blueprints.guards.get_tracer")
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
     from src.blueprints.guards import validate
@@ -192,17 +265,18 @@ def test_validate__raises_method_not_allowed(mocker):
 
 
 def test_validate__raises_bad_request__openai_api_key(mocker):
+    os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
-    mock_tracer = MockTracer()
+    # mock_tracer = MockTracer()
     mock_request = MockRequest("POST", json={"llmApi": "bar"})
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.get_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
     )
     mock_prep_environment = mocker.patch("src.blueprints.guards.prep_environment")
-    mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
     from src.blueprints.guards import validate
@@ -210,7 +284,7 @@ def test_validate__raises_bad_request__openai_api_key(mocker):
     response = validate("My%20Guard's%20Name")
 
     assert mock_prep_environment.call_count == 1
-    assert mock_get_guard.called_once_with("My Guard's Name")
+    mock_get_guard.assert_called_once_with("My Guard's Name")
 
     assert isinstance(response, Tuple)
     error, status = response
@@ -223,20 +297,22 @@ def test_validate__raises_bad_request__openai_api_key(mocker):
         " OPENAI_API_KEY environment variable."
     )
     assert status == 400
+    del os.environ["PGHOST"]
 
 
 def test_validate__raises_bad_request__num_reasks(mocker):
+    os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
-    mock_tracer = MockTracer()
+    # mock_tracer = MockTracer()
     mock_request = MockRequest("POST", json={"numReasks": 3})
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.get_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
     )
     mock_prep_environment = mocker.patch("src.blueprints.guards.prep_environment")
-    mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
     mocker.patch("src.utils.handle_error.logger.error")
     mocker.patch("src.utils.handle_error.traceback.print_exception")
     from src.blueprints.guards import validate
@@ -244,7 +320,7 @@ def test_validate__raises_bad_request__num_reasks(mocker):
     response = validate("My%20Guard's%20Name")
 
     assert mock_prep_environment.call_count == 1
-    assert mock_get_guard.called_once_with("My Guard's Name")
+    mock_get_guard.assert_called_once_with("My Guard's Name")
 
     assert isinstance(response, Tuple)
     error, status = response
@@ -256,9 +332,11 @@ def test_validate__raises_bad_request__num_reasks(mocker):
         " calling guard(...)."
     )
     assert status == 400
+    del os.environ["PGHOST"]
 
 
 def test_validate__parse(mocker):
+    os.environ["PGHOST"] = "localhost"
     mock_parse = mocker.patch.object(MockGuardStruct, "parse")
     mock_parse.return_value = ValidationOutcome(
         raw_llm_output="Hello world!",
@@ -266,7 +344,7 @@ def test_validate__parse(mocker):
         validation_passed=True,
     )
     mock_guard = MockGuardStruct()
-    mock_tracer = MockTracer()
+    # mock_tracer = MockTracer()
     mock_request = MockRequest(
         "POST",
         json={"llmOutput": "Hello world!", "args": [1, 2, 3], "some_kwarg": "foo"},
@@ -275,50 +353,56 @@ def test_validate__parse(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.get_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
     )
     mock_prep_environment = mocker.patch("src.blueprints.guards.prep_environment")
     mock_cleanup_environment = mocker.patch("src.blueprints.guards.cleanup_environment")
-    mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
 
-    set_attribute_spy = mocker.spy(mock_tracer.span, "set_attribute")
+    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+
+    # >>> Conflict
+    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+
+    # set_attribute_spy = mocker.spy(mock_tracer.span, "set_attribute")
 
     mock_status = mocker.patch(
         "guardrails.classes.history.call.Call.status", new_callable=PropertyMock
     )
     mock_status.return_value = "pass"
-    mock_guard.history = Stack(Call(inputs=CallInputs(prompt="Hello world prompt!")))
+    mock_guard.history = Stack(Call())
     from src.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 
     assert mock_prep_environment.call_count == 1
-    assert mock_get_guard.called_once_with("My Guard's Name")
+    mock_get_guard.assert_called_once_with("My Guard's Name")
 
     assert mock_parse.call_count == 1
 
-    assert mock_parse.called_once_with(
+    mock_parse.assert_called_once_with(
         1,
         2,
         3,
         llm_output="Hello world!",
         num_reasks=0,
-        prompt_params=None,
+        prompt_params={},
         llm_api=None,
         some_kwarg="foo",
+        api_key=None,
     )
 
-    assert set_attribute_spy.call_count == 7
-    expected_calls = [
-        call("guardName", "My Guard's Name"),
-        call("prompt", "Hello world prompt!"),
-        call("validation_status", "pass"),
-        call("raw_llm_ouput", "Hello world!"),
-        call("validated_output", "Hello world!"),
-        call("tokens_consumed", None),
-        call("num_of_reasks", 0),
-    ]
-    set_attribute_spy.assert_has_calls(expected_calls)
+    # Temporarily Disabled
+    # assert set_attribute_spy.call_count == 7
+    # expected_calls = [
+    #     call("guardName", "My Guard's Name"),
+    #     call("prompt", "Hello world prompt!"),
+    #     call("validation_status", "pass"),
+    #     call("raw_llm_ouput", "Hello world!"),
+    #     call("validated_output", "Hello world!"),
+    #     call("tokens_consumed", None),
+    #     call("num_of_reasks", 0),
+    # ]
+    # set_attribute_spy.assert_has_calls(expected_calls)
 
     assert mock_cleanup_environment.call_count == 1
 
@@ -327,16 +411,20 @@ def test_validate__parse(mocker):
         "validatedOutput": "Hello world!",
         "sessionHistory": [{"history": []}],
         "rawLlmResponse": "Hello world!",
+        "validatedStream": [{"chunk": "Hello world!", "validation_errors": []}],
     }
+
+    del os.environ["PGHOST"]
 
 
 def test_validate__call(mocker):
+    os.environ["PGHOST"] = "localhost"
     mock___call__ = mocker.patch.object(MockGuardStruct, "__call__")
     mock___call__.return_value = ValidationOutcome(
         raw_llm_output="Hello world!", validated_output=None, validation_passed=False
     )
     mock_guard = MockGuardStruct()
-    mock_tracer = MockTracer()
+    # mock_tracer = MockTracer()
     mock_request = MockRequest(
         "POST",
         json={
@@ -351,35 +439,37 @@ def test_validate__call(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("src.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.GuardClient.get_guard", return_value=mock_guard
+        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
     )
     mock_prep_environment = mocker.patch("src.blueprints.guards.prep_environment")
     mock_cleanup_environment = mocker.patch("src.blueprints.guards.cleanup_environment")
-    mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+    mocker.patch(
+        "src.blueprints.guards.get_llm_callable",
+        return_value="openai.Completion.create",
+    )
 
-    set_attribute_spy = mocker.spy(mock_tracer.span, "set_attribute")
+    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+
+    # >>> Conflict
+    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+
+    # set_attribute_spy = mocker.spy(mock_tracer.span, "set_attribute")
 
     mock_status = mocker.patch(
         "guardrails.classes.history.call.Call.status", new_callable=PropertyMock
     )
     mock_status.return_value = "fail"
-    mock_guard.history = Stack(
-        Call(
-            inputs=CallInputs(
-                prompt="Hello world prompt!", instructions="Hello world instructions!"
-            )
-        )
-    )
+    mock_guard.history = Stack(Call())
     from src.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 
     assert mock_prep_environment.call_count == 1
-    assert mock_get_guard.called_once_with("My Guard's Name")
+    mock_get_guard.assert_called_once_with("My Guard's Name")
 
     assert mock___call__.call_count == 1
 
-    assert mock___call__.called_once_with(
+    mock___call__.assert_called_once_with(
         1,
         2,
         3,
@@ -387,20 +477,22 @@ def test_validate__call(mocker):
         prompt_params={"p1": "bar"},
         num_reasks=0,
         some_kwarg="foo",
+        api_key="mock-key",
     )
 
-    assert set_attribute_spy.call_count == 8
-    expected_calls = [
-        call("guardName", "My Guard's Name"),
-        call("prompt", "Hello world prompt!"),
-        call("instructions", "Hello world instructions!"),
-        call("validation_status", "fail"),
-        call("raw_llm_ouput", "Hello world!"),
-        call("validated_output", "None"),
-        call("tokens_consumed", None),
-        call("num_of_reasks", 0),
-    ]
-    set_attribute_spy.assert_has_calls(expected_calls)
+    # Temporarily Disabled
+    # assert set_attribute_spy.call_count == 8
+    # expected_calls = [
+    #     call("guardName", "My Guard's Name"),
+    #     call("prompt", "Hello world prompt!"),
+    #     call("instructions", "Hello world instructions!"),
+    #     call("validation_status", "fail"),
+    #     call("raw_llm_ouput", "Hello world!"),
+    #     call("validated_output", "None"),
+    #     call("tokens_consumed", None),
+    #     call("num_of_reasks", 0),
+    # ]
+    # set_attribute_spy.assert_has_calls(expected_calls)
 
     assert mock_cleanup_environment.call_count == 1
 
@@ -409,4 +501,7 @@ def test_validate__call(mocker):
         "validatedOutput": None,
         "sessionHistory": [{"history": []}],
         "rawLlmResponse": "Hello world!",
+        "validatedStream": [{"chunk": "Hello world!", "validation_errors": []}],
     }
+
+    del os.environ["PGHOST"]

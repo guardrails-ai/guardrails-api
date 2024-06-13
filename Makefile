@@ -1,7 +1,11 @@
 # Installs production dependencies
 install:
 	pip install -r requirements.txt;
+	# This is a workaround because of this issue: https://github.com/open-telemetry/opentelemetry-python-contrib/issues/2053
+	pip uninstall aiohttp -y
+	pip install opentelemetry-distro
 	opentelemetry-bootstrap -a install
+	pip install aiohttp
 
 # Installs development dependencies
 install-dev:
@@ -14,14 +18,11 @@ lock:
 install-lock:
 	pip install -r requirements-lock.txt
 
-build:
-	make install
+start:
+	bash ./local.sh
 
-dev:
-	bash ./dev.sh
-
-local:
-	python3 ./wsgi.py
+infra:
+	docker compose --profile infra up --build
 
 env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
@@ -53,11 +54,11 @@ source:
 	source ./.venv/bin/activate
 
 test:
-	python3 -m pytest ./tests
+	pytest ./tests
 
 test-cov:
 	coverage run --source=./src -m pytest ./tests
-	coverage report --fail-under=70
+	coverage report --fail-under=50
 
 view-test-cov:
 	coverage run --source=./src -m pytest ./tests

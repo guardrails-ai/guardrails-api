@@ -3,6 +3,8 @@ FROM public.ecr.aws/docker/library/python:3.11.6-slim
 ARG GITHUB_TOKEN
 ARG HF_TOKEN
 
+COPY .guardrailsrc /root/.guardrailsrc
+
 # COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
 # COPY ./opentelemetry-lambda-layer /opt
 
@@ -32,9 +34,14 @@ RUN pip install -r requirements-lock.txt
 # Download punkt data
 RUN python -m nltk.downloader -d /opt/nltk_data punkt
 
-COPY buildspecs/hub-install.sh ./buildspecs/hub-install.sh
-RUN chmod +x ./buildspecs/hub-install.sh
-RUN ./buildspecs/hub-install.sh
+# RUN guardrails hub install hub://guardrails/profanity_free
+RUN guardrails hub install hub://guardrails/valid_length
+RUN guardrails hub install hub://guardrails/lowercase
+RUN guardrails hub install hub://guardrails/regex_match
+
+COPY ./custom-install ./custom-install
+
+RUN python ./custom-install/install.py
 
 # Freeze dependencies
 RUN pip freeze > requirements-lock.txt
@@ -44,5 +51,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD gunicorn --bind 0.0.0.0:8000 --timeout=90 --threads=10 "app:create_app()"
+CMD gunicorn --bind 0.0.0.0:8000 --timeout=90 --threads=10 --limit-request-line=0 --limit-request-fields=1000 --limit-request-field_size=0 "app:create_app()"
 # CMD gunicorn --forwarded-allow-ips="*" --bind 0.0.0.0:8000 --timeout=60 --threads=10 "app:create_app()"

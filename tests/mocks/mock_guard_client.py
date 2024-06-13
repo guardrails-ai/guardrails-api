@@ -1,9 +1,12 @@
+from src.classes.guard_struct import GuardStruct
+
+
 class MockRailspec:
     def to_dict(self, *args, **kwargs):
         return {}
 
 
-class MockGuardStruct:
+class MockGuardStruct(GuardStruct):
     name: str
     description: str
     num_reasks: int

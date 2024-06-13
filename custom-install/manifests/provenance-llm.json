@@ -1,0 +1,49 @@
+{
+  "name": "Provenance LLM",
+  "author": {
+      "name": "Guardrails AI",
+      "email": "contact@guardrailsai.com"
+  },
+  "maintainers": [{
+      "name": "Caleb Courier",
+      "email": "caleb@guardrailsai.com"
+  }],
+  "repository": {
+      "url": "https://github.com/guardrails-ai/provenance_llm.git",
+      "branch": "default-embed-func"
+  },
+  "index": "./__init__.py",
+  "exports": [
+      "ProvenanceLLM"
+  ],
+  "tags": {
+      "language": [
+          "en"
+      ],
+      "certification": [
+          "Guardrails Certified"
+      ],
+      "contentType": [
+          "string"
+      ],
+      "infrastructureRequirements": [
+          "ML",
+          "LLM"
+      ],
+      "riskCategory": [
+          "Factuality",
+          "Brand risk"
+      ],
+      "useCases": [
+          "Chatbots",
+          "RAG",
+          "Customer Support"
+      ]
+  },
+  "id": "guardrails/provenance_llm",
+  "namespace": "guardrails",
+  "packageName": "provenance_llm",
+  "moduleName": "validator",
+  "requiresAuth": false,
+  "postInstall": "post-install.py"
+}

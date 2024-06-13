@@ -7,6 +7,10 @@ from typing import Tuple
 from src.models.base import db, INIT_EXTENSIONS
 
 
+def postgres_is_enabled() -> bool:
+    return os.environ.get("PGHOST", None) is not None
+
+
 class PostgresClient:
     _instance = None
 

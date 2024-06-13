@@ -4,7 +4,9 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from urllib.parse import urlparse
 from guardrails import configure_logging
-# from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from src.clients.postgres_client import postgres_is_enabled
+from src.otel import otel_is_disabled, initialize
 
 
 class ReverseProxied(object):
@@ -19,6 +21,11 @@ class ReverseProxied(object):
 
 
 def create_app():
+    if os.environ.get("APP_ENVIRONMENT") != "production":
+        from dotenv import load_dotenv
+
+        load_dotenv()
+
     app = Flask(__name__)
 
     app.config["APPLICATION_ROOT"] = "/"
@@ -31,12 +38,16 @@ def create_app():
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)
 
-    # FlaskInstrumentor().instrument_app(app)
+    if not otel_is_disabled():
+        FlaskInstrumentor().instrument_app(app)
+        initialize()
 
-    from src.clients.postgres_client import PostgresClient
+    # if no pg_host is set, don't set up postgres
+    if postgres_is_enabled():
+        from src.clients.postgres_client import PostgresClient
 
-    pg_client = PostgresClient()
-    pg_client.initialize(app)
+        pg_client = PostgresClient()
+        pg_client.initialize(app)
 
     from src.blueprints.root import root_bp
     from src.blueprints.guards import guards_bp
