@@ -22,8 +22,7 @@ jobs:
           make install-lock;
           make install-dev;
 
-          curl https://raw.githubusercontent.com/guardrails-ai/guardrails-api-client/main/service-specs/guardrails-service-spec.yml -o ./open-api-spec.yml
-          npx @redocly/cli bundle --dereferenced --output ./open-api-spec.json --ext json ./open-api-spec.yml
+          cp ./.venv/lib/python3.12/site-packages/guardrails_api_client/openapi-spec.json ./open-api-spec.json
 
       - name: Run Quality Checks
         run: |
