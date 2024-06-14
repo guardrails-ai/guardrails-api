@@ -1,31 +1,16 @@
-from guardrails_api.classes.guard_struct import GuardStruct
-
-
-class MockRailspec:
-    def to_dict(self, *args, **kwargs):
-        return {}
+from typing import Any, List
+from guardrails_api_client import Guard as GuardStruct
+from pydantic import ConfigDict
 
 
 class MockGuardStruct(GuardStruct):
-    name: str
-    description: str
-    num_reasks: int
-    history = []
+    # Pydantic Config
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def __init__(
-        self,
-        name: str = "mock-guard",
-        num_reasks: str = 0,
-        description: str = "mock guard description",
-        railspec={},
-    ):
-        self.name = name
-        self.description = description
-        self.num_reasks = num_reasks
-        self.railspec = MockRailspec()
-
-    def to_response(self):
-        return {"name": "mock-guard"}
+    id: str = "mock-guard-id"
+    name: str = "mock-guard"
+    description: str = "mock guard description"
+    history: List[Any] = []
 
     def to_guard(self, *args):
         return self

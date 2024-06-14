@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = ["Guardrails", "Guardrails AI", "Guardrails API", "Guardrails API"]
 requires-python = ">= 3.8.1"
 dependencies = [
-    "guardrails-ai>=0.4.5",
+    "guardrails-ai@git+https://github.com/guardrails-ai/guardrails.git@core-schema-impl",
     "flask>=3.0.3,<4",
     "Flask-SQLAlchemy>=3.1.1,<4",
     "Werkzeug>=3.0.3,<4",

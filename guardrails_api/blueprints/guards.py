@@ -8,7 +8,7 @@ from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
-from guardrails_api.classes.guard_struct import GuardStruct
+from guardrails_api_client import Guard as GuardStruct
 from guardrails_api.classes.http_error import HttpError
 from guardrails_api.classes.validation_output import ValidationOutput
 from guardrails_api.clients.memory_guard_client import MemoryGuardClient
@@ -42,9 +42,7 @@ else:
 def guards():
     if request.method == "GET":
         guards = guard_client.get_guards()
-        if len(guards) > 0 and (isinstance(guards[0], Guard)):
-            return [g._to_request() for g in guards]
-        return [g.to_response() for g in guards]
+        return [g.to_dict() for g in guards]
     elif request.method == "POST":
         if not postgres_is_enabled():
             raise HttpError(
@@ -53,11 +51,9 @@ def guards():
                 "POST /guards is not implemented for in-memory guards.",
             )
         payload = request.json
-        guard = GuardStruct.from_request(payload)
+        guard = GuardStruct.from_dict(payload)
         new_guard = guard_client.create_guard(guard)
-        if isinstance(new_guard, Guard):
-            return new_guard._to_request()
-        return new_guard.to_response()
+        return new_guard.to_dict()
     else:
         raise HttpError(
             405,
@@ -82,9 +78,7 @@ def guard(guard_name: str):
                     guard_name=decoded_guard_name
                 ),
             )
-        if isinstance(guard, Guard):
-            return guard._to_request()
-        return guard.to_response()
+        return guard.to_dict()
     elif request.method == "PUT":
         if not postgres_is_enabled():
             raise HttpError(
@@ -93,11 +87,9 @@ def guard(guard_name: str):
                 "PUT /<guard_name> is not implemented for in-memory guards.",
             )
         payload = request.json
-        guard = GuardStruct.from_request(payload)
+        guard = GuardStruct.from_dict(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
-        if isinstance(updated_guard, Guard):
-            return updated_guard._to_request()
-        return updated_guard.to_response()
+        return updated_guard.to_dict()
     elif request.method == "DELETE":
         if not postgres_is_enabled():
             raise HttpError(
@@ -106,9 +98,7 @@ def guard(guard_name: str):
                 "DELETE /<guard_name> is not implemented for in-memory guards.",
             )
         guard = guard_client.delete_guard(decoded_guard_name)
-        if isinstance(guard, Guard):
-            return guard._to_request()
-        return guard.to_response()
+        return guard.to_dict()
     else:
         raise HttpError(
             405,
@@ -122,7 +112,7 @@ def collect_telemetry(
     *,
     guard: Guard,
     validate_span: Span,
-    validation_output: ValidationOutput,
+    validation_output: ValidationOutcome,
     prompt_params: Dict[str, Any],
     result: ValidationOutcome,
 ):
@@ -180,7 +170,7 @@ def validate(guard_name: str):
     guard_struct = guard_client.get_guard(decoded_guard_name)
 
     llm_output = payload.pop("llmOutput", None)
-    num_reasks = payload.pop("numReasks", guard_struct.num_reasks)
+    num_reasks = payload.pop("numReasks", None)
     prompt_params = payload.pop("promptParams", {})
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
@@ -195,11 +185,10 @@ def validate(guard_name: str):
     #     f"validate-{decoded_guard_name}"
     # ) as validate_span:
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-    guard: Guard = Guard()
-    if isinstance(guard_struct, GuardStruct):
-        guard: Guard = guard_struct.to_guard(openai_api_key)
-    elif isinstance(guard_struct, Guard):
-        guard = guard_struct
+    guard = guard_struct
+    if not isinstance(guard_struct, Guard):
+        guard: Guard = Guard.from_dict(guard_struct.to_dict())
+
     # validate_span.set_attribute("guardName", decoded_guard_name)
     if llm_api is not None:
         llm_api = get_llm_callable(llm_api)
@@ -230,14 +219,12 @@ def validate(guard_name: str):
                 message="BadRequest",
                 cause="Streaming is not supported for parse calls!",
             )
-
         result: ValidationOutcome = guard.parse(
             llm_output=llm_output,
             num_reasks=num_reasks,
             prompt_params=prompt_params,
             llm_api=llm_api,
             # api_key=openai_api_key,
-            *args,
             **payload,
         )
     else:
@@ -245,7 +232,7 @@ def validate(guard_name: str):
 
             def guard_streamer():
                 guard_stream = guard(
-                    llm_api=llm_api,
+                    # llm_api=llm_api,
                     prompt_params=prompt_params,
                     num_reasks=num_reasks,
                     stream=stream,
@@ -256,7 +243,7 @@ def validate(guard_name: str):
 
                 for result in guard_stream:
                     # TODO: Just make this a ValidationOutcome with history
-                    validation_output: ValidationOutput = ValidationOutput(
+                    validation_output: ValidationOutcome = ValidationOutcome(
                         result.validation_passed,
                         result.validated_output,
                         guard.history,
@@ -274,11 +261,11 @@ def validate(guard_name: str):
                     fragment = json.dumps(validation_output.to_response())
                     yield f"{fragment}\n"
 
-                final_validation_output: ValidationOutput = ValidationOutput(
-                    next_result.validation_passed,
-                    next_result.validated_output,
-                    guard.history,
-                    next_result.raw_llm_output,
+                final_validation_output: ValidationOutcome = ValidationOutcome(
+                    validation_passed=next_result.validation_passed,
+                    validated_output=next_result.validated_output,
+                    history=guard.history,
+                    raw_llm_output=next_result.raw_llm_output,
                 )
                 # I don't know if these are actually making it to OpenSearch
                 # because the span may be ended already
@@ -289,7 +276,7 @@ def validate(guard_name: str):
                 #     prompt_params=prompt_params,
                 #     result=next_result
                 # )
-                final_output_json = json.dumps(final_validation_output.to_response())
+                final_output_json = final_validation_output.to_json()
                 yield f"{final_output_json}\n"
 
             return Response(
@@ -308,12 +295,12 @@ def validate(guard_name: str):
         )
 
     # TODO: Just make this a ValidationOutcome with history
-    validation_output = ValidationOutput(
-        result.validation_passed,
-        result.validated_output,
-        guard.history,
-        result.raw_llm_output,
-    )
+    # validation_output = ValidationOutcome(
+    #     validation_passed = result.validation_passed,
+    #     validated_output=result.validated_output,
+    #     history=guard.history,
+    #     raw_llm_output=result.raw_llm_output,
+    # )
 
     # collect_telemetry(
     #     guard=guard,
@@ -322,4 +309,4 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-    return validation_output.to_response()
+    return result.to_dict()

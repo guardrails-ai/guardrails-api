@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 from flask import Flask
+from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from urllib.parse import urlparse
@@ -8,6 +9,14 @@ from guardrails import configure_logging
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
+
+
+# TODO: Move this to a separate file
+class OverrideJsonProvider(DefaultJSONProvider):
+    def default(self, o):
+        if isinstance(o, set):
+            return list(o)
+        return super().default(self, o)
 
 
 class ReverseProxied(object):
@@ -47,6 +56,7 @@ def create_app(env: Optional[str] = None, config: Optional[str] = None):
     register_config(config)
 
     app = Flask(__name__)
+    app.json = OverrideJsonProvider(app)
 
     app.config["APPLICATION_ROOT"] = "/"
     app.config["PREFERRED_URL_SCHEME"] = "https"

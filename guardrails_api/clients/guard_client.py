@@ -1,7 +1,7 @@
 from typing import List, Union
 
 from guardrails import Guard
-from guardrails_api.classes.guard_struct import GuardStruct
+from guardrails_api_client import Guard as GuardStruct
 
 
 class GuardClient:
