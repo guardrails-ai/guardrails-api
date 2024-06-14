@@ -6,10 +6,12 @@ from src.clients.postgres_client import PostgresClient
 from src.models.guard_item_audit import GuardItemAudit
 from guardrails_api_client import Guard as GuardStruct
 
-def from_guard_item(guard_item: GuardItem) -> GuardStruct: 
+
+def from_guard_item(guard_item: GuardItem) -> GuardStruct:
     # Temporary fix for the fact that the DB schema is out of date with the API schema
     # For now, we're just storing the serialized guard in the railspec column
     return GuardStruct.from_dict(guard_item.railspec)
+
 
 class PGGuardClient(GuardClient):
     def __init__(self):

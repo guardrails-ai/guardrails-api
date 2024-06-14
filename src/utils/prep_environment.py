@@ -6,7 +6,6 @@ from src.utils.logger import logger
 from guardrails_api_client import Guard as GuardStruct
 
 
-
 def dynamic_import(package: str):
     # We can't try to retrive the module name until the package is installed.
     # If it is already installed this will go quickly.

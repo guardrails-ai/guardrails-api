@@ -5,8 +5,7 @@ from string import Template
 from typing import Any, Dict, cast
 from flask import Blueprint, Response, request, stream_with_context
 from urllib.parse import unquote_plus
-from guardrails import Guard 
-from guardrails.api_client import GuardrailsApiClient
+from guardrails import Guard
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
 from src.classes.http_error import HttpError
@@ -15,7 +14,7 @@ from src.clients.pg_guard_client import PGGuardClient
 from src.clients.postgres_client import postgres_is_enabled
 from src.utils.handle_error import handle_error
 from src.utils.get_llm_callable import get_llm_callable
-from guardrails_api_client import Guard as GuardStruct 
+from guardrails_api_client import Guard as GuardStruct
 
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
@@ -170,8 +169,7 @@ def validate(guard_name: str):
     guard_struct = guard_client.get_guard(decoded_guard_name)
 
     llm_output = payload.pop("llmOutput", None)
-    # TODO: not sure if this is right - how do we get numReasks from new IGuard?
-    num_reasks = payload.pop("numReasks", 0)
+    num_reasks = payload.pop("numReasks", None)
     prompt_params = payload.pop("promptParams", {})
     llm_api = payload.pop("llmApi", None)
     args = payload.pop("args", [])
@@ -189,7 +187,7 @@ def validate(guard_name: str):
     guard = guard_struct
     if not isinstance(guard_struct, Guard):
         guard: Guard = Guard.from_dict(guard_struct.to_dict())
-        
+
     # validate_span.set_attribute("guardName", decoded_guard_name)
     if llm_api is not None:
         llm_api = get_llm_callable(llm_api)

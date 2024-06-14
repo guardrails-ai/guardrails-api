@@ -9,7 +9,7 @@ from guardrails.utils.openai_utils import (
 from guardrails_api_client.models.validate_payload import (
     ValidatePayload,
 )
-from guardrails_api_client.models.llm_resource import ( LLMResource )
+from guardrails_api_client.models.llm_resource import LLMResource
 
 
 def get_llm_callable(
@@ -18,13 +18,9 @@ def get_llm_callable(
     try:
         model = ValidatePayload(llm_api)
         # TODO: Add error handling and throw 400
-        if (
-            model is LLMResource.OPENAI_DOT_COMPLETION_DOT_CREATE
-        ):
+        if model is LLMResource.OPENAI_DOT_COMPLETION_DOT_CREATE:
             return get_static_openai_create_func()
-        elif (
-            model is LLMResource.OPENAI_DOT_CHAT_COMPLETION_DOT_CREATE
-        ):
+        elif model is LLMResource.OPENAI_DOT_CHAT_COMPLETION_DOT_CREATE:
             return get_static_openai_chat_create_func()
         elif model is LLMResource.OPENAI_DOT_COMPLETION_DOT_ACREATE:
             return get_static_openai_acreate_func()

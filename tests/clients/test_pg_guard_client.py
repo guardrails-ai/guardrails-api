@@ -6,7 +6,7 @@ from src.classes.http_error import HttpError
 from src.models.guard_item import GuardItem
 from src.models.guard_item_audit import GuardItemAudit
 from tests.mocks.mock_postgres_client import MockPostgresClient
-from tests.mocks.mock_guard_client import MockGuardStruct 
+from tests.mocks.mock_guard_client import MockGuardStruct
 from unittest.mock import call
 
 
@@ -170,9 +170,7 @@ def test_get_guards(mocker):
     guards = [guard_one, guard_two]
     mock_all.return_value = guards
 
-    mock_from_guard_item = mocker.patch(
-        "src.clients.pg_guard_client.from_guard_item"
-    )
+    mock_from_guard_item = mocker.patch("src.clients.pg_guard_client.from_guard_item")
     mock_from_guard_item.side_effect = [guard_one, guard_two]
 
     from src.clients.pg_guard_client import PGGuardClient
@@ -203,9 +201,7 @@ def test_create_guard(mocker):
     add_spy = mocker.spy(mock_pg_client.db.session, "add")
     commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
 
-    mock_from_guard_item = mocker.patch(
-        "src.clients.pg_guard_client.from_guard_item"
-    )
+    mock_from_guard_item = mocker.patch("src.clients.pg_guard_client.from_guard_item")
     mock_from_guard_item.return_value = mock_guard
 
     from src.clients.pg_guard_client import PGGuardClient
@@ -219,6 +215,7 @@ def test_create_guard(mocker):
         name="mock-guard",
         description="mock guard description",
         railspec=mock_guard.to_dict(),
+        num_reasks=None,
     )
 
     assert add_spy.call_count == 1
@@ -275,7 +272,7 @@ class TestUpdateGuard:
             num_reasks=None,
             description=old_guard.description,
         )
-        updated_guard = MockGuardStruct(description='updated description')
+        updated_guard = MockGuardStruct(description="updated description")
 
         mock_pg_client = MockPostgresClient()
         mocker.patch(
@@ -290,7 +287,7 @@ class TestUpdateGuard:
         mock_from_guard_item = mocker.patch(
             "src.clients.pg_guard_client.from_guard_item"
         )
-        mock_from_guard_item.return_value = updated_guard 
+        mock_from_guard_item.return_value = updated_guard
 
         from src.clients.pg_guard_client import PGGuardClient
 
@@ -304,7 +301,7 @@ class TestUpdateGuard:
 
         # These would have been updated by reference
         # assert old_guard.railspec == updated_guard.railspec.to_dict()
-        assert result.description == 'updated description'
+        assert result.description == "updated description"
 
         assert result == updated_guard
 

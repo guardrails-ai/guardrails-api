@@ -1,13 +1,16 @@
 from typing import Any, List
 from guardrails_api_client import Guard as GuardStruct
+from pydantic import ConfigDict
 
 
 class MockGuardStruct(GuardStruct):
-    id:str = 'mock-guard-id'
+    # Pydantic Config
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    id: str = "mock-guard-id"
     name: str = "mock-guard"
     description: str = "mock guard description"
-    history:List[Any] = []
-
+    history: List[Any] = []
 
     def to_guard(self, *args):
         return self

@@ -17,6 +17,7 @@ class OverrideJsonProvider(DefaultJSONProvider):
             return list(o)
         return super().default(self, o)
 
+
 class ReverseProxied(object):
     def __init__(self, app):
         self.app = app
