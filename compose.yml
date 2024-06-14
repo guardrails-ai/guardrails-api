@@ -23,6 +23,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: "${PGUSER:-postgres}@guardrails.com"
       PGADMIN_DEFAULT_PASSWORD: ${PGPASSWORD:-changeme}
       PGADMIN_SERVER_JSON_FILE: /var/lib/pgadmin/servers.json
+    # FIXME: Copy over server.json file and create passfile
     volumes:
       - ./pgadmin-data:/var/lib/pgadmin
     depends_on:
