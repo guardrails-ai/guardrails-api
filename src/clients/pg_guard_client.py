@@ -7,11 +7,9 @@ from src.models.guard_item_audit import GuardItemAudit
 from guardrails_api_client import Guard as GuardStruct
 
 def from_guard_item(guard_item: GuardItem) -> GuardStruct: 
-    return GuardStruct(
-        id=guard_item.name,
-        name=guard_item.name,
-        description=guard_item.description,
-    )
+    # Temporary fix for the fact that the DB schema is out of date with the API schema
+    # For now, we're just storing the serialized guard in the railspec column
+    return GuardStruct.from_dict(guard_item.railspec)
 
 class PGGuardClient(GuardClient):
     def __init__(self):
@@ -56,7 +54,7 @@ class PGGuardClient(GuardClient):
         guard_item = GuardItem(
             name=guard.name,
             railspec=guard.to_dict(),
-            # num_reasks=guard.num_reasks,
+            num_reasks=None,
             description=guard.description,
         )
         self.pgClient.db.session.add(guard_item)
@@ -74,6 +72,8 @@ class PGGuardClient(GuardClient):
                 ),
             )
         # guard_item.num_reasks = guard.num_reasks
+        guard_item.railspec = guard.to_dict()
+        guard_item.description = guard.description
         self.pgClient.db.session.commit()
         return from_guard_item(guard_item)
 

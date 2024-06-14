@@ -51,7 +51,7 @@ def guards():
                 "POST /guards is not implemented for in-memory guards.",
             )
         payload = request.json
-        guard = GuardStruct.from_json(payload)
+        guard = GuardStruct.from_dict(payload)
         new_guard = guard_client.create_guard(guard)
         return new_guard.to_dict()
     else:
@@ -87,7 +87,7 @@ def guard(guard_name: str):
                 "PUT /<guard_name> is not implemented for in-memory guards.",
             )
         payload = request.json
-        guard = GuardStruct.from_json(payload)
+        guard = GuardStruct.from_dict(payload)
         updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
         return updated_guard.to_dict()
     elif request.method == "DELETE":
