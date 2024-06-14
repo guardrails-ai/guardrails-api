@@ -14,8 +14,9 @@ install-lock:
 
 .PHONY: build
 build:
-	curl https://raw.githubusercontent.com/guardrails-ai/guardrails-api-client/main/service-specs/guardrails-service-spec.yml -o ./open-api-spec.yml
-	npx @redocly/cli bundle --dereferenced --output ./guardrails_api/open-api-spec.json --ext json ./open-api-spec.yml
+	make install
+	
+	cp "$$(python -c "import guardrails_api_client as _; print(_.__path__[0])")/openapi-spec.json" ./guardrails_api/open-api-spec.json
 
 start:
 	bash ./guardrails_api/start.sh

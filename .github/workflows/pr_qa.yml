@@ -32,9 +32,8 @@ jobs:
         run: |
           python -m venv ./.venv
           source ./.venv/bin/activate
+          make build
           make install-dev;
-
-          cp ./.venv/lib/python3.12/site-packages/guardrails_api_client/openapi-spec.json ./open-api-spec.json
 
       - name: Run Quality Checks
         run: |
