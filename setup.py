@@ -33,6 +33,6 @@ setup(
         "opentelemetry-exporter-otlp-proto-http>1,<2",
         "opentelemetry-instrumentation-flask>=0.12b0,<1"
     ],
-    package_data={"guardrails_api": ["py.typed"]},
+    package_data={"guardrails_api": ["py.typed", "open-api-spec.json"]},
 )
   

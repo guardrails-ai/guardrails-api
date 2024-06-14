@@ -10,7 +10,6 @@ from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
 from guardrails_api_client import Guard as GuardStruct
 from guardrails_api.classes.http_error import HttpError
-from guardrails_api.classes.validation_output import ValidationOutput
 from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled

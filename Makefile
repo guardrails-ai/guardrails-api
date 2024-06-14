@@ -17,8 +17,10 @@ build:
 	make install
 	
 	cp "$$(python -c "import guardrails_api_client as _; print(_.__path__[0])")/openapi-spec.json" ./guardrails_api/open-api-spec.json
+	
 
 start:
+	make build
 	bash ./guardrails_api/start.sh
 
 infra:
