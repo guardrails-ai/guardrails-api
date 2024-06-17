@@ -1,9 +1,8 @@
-# from src.clients.memory_guard_client import MemoryGuardClient
 from tests.mocks.mock_guard_client import MockGuardStruct
 
 
 def test_init(mocker):
-    from src.clients.memory_guard_client import MemoryGuardClient
+    from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 
     mem_guard_client = MemoryGuardClient()
 
@@ -12,7 +11,7 @@ def test_init(mocker):
 
 class TestGetGuard:
     def test_get_all(self, mocker):
-        from src.clients.memory_guard_client import MemoryGuardClient
+        from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 
         guard_client = MemoryGuardClient()
 
@@ -21,7 +20,7 @@ class TestGetGuard:
         assert result == []
 
     def test_get_all_after_insert(self, mocker):
-        from src.clients.memory_guard_client import MemoryGuardClient
+        from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 
         guard_client = MemoryGuardClient()
         new_guard = MockGuardStruct()
@@ -31,7 +30,7 @@ class TestGetGuard:
         assert result == [new_guard]
 
     def test_get_guard_after_insert(self, mocker):
-        from src.clients.memory_guard_client import MemoryGuardClient
+        from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 
         guard_client = MemoryGuardClient()
         new_guard = MockGuardStruct()
@@ -41,7 +40,7 @@ class TestGetGuard:
         assert result == new_guard
 
     def test_not_found(self, mocker):
-        from src.clients.memory_guard_client import MemoryGuardClient
+        from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 
         guard_client = MemoryGuardClient()
         new_guard = MockGuardStruct()

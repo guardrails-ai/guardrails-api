@@ -1,4 +1,4 @@
-from src.utils.pluck import pluck
+from guardrails_api.utils.pluck import pluck
 
 
 def test_pluck():

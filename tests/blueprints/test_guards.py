@@ -10,7 +10,11 @@ from tests.mocks.mock_request import MockRequest
 from guardrails.classes import ValidationOutcome
 from guardrails.classes.generic import Stack
 from guardrails.classes.history import Call
-# from tests.mocks.mock_trace import MockTracer
+from guardrails_api.app import register_config
+
+# TODO: Should we mock this somehow?
+#   Right now it's just empty, but it technically does a file read
+register_config()
 
 
 MOCK_GUARD_STRING = {
@@ -38,7 +42,7 @@ def around_each():
 def test_route_setup(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
 
-    from src.blueprints.guards import guards_bp
+    from guardrails_api.blueprints.guards import guards_bp
 
     assert guards_bp.route_call_count == 3
     assert guards_bp.routes == ["/", "/<guard_name>", "/<guard_name>/validate"]
@@ -49,19 +53,20 @@ def test_guards__get(mocker):
     mock_request = MockRequest("GET")
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
     mock_get_guards = mocker.patch(
-        "src.blueprints.guards.guard_client.get_guards", return_value=[mock_guard]
+        "guardrails_api.blueprints.guards.guard_client.get_guards",
+        return_value=[mock_guard],
     )
-    # mocker.patch("src.blueprints.guards.collect_telemetry")
+    mocker.patch("guardrails_api.blueprints.guards.collect_telemetry")
 
     # >>> Conflict
     # mock_get_guards = mocker.patch(
-    #     "src.blueprints.guards.guard_client.get_guards", return_value=[mock_guard]
+    #     "guardrails_api.blueprints.guards.guard_client.get_guards", return_value=[mock_guard]
     # )
-    # mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guards
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -76,15 +81,16 @@ def test_guards__post_pg(mocker):
     mock_request = MockRequest("POST", mock_guard.to_dict())
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
     mock_from_request = mocker.patch(
-        "src.blueprints.guards.GuardStruct.from_dict", return_value=mock_guard
+        "guardrails_api.blueprints.guards.GuardStruct.from_dict", return_value=mock_guard
     )
     mock_create_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.create_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.create_guard",
+        return_value=mock_guard,
     )
 
-    from src.blueprints.guards import guards
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -101,9 +107,9 @@ def test_guards__post_mem(mocker):
     mock_request = MockRequest("POST", mock_guard.to_dict())
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
 
-    from src.blueprints.guards import guards
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -116,11 +122,11 @@ def test_guards__raises(mocker):
     mock_request = MockRequest("PUT")
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
-    # mocker.patch("src.blueprints.guards.get_tracer")
-    mocker.patch("src.utils.handle_error.logger.error")
-    mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import guards
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
+    mocker.patch("guardrails_api.utils.handle_error.logger.error")
+    mocker.patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    from guardrails_api.blueprints.guards import guards
 
     response = guards()
 
@@ -142,20 +148,21 @@ def test_guard__get_mem(mocker):
     mock_request = MockRequest("GET", args={"asOf": timestamp})
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
 
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
     )
-    # mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
 
     # >>> Conflict
     # mock_get_guard = mocker.patch(
-    #     "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
+    #     "guardrails_api.blueprints.guards.guard_client.get_guard", return_value=mock_guard
     # )
-    # mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guard
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("My%20Guard's%20Name")
 
@@ -175,26 +182,27 @@ def test_guard__put_pg(mocker):
     mock_request = MockRequest("PUT", json=json_guard)
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
 
     mock_from_request = mocker.patch(
-        "src.blueprints.guards.GuardStruct.from_dict", return_value=mock_guard
+        "guardrails_api.blueprints.guards.GuardStruct.from_dict", return_value=mock_guard
     )
     mock_upsert_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.upsert_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.upsert_guard",
+        return_value=mock_guard,
     )
-    # mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
 
     # >>> Conflict
     # mock_from_request = mocker.patch(
-    #     "src.blueprints.guards.GuardStruct.from_request", return_value=mock_guard
+    #     "guardrails_api.blueprints.guards.GuardStruct.from_request", return_value=mock_guard
     # )
     # mock_upsert_guard = mocker.patch(
-    #     "src.blueprints.guards.guard_client.upsert_guard", return_value=mock_guard
+    #     "guardrails_api.blueprints.guards.guard_client.upsert_guard", return_value=mock_guard
     # )
-    # mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guard
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("My%20Guard's%20Name")
 
@@ -210,20 +218,21 @@ def test_guard__delete_pg(mocker):
     mock_request = MockRequest("DELETE")
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
 
     mock_delete_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.delete_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.delete_guard",
+        return_value=mock_guard,
     )
-    # mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
 
     # >>> Conflict
     # mock_delete_guard = mocker.patch(
-    #     "src.blueprints.guards.guard_client.delete_guard", return_value=mock_guard
+    #     "guardrails_api.blueprints.guards.guard_client.delete_guard", return_value=mock_guard
     # )
-    # mocker.patch("src.blueprints.guards.get_tracer")
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
 
-    from src.blueprints.guards import guard
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("my-guard-name")
 
@@ -236,11 +245,11 @@ def test_guard__raises(mocker):
     mock_request = MockRequest("POST")
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
-    # mocker.patch("src.blueprints.guards.get_tracer")
-    mocker.patch("src.utils.handle_error.logger.error")
-    mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import guard
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
+    mocker.patch("guardrails_api.utils.handle_error.logger.error")
+    mocker.patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    from guardrails_api.blueprints.guards import guard
 
     response = guard("guard")
 
@@ -260,11 +269,11 @@ def test_validate__raises_method_not_allowed(mocker):
     mock_request = MockRequest("PUT")
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
-    # mocker.patch("src.blueprints.guards.get_tracer")
-    mocker.patch("src.utils.handle_error.logger.error")
-    mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import validate
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer")
+    mocker.patch("guardrails_api.utils.handle_error.logger.error")
+    mocker.patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("guard")
 
@@ -287,15 +296,16 @@ def test_validate__raises_bad_request__openai_api_key(mocker):
     mock_request = MockRequest("POST", json={"llmApi": "bar"})
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
     )
 
-    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
-    mocker.patch("src.utils.handle_error.logger.error")
-    mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import validate
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
+    mocker.patch("guardrails_api.utils.handle_error.logger.error")
+    mocker.patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("mock-guard")
 
@@ -322,14 +332,15 @@ def test_validate__raises_bad_request__num_reasks(mocker):
     mock_request = MockRequest("POST", json={"numReasks": 3})
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
     )
-    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
-    mocker.patch("src.utils.handle_error.logger.error")
-    mocker.patch("src.utils.handle_error.traceback.print_exception")
-    from src.blueprints.guards import validate
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
+    mocker.patch("guardrails_api.utils.handle_error.logger.error")
+    mocker.patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("mock-guard")
 
@@ -360,7 +371,7 @@ def test_validate__parse(mocker):
     mock_parse.return_value = mock_outcome
 
     mock_guard = MockGuardStruct()
-    mock_from_dict = mocker.patch("src.blueprints.guards.Guard.from_dict")
+    mock_from_dict = mocker.patch("guardrails_api.blueprints.guards.Guard.from_dict")
     mock_from_dict.return_value = mock_guard
 
     # mock_tracer = MockTracer()
@@ -370,15 +381,16 @@ def test_validate__parse(mocker):
     )
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
     )
 
-    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
 
     # >>> Conflict
-    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
 
     # set_attribute_spy = mocker.spy(mock_tracer.span, "set_attribute")
 
@@ -387,7 +399,7 @@ def test_validate__parse(mocker):
     )
     mock_status.return_value = "pass"
     mock_guard.history = Stack(Call())
-    from src.blueprints.guards import validate
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 
@@ -437,7 +449,7 @@ def test_validate__call(mocker):
     mock___call__.return_value = mock_outcome
 
     mock_guard = MockGuardStruct()
-    mock_from_dict = mocker.patch("src.blueprints.guards.Guard.from_dict")
+    mock_from_dict = mocker.patch("guardrails_api.blueprints.guards.Guard.from_dict")
     mock_from_dict.return_value = mock_guard
 
     # mock_tracer = MockTracer()
@@ -454,19 +466,20 @@ def test_validate__call(mocker):
     )
 
     mocker.patch("flask.Blueprint", new=MockBlueprint)
-    mocker.patch("src.blueprints.guards.request", mock_request)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
     mock_get_guard = mocker.patch(
-        "src.blueprints.guards.guard_client.get_guard", return_value=mock_guard
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
     )
     mocker.patch(
-        "src.blueprints.guards.get_llm_callable",
+        "guardrails_api.blueprints.guards.get_llm_callable",
         return_value="openai.Completion.create",
     )
 
-    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
 
     # >>> Conflict
-    # mocker.patch("src.blueprints.guards.get_tracer", return_value=mock_tracer)
+    # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
 
     # set_attribute_spy = mocker.spy(mock_tracer.span, "set_attribute")
 
@@ -475,7 +488,7 @@ def test_validate__call(mocker):
     )
     mock_status.return_value = "fail"
     mock_guard.history = Stack(Call())
-    from src.blueprints.guards import validate
+    from guardrails_api.blueprints.guards import validate
 
     response = validate("My%20Guard's%20Name")
 

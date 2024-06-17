@@ -1,0 +1,57 @@
+[project]
+name = "guardrails-api"
+dynamic = ["version"]
+description = "Guardrails API"
+authors = [
+    {name = "Guardrails AI", email = "contact@guardrailsai.com"}
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+keywords = ["Guardrails", "Guardrails AI", "Guardrails API", "Guardrails API"]
+requires-python = ">= 3.8.1"
+dependencies = [
+    "guardrails-ai@git+https://github.com/guardrails-ai/guardrails.git@core-schema-impl",
+    "flask>=3.0.3,<4",
+    "Flask-SQLAlchemy>=3.1.1,<4",
+    "Werkzeug>=3.0.3,<4",
+    "jsonschema>=4.22.0,<5",
+    "referencing>=0.35.1,<1",
+    "Flask-Cors>=4.0.1,<5",
+    "boto3>=1.34.115,<2",
+    "gunicorn>=22.0.0,<23",
+    "psycopg2-binary>=2.9.9,<3",
+    "litellm>=1.39.3,<2",
+    "typer>=0.9.4,<1",
+    "opentelemetry-api>=1.0.0,<2",
+    "opentelemetry-sdk>=1.0.0,<2",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.0.0,<2",
+    "opentelemetry-exporter-otlp-proto-http>=1.0.0,<2",
+    "opentelemetry-instrumentation-flask>=0.12b0,<1",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "guardrails_api.__version__"}
+
+[project.scripts]
+guardrails-api = "guardrails_api.cli:cli"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "coverage",
+    "pytest-mock"
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-rP"
+testpaths = [
+    "tests"
+]
+pythonpath = [
+    ".", "guardrails_api"
+]
+
+[tool.pyright]
+include = ["guardrails_api"]

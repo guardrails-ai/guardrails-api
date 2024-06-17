@@ -1,4 +1,0 @@
-ruff
-pytest
-coverage
-pytest-mock

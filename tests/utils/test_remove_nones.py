@@ -1,4 +1,4 @@
-from src.utils.remove_nones import remove_nones
+from guardrails_api.utils.remove_nones import remove_nones
 
 
 def test_remove_nones():
