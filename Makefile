@@ -4,7 +4,7 @@ install:
 
 # Installs development dependencies
 install-dev:
-	pip install .[dev];
+	pip install ".[dev]";
 
 lock:
 	pip freeze --exclude guardrails-api-client > requirements-lock.txt

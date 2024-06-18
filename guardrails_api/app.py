@@ -9,6 +9,7 @@ from guardrails import configure_logging
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
+from guardrails_api.clients.cache_client import CacheClient
 
 
 # TODO: Move this to a separate file
@@ -80,6 +81,9 @@ def create_app(env: Optional[str] = None, config: Optional[str] = None):
 
         pg_client = PostgresClient()
         pg_client.initialize(app)
+        
+    cache_client = CacheClient()
+    cache_client.initialize(app)
 
     from guardrails_api.blueprints.root import root_bp
     from guardrails_api.blueprints.guards import guards_bp
