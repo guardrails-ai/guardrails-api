@@ -169,6 +169,7 @@ def validate(guard_name: str):
         "x-openai-api-key", os.environ.get("OPENAI_API_KEY")
     )
     decoded_guard_name = unquote_plus(guard_name)
+    print('decoeded guard name', decoded_guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
 
     llm_output = payload.pop("llmOutput", None)
@@ -189,11 +190,16 @@ def validate(guard_name: str):
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
     guard = guard_struct
     if not isinstance(guard_struct, Guard):
+        print('what is guard?')
+        print(guard)
         guard: Guard = Guard.from_dict(guard_struct.to_dict())
 
     # validate_span.set_attribute("guardName", decoded_guard_name)
+    print('llm api', llm_api)
     if llm_api is not None:
+
         llm_api = get_llm_callable(llm_api)
+        print('llm callable', llm_api)
         if openai_api_key is None:
             raise HttpError(
                 status=400,
