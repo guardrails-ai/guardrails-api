@@ -169,7 +169,6 @@ def validate(guard_name: str):
         "x-openai-api-key", os.environ.get("OPENAI_API_KEY")
     )
     decoded_guard_name = unquote_plus(guard_name)
-    print('decoeded guard name', decoded_guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
 
     llm_output = payload.pop("llmOutput", None)
@@ -190,16 +189,11 @@ def validate(guard_name: str):
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
     guard = guard_struct
     if not isinstance(guard_struct, Guard):
-        print('what is guard?')
-        print(guard)
         guard: Guard = Guard.from_dict(guard_struct.to_dict())
 
     # validate_span.set_attribute("guardName", decoded_guard_name)
-    print('llm api', llm_api)
     if llm_api is not None:
-
         llm_api = get_llm_callable(llm_api)
-        print('llm callable', llm_api)
         if openai_api_key is None:
             raise HttpError(
                 status=400,
@@ -219,7 +213,6 @@ def validate(guard_name: str):
                 " calling guard(...)."
             ),
         )
-
     if llm_output is not None:
         if stream:
             raise HttpError(
@@ -232,7 +225,6 @@ def validate(guard_name: str):
             num_reasks=num_reasks,
             prompt_params=prompt_params,
             llm_api=llm_api,
-            # api_key=openai_api_key,
             **payload,
         )
     else:
@@ -244,19 +236,20 @@ def validate(guard_name: str):
                     prompt_params=prompt_params,
                     num_reasks=num_reasks,
                     stream=stream,
-                    # api_key=openai_api_key,
                     *args,
                     **payload,
                 )
 
                 for result in guard_stream:
                     # TODO: Just make this a ValidationOutcome with history
-                    validation_output: ValidationOutcome = ValidationOutcome(
-                        result.validation_passed,
-                        result.validated_output,
-                        guard.history,
-                        result.raw_llm_output,
-                    )
+                    validation_output: ValidationOutcome = ValidationOutcome.from_guard_history(guard.history.last)
+                    
+                    # ValidationOutcome(
+                    #     guard.history,
+                    #     validation_passed=result.validation_passed,
+                    #     validated_output=result.validated_output,
+                    #     raw_llm_output=result.raw_llm_output,
+                    # )
 
                     yield validation_output, cast(ValidationOutcome, result)
 
@@ -266,7 +259,7 @@ def validate(guard_name: str):
                 for validation_output, result in guard_iter:
                     next_result = result
                     # next_validation_output = validation_output
-                    fragment = json.dumps(validation_output.to_response())
+                    fragment = json.dumps(validation_output.to_dict())
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutcome = ValidationOutcome(

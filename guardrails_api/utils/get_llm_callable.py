@@ -11,7 +11,7 @@ from guardrails_api_client.models.validate_payload import (
 )
 from guardrails_api_client.models.llm_resource import LLMResource
 
-
+litellm.set_verbose=True
 def get_llm_callable(
     llm_api: str,
 ) -> Union[Callable, Callable[[Any], Awaitable[Any]]]:
