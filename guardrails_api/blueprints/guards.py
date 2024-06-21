@@ -250,7 +250,7 @@ def validate(guard_name: str):
                     #     validated_output=result.validated_output,
                     #     raw_llm_output=result.raw_llm_output,
                     # )
-
+                    print('RESULT', result)
                     yield validation_output, cast(ValidationOutcome, result)
 
             def validate_streamer(guard_iter):
@@ -259,7 +259,12 @@ def validate(guard_name: str):
                 for validation_output, result in guard_iter:
                     next_result = result
                     # next_validation_output = validation_output
-                    fragment = json.dumps(validation_output.to_dict())
+                    fragment_dict = result.to_dict()
+                    fragment_dict['error_spans'] = guard.error_spans_in_output()
+                    fragment = json.dumps(fragment_dict)
+                    print('fragment!', fragment)
+                    print(guard.error_spans_in_output())
+                    print(guard.history.last.iterations.last.outputs.validator_logs)
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutcome = ValidationOutcome(
@@ -277,9 +282,12 @@ def validate(guard_name: str):
                 #     prompt_params=prompt_params,
                 #     result=next_result
                 # )
-                final_output_json = final_validation_output.to_json()
-                yield f"{final_output_json}\n"
-
+                final_output_dict = final_validation_output.to_dict()
+                final_output_dict['error_spans'] = guard.error_spans_in_output()
+                print('error spans', guard.error_spans_in_output())
+                final_output_json = json.dumps(final_output_dict)
+                print('final output', final_output_json)
+                yield f"{final_validation_output.to_json()}\n"
             return Response(
                 stream_with_context(validate_streamer(guard_streamer())),
                 content_type="application/json",
