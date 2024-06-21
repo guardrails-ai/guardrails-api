@@ -250,7 +250,6 @@ def validate(guard_name: str):
                     #     validated_output=result.validated_output,
                     #     raw_llm_output=result.raw_llm_output,
                     # )
-                    print('RESULT', result)
                     yield validation_output, cast(ValidationOutcome, result)
 
             def validate_streamer(guard_iter):
@@ -260,11 +259,10 @@ def validate(guard_name: str):
                     next_result = result
                     # next_validation_output = validation_output
                     fragment_dict = result.to_dict()
-                    fragment_dict['error_spans'] = guard.error_spans_in_output()
+                    fragment_dict['error_spans'] = list(map(lambda x: json.dumps({"start":x.start, "end":x.end,"reason":x.reason }),guard.error_spans_in_output()))
                     fragment = json.dumps(fragment_dict)
                     print('fragment!', fragment)
-                    print(guard.error_spans_in_output())
-                    print(guard.history.last.iterations.last.outputs.validator_logs)
+                    # print(guard.history.last.iterations.last.outputs.validator_logs)
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutcome = ValidationOutcome(
@@ -283,7 +281,7 @@ def validate(guard_name: str):
                 #     result=next_result
                 # )
                 final_output_dict = final_validation_output.to_dict()
-                final_output_dict['error_spans'] = guard.error_spans_in_output()
+                final_output_dict['error_spans'] = list(map(lambda x: json.dumps({"start":x.start, "end":x.end,"reason":x.reason }),guard.error_spans_in_output()))
                 print('error spans', guard.error_spans_in_output())
                 final_output_json = json.dumps(final_output_dict)
                 print('final output', final_output_json)
