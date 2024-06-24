@@ -29,12 +29,22 @@ def start(
     env: Optional[str] = typer.Option(
         default="",
         help="An env file to load environment variables from.",
-        prompt=".env file (optional)",
     ),
     config: Optional[str] = typer.Option(
         default="",
         help="A config file to load Guards from.",
-        prompt="config file (optional)",
+    ),
+    timeout: Optional[int] = typer.Option(
+        default=5,
+        help="Gunicorn worker timeout.",
+    ),
+    threads: Optional[int] = typer.Option(
+        default=10,
+        help="Number of Gunicorn worker threads.",
+    ),
+    port: Optional[int] = typer.Option(
+        default=8000,
+        help="The port to run the server on.",
     ),
 ):
     # TODO: If these are empty,
@@ -43,8 +53,8 @@ def start(
     config = config or None
 
     options = {
-        "bind": "0.0.0.0:8000",
-        "timeout": 5,
-        "threads": 10,
+        "bind": f"0.0.0.0:{port}",
+        "timeout": timeout,
+        "threads": threads,
     }
-    StandaloneApplication(create_app(env, config), options).run()
+    StandaloneApplication(create_app(env, config, port), options).run()

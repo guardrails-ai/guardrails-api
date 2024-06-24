@@ -15,9 +15,8 @@ class CacheClient:
         self.cache = Cache(
             app, 
             config={
-                "CACHE_TYPE": "simple",
+                "CACHE_TYPE": "SimpleCache",
                 "CACHE_DEFAULT_TIMEOUT": 300,
-                "CACHE_NO_NULL_WARNING": True,
                 "CACHE_THRESHOLD": 50
             }
         )
