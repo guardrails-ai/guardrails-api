@@ -44,8 +44,8 @@ def test_route_setup(mocker):
 
     from guardrails_api.blueprints.guards import guards_bp
 
-    assert guards_bp.route_call_count == 3
-    assert guards_bp.routes == ["/", "/<guard_name>", "/<guard_name>/validate"]
+    assert guards_bp.route_call_count == 4
+    assert guards_bp.routes == ["/", "/<guard_name>", "/<guard_name>/validate", "/<guard_name>/history/<call_id>"]
 
 
 def test_guards__get(mocker):
@@ -362,6 +362,7 @@ def test_validate__raises_bad_request__num_reasks(mocker):
 def test_validate__parse(mocker):
     os.environ["PGHOST"] = "localhost"
     mock_outcome = ValidationOutcome(
+        call_id="mock-call-id",
         raw_llm_output="Hello world!",
         validated_output="Hello world!",
         validation_passed=True,
@@ -385,6 +386,10 @@ def test_validate__parse(mocker):
     mock_get_guard = mocker.patch(
         "guardrails_api.blueprints.guards.guard_client.get_guard",
         return_value=mock_guard,
+    )
+    
+    mocker.patch(
+        "guardrails_api.blueprints.guards.CacheClient.set"
     )
 
     # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
@@ -430,6 +435,7 @@ def test_validate__parse(mocker):
     # set_attribute_spy.assert_has_calls(expected_calls)
 
     assert response == {
+        "callId": "mock-call-id",
         "validatedOutput": "Hello world!",
         "validationPassed": True,
         "rawLlmOutput": "Hello world!",
@@ -442,7 +448,10 @@ def test_validate__call(mocker):
     os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
     mock_outcome = ValidationOutcome(
-        raw_llm_output="Hello world!", validated_output=None, validation_passed=False
+        call_id="mock-call-id",
+        raw_llm_output="Hello world!",
+        validated_output=None,
+        validation_passed=False
     )
 
     mock___call__ = mocker.patch.object(MockGuardStruct, "__call__")
@@ -475,6 +484,12 @@ def test_validate__call(mocker):
         "guardrails_api.blueprints.guards.get_llm_callable",
         return_value="openai.Completion.create",
     )
+    
+    mocker.patch(
+        "guardrails_api.blueprints.guards.CacheClient.set"
+    )
+    
+    
 
     # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
 
@@ -523,6 +538,7 @@ def test_validate__call(mocker):
     # set_attribute_spy.assert_has_calls(expected_calls)
 
     assert response == {
+        "callId": "mock-call-id",
         "validationPassed": False,
         "validatedOutput": None,
         "rawLlmOutput": "Hello world!",
