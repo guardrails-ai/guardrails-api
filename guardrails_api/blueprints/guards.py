@@ -10,6 +10,7 @@ from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
 from guardrails_api_client import Guard as GuardStruct
 from guardrails_api.classes.http_error import HttpError
+from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
@@ -34,6 +35,8 @@ else:
         is_guard = isinstance(export, Guard)
         if is_guard:
             guard_client.create_guard(export)
+            
+cache_client = CacheClient()
 
 
 @guards_bp.route("/", methods=["GET", "POST"])
@@ -308,4 +311,16 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
+    serialized_history = [
+        call.to_dict() for call in guard.history
+    ]
+    cache_key = f"{guard.name}-{result.call_id}"
+    cache_client.set(cache_key, serialized_history, 300)
     return result.to_dict()
+
+@guards_bp.route("/<guard_name>/history/<call_id>", methods=["GET"])
+@handle_error
+def guard_history(guard_name: str, call_id: str):
+    if request.method == "GET":
+        cache_key = f"{guard_name}-{call_id}"
+        return cache_client.get(cache_key)

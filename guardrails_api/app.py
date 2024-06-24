@@ -9,6 +9,7 @@ from guardrails import configure_logging
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
+from guardrails_api.clients.cache_client import CacheClient
 
 
 # TODO: Move this to a separate file
@@ -46,7 +47,7 @@ def register_config(config: Optional[str] = None):
         SourceFileLoader("config", config_file_path).load_module()
 
 
-def create_app(env: Optional[str] = None, config: Optional[str] = None):
+def create_app(env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None):
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
 
@@ -54,6 +55,11 @@ def create_app(env: Optional[str] = None, config: Optional[str] = None):
         env_file = env or default_env_file
         env_file_path = os.path.abspath(env_file)
         load_dotenv(env_file_path)
+
+    set_port = port or os.environ.get("PORT", 8000)
+    host = os.environ.get("HOST", "http://localhost")
+    self_endpoint = os.environ.get("SELF_ENDPOINT", f"{host}:{set_port}")
+    os.environ["SELF_ENDPOINT"] = self_endpoint
 
     register_config(config)
 
@@ -80,6 +86,9 @@ def create_app(env: Optional[str] = None, config: Optional[str] = None):
 
         pg_client = PostgresClient()
         pg_client.initialize(app)
+        
+    cache_client = CacheClient()
+    cache_client.initialize(app)
 
     from guardrails_api.blueprints.root import root_bp
     from guardrails_api.blueprints.guards import guards_bp
