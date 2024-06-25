@@ -35,7 +35,7 @@ else:
         is_guard = isinstance(export, Guard)
         if is_guard:
             guard_client.create_guard(export)
-            
+
 cache_client = CacheClient()
 
 
@@ -213,7 +213,6 @@ def validate(guard_name: str):
                 " calling guard(...)."
             ),
         )
-
     if llm_output is not None:
         if stream:
             raise HttpError(
@@ -226,7 +225,6 @@ def validate(guard_name: str):
             num_reasks=num_reasks,
             prompt_params=prompt_params,
             llm_api=llm_api,
-            # api_key=openai_api_key,
             **payload,
         )
     else:
@@ -234,24 +232,26 @@ def validate(guard_name: str):
 
             def guard_streamer():
                 guard_stream = guard(
-                    # llm_api=llm_api,
+                    llm_api=llm_api,
                     prompt_params=prompt_params,
                     num_reasks=num_reasks,
                     stream=stream,
-                    # api_key=openai_api_key,
                     *args,
                     **payload,
                 )
 
                 for result in guard_stream:
                     # TODO: Just make this a ValidationOutcome with history
-                    validation_output: ValidationOutcome = ValidationOutcome(
-                        result.validation_passed,
-                        result.validated_output,
-                        guard.history,
-                        result.raw_llm_output,
+                    validation_output: ValidationOutcome = (
+                        ValidationOutcome.from_guard_history(guard.history.last)
                     )
 
+                    # ValidationOutcome(
+                    #     guard.history,
+                    #     validation_passed=result.validation_passed,
+                    #     validated_output=result.validated_output,
+                    #     raw_llm_output=result.raw_llm_output,
+                    # )
                     yield validation_output, cast(ValidationOutcome, result)
 
             def validate_streamer(guard_iter):
@@ -260,10 +260,21 @@ def validate(guard_name: str):
                 for validation_output, result in guard_iter:
                     next_result = result
                     # next_validation_output = validation_output
-                    fragment = json.dumps(validation_output.to_response())
+                    fragment_dict = result.to_dict()
+                    fragment_dict["error_spans"] = list(
+                        map(
+                            lambda x: json.dumps(
+                                {"start": x.start, "end": x.end, "reason": x.reason}
+                            ),
+                            guard.error_spans_in_output(),
+                        )
+                    )
+                    fragment = json.dumps(fragment_dict)
                     yield f"{fragment}\n"
 
+                call = guard.history.last
                 final_validation_output: ValidationOutcome = ValidationOutcome(
+                    callId=call.id,
                     validation_passed=next_result.validation_passed,
                     validated_output=next_result.validated_output,
                     history=guard.history,
@@ -278,7 +289,16 @@ def validate(guard_name: str):
                 #     prompt_params=prompt_params,
                 #     result=next_result
                 # )
-                final_output_json = final_validation_output.to_json()
+                final_output_dict = final_validation_output.to_dict()
+                final_output_dict["error_spans"] = list(
+                    map(
+                        lambda x: json.dumps(
+                            {"start": x.start, "end": x.end, "reason": x.reason}
+                        ),
+                        guard.error_spans_in_output(),
+                    )
+                )
+                final_output_json = json.dumps(final_output_dict)
                 yield f"{final_output_json}\n"
 
             return Response(
@@ -311,12 +331,11 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-    serialized_history = [
-        call.to_dict() for call in guard.history
-    ]
+    serialized_history = [call.to_dict() for call in guard.history]
     cache_key = f"{guard.name}-{result.call_id}"
     cache_client.set(cache_key, serialized_history, 300)
     return result.to_dict()
+
 
 @guards_bp.route("/<guard_name>/history/<call_id>", methods=["GET"])
 @handle_error

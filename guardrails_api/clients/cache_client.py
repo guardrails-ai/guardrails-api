@@ -9,16 +9,15 @@ class CacheClient:
         if cls._instance is None:
             cls._instance = super(CacheClient, cls).__new__(cls)
         return cls._instance
-    
 
     def initialize(self, app):
         self.cache = Cache(
-            app, 
+            app,
             config={
                 "CACHE_TYPE": "SimpleCache",
                 "CACHE_DEFAULT_TIMEOUT": 300,
-                "CACHE_THRESHOLD": 50
-            }
+                "CACHE_THRESHOLD": 50,
+            },
         )
 
     def get(self, key):

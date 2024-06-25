@@ -174,7 +174,9 @@ def test_get_guards(mocker):
     guards = [guard_one, guard_two]
     mock_all.return_value = guards
 
-    mock_from_guard_item = mocker.patch("guardrails_api.clients.pg_guard_client.from_guard_item")
+    mock_from_guard_item = mocker.patch(
+        "guardrails_api.clients.pg_guard_client.from_guard_item"
+    )
     mock_from_guard_item.side_effect = [guard_one, guard_two]
 
     from guardrails_api.clients.pg_guard_client import PGGuardClient
@@ -208,7 +210,9 @@ def test_create_guard(mocker):
     add_spy = mocker.spy(mock_pg_client.db.session, "add")
     commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
 
-    mock_from_guard_item = mocker.patch("guardrails_api.clients.pg_guard_client.from_guard_item")
+    mock_from_guard_item = mocker.patch(
+        "guardrails_api.clients.pg_guard_client.from_guard_item"
+    )
     mock_from_guard_item.return_value = mock_guard
 
     from guardrails_api.clients.pg_guard_client import PGGuardClient

@@ -45,7 +45,12 @@ def test_route_setup(mocker):
     from guardrails_api.blueprints.guards import guards_bp
 
     assert guards_bp.route_call_count == 4
-    assert guards_bp.routes == ["/", "/<guard_name>", "/<guard_name>/validate", "/<guard_name>/history/<call_id>"]
+    assert guards_bp.routes == [
+        "/",
+        "/<guard_name>",
+        "/<guard_name>/validate",
+        "/<guard_name>/history/<call_id>",
+    ]
 
 
 def test_guards__get(mocker):
@@ -83,7 +88,8 @@ def test_guards__post_pg(mocker):
     mocker.patch("flask.Blueprint", new=MockBlueprint)
     mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
     mock_from_request = mocker.patch(
-        "guardrails_api.blueprints.guards.GuardStruct.from_dict", return_value=mock_guard
+        "guardrails_api.blueprints.guards.GuardStruct.from_dict",
+        return_value=mock_guard,
     )
     mock_create_guard = mocker.patch(
         "guardrails_api.blueprints.guards.guard_client.create_guard",
@@ -185,7 +191,8 @@ def test_guard__put_pg(mocker):
     mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
 
     mock_from_request = mocker.patch(
-        "guardrails_api.blueprints.guards.GuardStruct.from_dict", return_value=mock_guard
+        "guardrails_api.blueprints.guards.GuardStruct.from_dict",
+        return_value=mock_guard,
     )
     mock_upsert_guard = mocker.patch(
         "guardrails_api.blueprints.guards.guard_client.upsert_guard",
@@ -387,10 +394,8 @@ def test_validate__parse(mocker):
         "guardrails_api.blueprints.guards.guard_client.get_guard",
         return_value=mock_guard,
     )
-    
-    mocker.patch(
-        "guardrails_api.blueprints.guards.CacheClient.set"
-    )
+
+    mocker.patch("guardrails_api.blueprints.guards.CacheClient.set")
 
     # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
 
@@ -451,7 +456,7 @@ def test_validate__call(mocker):
         call_id="mock-call-id",
         raw_llm_output="Hello world!",
         validated_output=None,
-        validation_passed=False
+        validation_passed=False,
     )
 
     mock___call__ = mocker.patch.object(MockGuardStruct, "__call__")
@@ -484,12 +489,8 @@ def test_validate__call(mocker):
         "guardrails_api.blueprints.guards.get_llm_callable",
         return_value="openai.Completion.create",
     )
-    
-    mocker.patch(
-        "guardrails_api.blueprints.guards.CacheClient.set"
-    )
-    
-    
+
+    mocker.patch("guardrails_api.blueprints.guards.CacheClient.set")
 
     # mocker.patch("guardrails_api.blueprints.guards.get_tracer", return_value=mock_tracer)
 
