@@ -8,6 +8,7 @@ pgadmin-data
 __pycache__/
 guard-rails-api-client
 guardrails-custom-validators
+guardrails_api/default.env
 sdk
 .coverage
 htmlcov
