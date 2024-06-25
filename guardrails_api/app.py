@@ -47,7 +47,9 @@ def register_config(config: Optional[str] = None):
         SourceFileLoader("config", config_file_path).load_module()
 
 
-def create_app(env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None):
+def create_app(
+    env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None
+):
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
 
@@ -86,7 +88,7 @@ def create_app(env: Optional[str] = None, config: Optional[str] = None, port: Op
 
         pg_client = PostgresClient()
         pg_client.initialize(app)
-        
+
     cache_client = CacheClient()
     cache_client.initialize(app)
 

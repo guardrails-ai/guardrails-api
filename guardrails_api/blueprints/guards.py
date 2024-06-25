@@ -35,7 +35,7 @@ else:
         is_guard = isinstance(export, Guard)
         if is_guard:
             guard_client.create_guard(export)
-            
+
 cache_client = CacheClient()
 
 
@@ -242,8 +242,10 @@ def validate(guard_name: str):
 
                 for result in guard_stream:
                     # TODO: Just make this a ValidationOutcome with history
-                    validation_output: ValidationOutcome = ValidationOutcome.from_guard_history(guard.history.last)
-                    
+                    validation_output: ValidationOutcome = (
+                        ValidationOutcome.from_guard_history(guard.history.last)
+                    )
+
                     # ValidationOutcome(
                     #     guard.history,
                     #     validation_passed=result.validation_passed,
@@ -259,7 +261,14 @@ def validate(guard_name: str):
                     next_result = result
                     # next_validation_output = validation_output
                     fragment_dict = result.to_dict()
-                    fragment_dict['error_spans'] = list(map(lambda x: json.dumps({"start":x.start, "end":x.end,"reason":x.reason }),guard.error_spans_in_output()))
+                    fragment_dict["error_spans"] = list(
+                        map(
+                            lambda x: json.dumps(
+                                {"start": x.start, "end": x.end, "reason": x.reason}
+                            ),
+                            guard.error_spans_in_output(),
+                        )
+                    )
                     fragment = json.dumps(fragment_dict)
                     yield f"{fragment}\n"
 
@@ -281,9 +290,17 @@ def validate(guard_name: str):
                 #     result=next_result
                 # )
                 final_output_dict = final_validation_output.to_dict()
-                final_output_dict['error_spans'] = list(map(lambda x: json.dumps({"start":x.start, "end":x.end,"reason":x.reason }),guard.error_spans_in_output()))
+                final_output_dict["error_spans"] = list(
+                    map(
+                        lambda x: json.dumps(
+                            {"start": x.start, "end": x.end, "reason": x.reason}
+                        ),
+                        guard.error_spans_in_output(),
+                    )
+                )
                 final_output_json = json.dumps(final_output_dict)
                 yield f"{final_output_json}\n"
+
             return Response(
                 stream_with_context(validate_streamer(guard_streamer())),
                 content_type="application/json",
@@ -314,12 +331,11 @@ def validate(guard_name: str):
     #     prompt_params=prompt_params,
     #     result=result
     # )
-    serialized_history = [
-        call.to_dict() for call in guard.history
-    ]
+    serialized_history = [call.to_dict() for call in guard.history]
     cache_key = f"{guard.name}-{result.call_id}"
     cache_client.set(cache_key, serialized_history, 300)
     return result.to_dict()
+
 
 @guards_bp.route("/<guard_name>/history/<call_id>", methods=["GET"])
 @handle_error

@@ -6,10 +6,8 @@ from guardrails.utils.openai_utils import (
     get_static_openai_acreate_func,
     get_static_openai_chat_acreate_func,
 )
-from guardrails_api_client.models.validate_payload import (
-    ValidatePayload,
-)
 from guardrails_api_client.models.llm_resource import LLMResource
+
 
 def get_llm_callable(
     llm_api: str,
@@ -29,4 +27,3 @@ def get_llm_callable(
         return litellm.acompletion
     else:
         pass
-

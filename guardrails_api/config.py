@@ -7,5 +7,3 @@ undefined. Otherwise, a postgres instance will be started
 and guards will be persisted into postgres. In that case,
 these guards will not be initialized.
 """
-
-from guardrails import Guard
