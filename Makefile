@@ -23,6 +23,11 @@ start:
 	make build
 	bash ./guardrails_api/start.sh
 
+start-dev:
+	make install-dev
+	make build
+	bash ./guardrails_api/start-dev.sh
+
 infra:
 	docker compose --profile infra up --build
 
