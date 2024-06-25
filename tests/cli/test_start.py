@@ -9,7 +9,7 @@ def test_start(mocker):
 
     from guardrails_api.cli.start import start
 
-    start("env", "config")
+    start("env", "config", 5, 10, 8000)
 
     mock_gunicorn.assert_called_once_with(
         mock_flask_app,
@@ -20,4 +20,4 @@ def test_start(mocker):
         },
     )
 
-    mock_create_app.assert_called_once_with("env", "config")
+    mock_create_app.assert_called_once_with("env", "config", 8000)

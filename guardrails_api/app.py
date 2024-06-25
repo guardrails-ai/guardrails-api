@@ -47,7 +47,7 @@ def register_config(config: Optional[str] = None):
         SourceFileLoader("config", config_file_path).load_module()
 
 
-def create_app(env: Optional[str] = None, config: Optional[str] = None):
+def create_app(env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None):
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
 
@@ -55,6 +55,11 @@ def create_app(env: Optional[str] = None, config: Optional[str] = None):
         env_file = env or default_env_file
         env_file_path = os.path.abspath(env_file)
         load_dotenv(env_file_path)
+
+    set_port = port or os.environ.get("PORT", 8000)
+    host = os.environ.get("HOST", "http://localhost")
+    self_endpoint = os.environ.get("SELF_ENDPOINT", f"{host}:{set_port}")
+    os.environ["SELF_ENDPOINT"] = self_endpoint
 
     register_config(config)
 
