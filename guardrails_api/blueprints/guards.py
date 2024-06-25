@@ -261,11 +261,11 @@ def validate(guard_name: str):
                     fragment_dict = result.to_dict()
                     fragment_dict['error_spans'] = list(map(lambda x: json.dumps({"start":x.start, "end":x.end,"reason":x.reason }),guard.error_spans_in_output()))
                     fragment = json.dumps(fragment_dict)
-                    print('fragment!', fragment)
-                    # print(guard.history.last.iterations.last.outputs.validator_logs)
                     yield f"{fragment}\n"
 
                 final_validation_output: ValidationOutcome = ValidationOutcome(
+                    # TODO: THIS IS PROBABLY WRONG, i'm just using it to silence pydantic
+                    callId=str(id(next_result)),
                     validation_passed=next_result.validation_passed,
                     validated_output=next_result.validated_output,
                     history=guard.history,
@@ -282,10 +282,8 @@ def validate(guard_name: str):
                 # )
                 final_output_dict = final_validation_output.to_dict()
                 final_output_dict['error_spans'] = list(map(lambda x: json.dumps({"start":x.start, "end":x.end,"reason":x.reason }),guard.error_spans_in_output()))
-                print('error spans', guard.error_spans_in_output())
                 final_output_json = json.dumps(final_output_dict)
-                print('final output', final_output_json)
-                yield f"{final_validation_output.to_json()}\n"
+                yield f"{final_output_json}\n"
             return Response(
                 stream_with_context(validate_streamer(guard_streamer())),
                 content_type="application/json",
