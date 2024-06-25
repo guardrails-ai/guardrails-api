@@ -263,9 +263,9 @@ def validate(guard_name: str):
                     fragment = json.dumps(fragment_dict)
                     yield f"{fragment}\n"
 
+                call = guard.history.last
                 final_validation_output: ValidationOutcome = ValidationOutcome(
-                    # TODO: THIS IS PROBABLY WRONG, i'm just using it to silence pydantic
-                    callId=str(id(next_result)),
+                    callId=call.id,
                     validation_passed=next_result.validation_passed,
                     validated_output=next_result.validated_output,
                     history=guard.history,
