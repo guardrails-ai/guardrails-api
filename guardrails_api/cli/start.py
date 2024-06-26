@@ -46,15 +46,22 @@ def start(
         default=8000,
         help="The port to run the server on.",
     ),
+    dev: Optional[bool] = typer.Option(
+        default=False,
+        help="Run in development mode without gunicorn.",
+    ),
 ):
     # TODO: If these are empty,
     #   look for them in a .guardrailsrc in the current directory.
     env = env or None
     config = config or None
 
-    options = {
-        "bind": f"0.0.0.0:{port}",
-        "timeout": timeout,
-        "threads": threads,
-    }
-    StandaloneApplication(create_app(env, config, port), options).run()
+    if dev is True:
+        create_app(env, config, port).run(port=port)
+    else:
+        options = {
+            "bind": f"0.0.0.0:{port}",
+            "timeout": timeout,
+            "threads": threads,
+        }
+        StandaloneApplication(create_app(env, config, port), options).run()
