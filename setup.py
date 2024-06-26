@@ -24,7 +24,6 @@ setup(
         "referencing>=0.35.1,<1",
         "Flask-Cors>=4.0.1,<5",
         "boto3>=1.34.115,<2",
-        "gunicorn>=22.0.0,<23",
         "psycopg2-binary>=2.9.9,<3",
         "litellm>=1.39.3,<2",
         "typer>=0.9.4,<1",

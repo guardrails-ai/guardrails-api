@@ -53,10 +53,13 @@ def create_app(
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
 
+        # Always load default env file, but let user specified file override it.
         default_env_file = os.path.join(os.path.dirname(__file__), "default.env")
-        env_file = env or default_env_file
-        env_file_path = os.path.abspath(env_file)
-        load_dotenv(env_file_path)
+        load_dotenv(default_env_file, override=True)
+
+        if env:
+            env_file_path = os.path.abspath(env)
+            load_dotenv(env_file_path, override=True)
 
     set_port = port or os.environ.get("PORT", 8000)
     host = os.environ.get("HOST", "http://localhost")
