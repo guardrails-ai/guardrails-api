@@ -299,6 +299,11 @@ def validate(guard_name: str):
                     )
                 )
                 final_output_json = json.dumps(final_output_dict)
+
+                serialized_history = [call.to_dict() for call in guard.history]
+                cache_key = f"{guard.name}-{final_validation_output.call_id}"
+                cache_client.set(cache_key, serialized_history, 300)
+
                 yield f"{final_output_json}\n"
 
             return Response(
