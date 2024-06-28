@@ -291,7 +291,6 @@ def validate(guard_name: str):
                             )
                         )
                         fragment = json.dumps(fragment_dict)
-                        print('yileding async', fragment)
                         yield f"{fragment}\n"
                 else:
                     for validation_output, result in guard_iter:
@@ -341,7 +340,7 @@ def validate(guard_name: str):
                 cache_key = f"{guard.name}-{final_validation_output.call_id}"
                 cache_client.set(cache_key, serialized_history, 300)
                 yield f"{final_output_json}\n"
-            
+            # apropos of https://stackoverflow.com/questions/73949570/using-stream-with-context-as-async
             def iter_over_async(ait, loop):
                 ait = ait.__aiter__()
                 async def get_next():
