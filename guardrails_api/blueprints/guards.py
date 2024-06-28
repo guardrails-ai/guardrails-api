@@ -1,11 +1,13 @@
+import asyncio
 import json
 import os
+import inspect
 from guardrails.hub import *  # noqa
 from string import Template
 from typing import Any, Dict, cast
 from flask import Blueprint, Response, request, stream_with_context
 from urllib.parse import unquote_plus
-from guardrails import Guard
+from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
 from opentelemetry.trace import Span
 from guardrails_api_client import Guard as GuardStruct
@@ -187,9 +189,7 @@ def validate(guard_name: str):
     #     f"validate-{decoded_guard_name}"
     # ) as validate_span:
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
-    guard = guard_struct
-    if not isinstance(guard_struct, Guard):
-        guard: Guard = Guard.from_dict(guard_struct.to_dict())
+
 
     # validate_span.set_attribute("guardName", decoded_guard_name)
     if llm_api is not None:
@@ -204,6 +204,17 @@ def validate(guard_name: str):
                     " OPENAI_API_KEY environment variable."
                 ),
             )
+
+    guard = guard_struct
+    is_async = inspect.iscoroutinefunction(llm_api)
+    if not isinstance(guard_struct, Guard):
+        if is_async:
+            guard = AsyncGuard.from_dict(guard_struct.to_dict())
+        else:
+            guard: Guard = Guard.from_dict(guard_struct.to_dict())
+    elif is_async:
+        guard:Guard = AsyncGuard.from_dict(guard_struct.to_dict())
+
     elif num_reasks and num_reasks > 1:
         raise HttpError(
             status=400,
@@ -230,47 +241,73 @@ def validate(guard_name: str):
     else:
         if stream:
 
-            def guard_streamer():
-                guard_stream = guard(
-                    llm_api=llm_api,
-                    prompt_params=prompt_params,
-                    num_reasks=num_reasks,
-                    stream=stream,
-                    *args,
-                    **payload,
-                )
-
-                for result in guard_stream:
-                    # TODO: Just make this a ValidationOutcome with history
-                    validation_output: ValidationOutcome = (
-                        ValidationOutcome.from_guard_history(guard.history.last)
+            async def guard_streamer():
+                if is_async:
+                    guard_stream = await guard(
+                        llm_api=llm_api,
+                        prompt_params=prompt_params,
+                        num_reasks=num_reasks,
+                        stream=stream,
+                        *args,
+                        **payload,
                     )
+                else:
+                    guard_stream = guard(
+                        llm_api=llm_api,
+                        prompt_params=prompt_params,
+                        num_reasks=num_reasks,
+                        stream=stream,
+                        *args,
+                        **payload,
+                    )
+                if is_async:
+                    async for result in guard_stream:
+                        validation_output: ValidationOutcome = (
+                            ValidationOutcome.from_guard_history(guard.history.last)
+                        )
+                        yield validation_output, cast(ValidationOutcome, result)
+                else:
+                    for result in guard_stream:
+                        # TODO: Just make this a ValidationOutcome with history
+                        validation_output: ValidationOutcome = (
+                            ValidationOutcome.from_guard_history(guard.history.last)
+                        )
+                        yield validation_output, cast(ValidationOutcome, result)
 
-                    # ValidationOutcome(
-                    #     guard.history,
-                    #     validation_passed=result.validation_passed,
-                    #     validated_output=result.validated_output,
-                    #     raw_llm_output=result.raw_llm_output,
-                    # )
-                    yield validation_output, cast(ValidationOutcome, result)
-
-            def validate_streamer(guard_iter):
+            async def validate_streamer(guard_iter):
                 next_result = None
                 # next_validation_output = None
-                for validation_output, result in guard_iter:
-                    next_result = result
-                    # next_validation_output = validation_output
-                    fragment_dict = result.to_dict()
-                    fragment_dict["error_spans"] = list(
-                        map(
-                            lambda x: json.dumps(
-                                {"start": x.start, "end": x.end, "reason": x.reason}
-                            ),
-                            guard.error_spans_in_output(),
+                if is_async:
+                    async for validation_output, result in guard_iter:
+                        next_result = result
+                        # next_validation_output = validation_output
+                        fragment_dict = result.to_dict()
+                        fragment_dict["error_spans"] = list(
+                            map(
+                                lambda x: json.dumps(
+                                    {"start": x.start, "end": x.end, "reason": x.reason}
+                                ),
+                                guard.error_spans_in_output(),
+                            )
                         )
-                    )
-                    fragment = json.dumps(fragment_dict)
-                    yield f"{fragment}\n"
+                        fragment = json.dumps(fragment_dict)
+                        print('yileding async', fragment)
+                        yield f"{fragment}\n"
+                else:
+                    for validation_output, result in guard_iter:
+                        next_result = result
+                        # next_validation_output = validation_output
+                        fragment_dict = result.to_dict()
+                        fragment_dict["error_spans"] = list(
+                            map(
+                                lambda x: json.dumps(
+                                    {"start": x.start, "end": x.end, "reason": x.reason}
+                                ),
+                                guard.error_spans_in_output(),
+                            )
+                        )
+                        fragment = json.dumps(fragment_dict)
+                        yield f"{fragment}\n"
 
                 call = guard.history.last
                 final_validation_output: ValidationOutcome = ValidationOutcome(
@@ -303,11 +340,23 @@ def validate(guard_name: str):
                 serialized_history = [call.to_dict() for call in guard.history]
                 cache_key = f"{guard.name}-{final_validation_output.call_id}"
                 cache_client.set(cache_key, serialized_history, 300)
-
                 yield f"{final_output_json}\n"
+            
+            def iter_over_async(ait, loop):
+                ait = ait.__aiter__()
+                async def get_next():
+                    try: obj = await ait.__anext__(); return False, obj
+                    except StopAsyncIteration: return True, None
+                while True:
+                    done, obj = loop.run_until_complete(get_next())
+                    if done: break
+                    yield obj
 
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            iter = iter_over_async(validate_streamer(guard_streamer()), loop)
             return Response(
-                stream_with_context(validate_streamer(guard_streamer())),
+                stream_with_context(iter),
                 content_type="application/json",
                 # content_type="text/event-stream"
             )
