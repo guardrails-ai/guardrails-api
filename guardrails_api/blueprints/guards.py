@@ -344,11 +344,15 @@ def validate(guard_name: str):
             def iter_over_async(ait, loop):
                 ait = ait.__aiter__()
                 async def get_next():
-                    try: obj = await ait.__anext__(); return False, obj
-                    except StopAsyncIteration: return True, None
+                    try: 
+                        obj = await ait.__anext__()
+                        return False, obj
+                    except StopAsyncIteration: 
+                        return True, None
                 while True:
                     done, obj = loop.run_until_complete(get_next())
-                    if done: break
+                    if done: 
+                        break
                     yield obj
 
             loop = asyncio.new_event_loop()
