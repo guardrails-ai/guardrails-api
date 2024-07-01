@@ -172,7 +172,6 @@ def validate(guard_name: str):
     )
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
-
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", None)
     prompt_params = payload.pop("promptParams", {})
@@ -215,7 +214,7 @@ def validate(guard_name: str):
     elif is_async:
         guard:Guard = AsyncGuard.from_dict(guard_struct.to_dict())
 
-    elif num_reasks and num_reasks > 1:
+    if llm_api is None and num_reasks and num_reasks > 1:
         raise HttpError(
             status=400,
             message="BadRequest",
