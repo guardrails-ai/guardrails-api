@@ -191,12 +191,17 @@ def chat_completions(guard_name: str):
     if not stream:
         try:
             validation_outcome: ValidationOutcome = guard(
-                        # todo make this come from the guard struct
+                        # todo make this come from the guard struct?
                         # currently we dont support .configure
                         num_reasks=0,
                         **payload,
                     )
-            result = outcome_to_chat_completion(validation_outcome=validation_outcome, has_tool_gd_tool_call=has_tool_gd_tool_call)
+            llm_response  = guard.history.last.iterations.last.outputs.llm_response_info
+            result = outcome_to_chat_completion(
+                validation_outcome=validation_outcome, 
+                llm_response=llm_response,
+                has_tool_gd_tool_call=has_tool_gd_tool_call
+                )
             return result
         except Exception as e:
             raise HttpError(
