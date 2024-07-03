@@ -2,8 +2,8 @@ import json
 import os
 from guardrails.hub import *  # noqa
 from string import Template
-from typing import Any, Dict, cast, Iterator
-from flask import Blueprint, Response, request, stream_with_context, jsonify, abort
+from typing import Any, Dict, cast
+from flask import Blueprint, Response, request, stream_with_context
 from urllib.parse import unquote_plus
 from guardrails import Guard
 from guardrails.classes import ValidationOutcome
@@ -16,7 +16,10 @@ from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.handle_error import handle_error
 from guardrails_api.utils.get_llm_callable import get_llm_callable
-from guardrails_api.utils.openai import outcome_to_chat_completion, outcome_to_stream_response
+from guardrails_api.utils.openai import (
+    outcome_to_chat_completion,
+    outcome_to_stream_response,
+)
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 
@@ -180,44 +183,42 @@ def chat_completions(guard_name: str):
         guard: Guard = Guard.from_dict(guard_struct.to_dict())
     stream = payload.get("stream", False)
     has_tool_gd_tool_call = False
-    
+
     try:
         tools = payload.get("tools", [])
-        tools.filter(lambda tool: tool["funcion"]["name"]== "gd_response_tool")
+        tools.filter(lambda tool: tool["funcion"]["name"] == "gd_response_tool")
         has_tool_gd_tool_call = len(tools) > 0
-    except:
+    except KeyError:
         pass
 
     if not stream:
         try:
             validation_outcome: ValidationOutcome = guard(
-                        # todo make this come from the guard struct?
-                        # currently we dont support .configure
-                        num_reasks=0,
-                        **payload,
-                    )
-            llm_response  = guard.history.last.iterations.last.outputs.llm_response_info
+                # todo make this come from the guard struct?
+                # currently we dont support .configure
+                num_reasks=0,
+                **payload,
+            )
+            llm_response = guard.history.last.iterations.last.outputs.llm_response_info
             result = outcome_to_chat_completion(
-                validation_outcome=validation_outcome, 
+                validation_outcome=validation_outcome,
                 llm_response=llm_response,
-                has_tool_gd_tool_call=has_tool_gd_tool_call
-                )
+                has_tool_gd_tool_call=has_tool_gd_tool_call,
+            )
             return result
         except Exception as e:
             raise HttpError(
                 status=400,
                 message="BadRequest",
-                cause=(
-                    str(e)
-                ),
+                cause=(str(e)),
             )
 
     else:
-    # need to return validated chunks that look identical to openai's
-    # should look something like
-    # data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0125", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":None,"finish_reason":None}]}
-    # ....
-    # data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0125", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{},"logprobs":None,"finish_reason":"stop"}]}
+        # need to return validated chunks that look identical to openai's
+        # should look something like
+        # data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0125", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":None,"finish_reason":None}]}
+        # ....
+        # data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0125", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{},"logprobs":None,"finish_reason":"stop"}]}
         def openai_streamer():
             guard_stream = guard(
                 num_reasks=0,
@@ -225,13 +226,14 @@ def chat_completions(guard_name: str):
             )
             for result in guard_stream:
                 chunk_string = f"data: {json.dumps(outcome_to_stream_response(validation_outcome=result))}\n\n"
-                yield chunk_string.encode('utf-8')
+                yield chunk_string.encode("utf-8")
             # close the stream
             yield b"\n"
 
         return Response(
             stream_with_context(openai_streamer()),
         )
+
 
 @guards_bp.route("/<guard_name>/validate", methods=["POST"])
 @handle_error
