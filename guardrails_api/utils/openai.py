@@ -1,5 +1,4 @@
-from guardrails.classes import ValidationOutcome, LLMResponse
-
+from guardrails.classes import ValidationOutcome
 
 def outcome_to_stream_response(validation_outcome: ValidationOutcome):
     stream_chunk_template = {
@@ -24,7 +23,7 @@ def outcome_to_stream_response(validation_outcome: ValidationOutcome):
 
 def outcome_to_chat_completion(
     validation_outcome: ValidationOutcome,
-    llm_response: LLMResponse,
+    llm_response,
     has_tool_gd_tool_call=False,
 ):
     completion_template = (
