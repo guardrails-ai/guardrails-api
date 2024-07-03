@@ -153,7 +153,7 @@ def collect_telemetry(
 
 @guards_bp.route("/<guard_name>/openai/v1/chat/completions", methods=["POST"])
 @handle_error
-def chat_completions(guard_name: str):
+def openai_v1_chat_completions(guard_name: str):
     # This endpoint implements the OpenAI Chat API
     # It is mean to be fully compatible
     # The only difference is that it uses the Guard API under the hood
@@ -185,7 +185,7 @@ def chat_completions(guard_name: str):
         tools = payload.get("tools", [])
         tools.filter(lambda tool: tool["funcion"]["name"] == "gd_response_tool")
         has_tool_gd_tool_call = len(tools) > 0
-    except KeyError:
+    except (KeyError, AttributeError):
         pass
 
     if not stream:
@@ -196,7 +196,7 @@ def chat_completions(guard_name: str):
                 num_reasks=0,
                 **payload,
             )
-            llm_response = guard.history.last.iterations.last.outputs.llm_response_info
+            llm_response = guard.history[-1].iterations[-1].outputs.llm_response_info
             result = outcome_to_chat_completion(
                 validation_outcome=validation_outcome,
                 llm_response=llm_response,
