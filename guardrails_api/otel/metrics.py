@@ -1,5 +1,7 @@
 import os
-from typing import Optional
+import psutil
+from time import time
+from typing import Iterable, Optional
 from opentelemetry import metrics
 from opentelemetry.metrics import Meter
 from opentelemetry.sdk.metrics import MeterProvider
@@ -14,6 +16,7 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter as GrpcMetricExporter,
 )
+from opentelemetry.metrics import CallbackOptions, Observation
 from guardrails_api.otel.constants import none
 
 
@@ -56,4 +59,53 @@ def initialize_metrics_collector():
         provider = MeterProvider(metric_readers=metric_readers)
         metrics.set_meter_provider(provider)
 
-        get_meter()
+        meter = get_meter()
+        
+        print("creating cpu gauge")
+        meter.create_observable_gauge(
+            "cpu.percent",
+            callbacks=[scrape_cpu],
+            description="The system-wide CPU utilization as a percentage",
+        )
+        
+        print("creating memory gauge")
+        meter.create_observable_gauge(
+            "mem.percent",
+            callbacks=[scrape_mem],
+            description="The system-wide memory utilization as a percentage",
+        )
+        
+def custom_metrics ():
+    meter = get_meter()
+        
+    print("creating cpu gauge")
+    meter.create_observable_gauge(
+        "cpu.percent",
+        callbacks=[scrape_cpu],
+        description="The system-wide CPU utilization as a percentage",
+    )
+    
+    print("creating memory gauge")
+    meter.create_observable_gauge(
+        "mem.percent",
+        callbacks=[scrape_mem],
+        description="The system-wide memory utilization as a percentage",
+    )
+
+
+
+def scrape_cpu(options: CallbackOptions) -> Iterable[Observation]:
+    print("scraping cpu")
+    cpu = psutil.cpu_percent()
+    timestamp = time()
+    yield Observation(
+        cpu, {"timestamp": timestamp}
+    )
+
+def scrape_mem(options: CallbackOptions) -> Iterable[Observation]:
+    print("scraping memory")
+    mem = psutil.virtual_memory().percent
+    timestamp = time()
+    yield Observation(
+        mem, {"timestamp": timestamp}
+    )

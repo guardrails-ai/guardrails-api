@@ -10,6 +10,7 @@ from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
 from guardrails_api.clients.cache_client import CacheClient
+from guardrails_api.otel.metrics import custom_metrics
 
 
 # TODO: Move this to a separate file
@@ -81,9 +82,10 @@ def create_app(
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)
 
-    if not otel_is_disabled():
-        FlaskInstrumentor().instrument_app(app)
-        initialize()
+    # if not otel_is_disabled():
+    #     FlaskInstrumentor().instrument_app(app)
+    #     initialize()
+    custom_metrics()
 
     # if no pg_host is set, don't set up postgres
     if postgres_is_enabled():

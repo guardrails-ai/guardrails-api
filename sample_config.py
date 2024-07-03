@@ -8,12 +8,20 @@ and guards will be persisted into postgres. In that case,
 these guards will not be initialized.
 """
 
-from guardrails import Guard
+from guardrails import Guard, OnFailAction
 from guardrails.hub import (
     DetectPII,
-    CompetitorCheck
+    CompetitorCheck,
+    RegexMatch
 )
 
+
+name_case = Guard(
+    name='name-case',
+    description='Checks that a string is in Title Case format.'
+).use(
+    RegexMatch(regex="^(?:[A-Z][^\\s]*\\s?)+$")
+)
 
 no_guards = Guard()
 no_guards.name = "No Guards"
@@ -22,10 +30,12 @@ output_guard = Guard()
 output_guard.name = "Output Guard"
 output_guard.use_many(
     DetectPII(
-        pii_entities='pii'
+        pii_entities='pii',
+        on_fail=OnFailAction.FIX
     ),
     CompetitorCheck(
-        competitors=['OpenAI', 'Anthropic']
+        competitors=['OpenAI', 'Anthropic'],
+        on_fail=OnFailAction.FIX
     )
 )
 
