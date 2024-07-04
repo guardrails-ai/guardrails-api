@@ -44,10 +44,11 @@ def test_route_setup(mocker):
 
     from guardrails_api.blueprints.guards import guards_bp
 
-    assert guards_bp.route_call_count == 4
+    assert guards_bp.route_call_count == 5
     assert guards_bp.routes == [
         "/",
         "/<guard_name>",
+        "/<guard_name>/openai/v1/chat/completions",
         "/<guard_name>/validate",
         "/<guard_name>/history/<call_id>",
     ]
