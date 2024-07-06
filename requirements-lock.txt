@@ -8,7 +8,7 @@ blinker==1.8.2
 boto3==1.34.132
 botocore==1.34.132
 cachelib==0.9.0
-certifi==2024.6.2
+certifi==2024.7.4
 cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
