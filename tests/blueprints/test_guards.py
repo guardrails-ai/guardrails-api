@@ -9,7 +9,7 @@ from tests.mocks.mock_guard_client import MockGuardStruct
 from tests.mocks.mock_request import MockRequest
 from guardrails.classes import ValidationOutcome
 from guardrails.classes.generic import Stack
-from guardrails.classes.history import Call
+from guardrails.classes.history import Call, Iteration
 from guardrails_api.app import register_config
 
 # TODO: Should we mock this somehow?
@@ -44,10 +44,11 @@ def test_route_setup(mocker):
 
     from guardrails_api.blueprints.guards import guards_bp
 
-    assert guards_bp.route_call_count == 4
+    assert guards_bp.route_call_count == 5
     assert guards_bp.routes == [
         "/",
         "/<guard_name>",
+        "/<guard_name>/openai/v1/chat/completions",
         "/<guard_name>/validate",
         "/<guard_name>/history/<call_id>",
     ]
@@ -543,6 +544,80 @@ def test_validate__call(mocker):
         "validationPassed": False,
         "validatedOutput": None,
         "rawLlmOutput": "Hello world!",
+    }
+
+    del os.environ["PGHOST"]
+
+def test_openai_v1_chat_completions__call(mocker):
+    from guardrails_api.blueprints.guards import openai_v1_chat_completions
+    os.environ["PGHOST"] = "localhost"
+    mock_guard = MockGuardStruct()
+    mock_outcome = ValidationOutcome(
+        call_id="mock-call-id",
+        raw_llm_output="Hello world!",
+        validated_output="Hello world!",
+        validation_passed=False,
+    )
+
+    mock___call__ = mocker.patch.object(MockGuardStruct, "__call__")
+    mock___call__.return_value = mock_outcome
+
+    mock_from_dict = mocker.patch("guardrails_api.blueprints.guards.Guard.from_dict")
+    mock_from_dict.return_value = mock_guard
+
+    mock_request = MockRequest(
+        "POST",
+        json={
+            "messages": [{"role":"user", "content":"Hello world!"}],
+        },
+        headers={"x-openai-api-key": "mock-key"},
+    )
+
+    mocker.patch("flask.Blueprint", new=MockBlueprint)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
+    mock_get_guard = mocker.patch(
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
+    )
+    mocker.patch(
+        "guardrails_api.blueprints.guards.get_llm_callable",
+        return_value="openai.Completion.create",
+    )
+
+    mocker.patch("guardrails_api.blueprints.guards.CacheClient.set")
+
+    mock_status = mocker.patch(
+        "guardrails.classes.history.call.Call.status", new_callable=PropertyMock
+    )
+    mock_status.return_value = "fail"
+    mock_call = Call()
+    mock_call.iterations= Stack(Iteration('some-id', 1))
+    mock_guard.history = Stack(mock_call)
+
+    response = openai_v1_chat_completions("My%20Guard's%20Name")
+
+    mock_get_guard.assert_called_once_with("My Guard's Name")
+
+    assert mock___call__.call_count == 1
+
+    mock___call__.assert_called_once_with(
+        num_reasks=0,
+        messages=[{"role":"user", "content":"Hello world!"}],
+    )
+
+    assert response == {
+        "choices": [
+            {
+                "message": {
+                    "content": "Hello world!",
+                },
+            }
+        ],
+        "guardrails": {
+            "reask": None,
+            "validation_passed": False,
+            "error": None,
+        },
     }
 
     del os.environ["PGHOST"]
