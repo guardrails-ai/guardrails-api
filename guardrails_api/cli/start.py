@@ -2,7 +2,7 @@ import typer
 from typing import Optional
 from guardrails_api.cli.cli import cli
 from guardrails_api.app import create_app
-
+from guardrails_api.utils.configuration import valid_configuration
 
 @cli.command("start")
 def start(
@@ -23,5 +23,5 @@ def start(
     #   look for them in a .guardrailsrc in the current directory.
     env = env or None
     config = config or None
-
+    valid_configuration(config)
     create_app(env, config, port).run(port=port)
