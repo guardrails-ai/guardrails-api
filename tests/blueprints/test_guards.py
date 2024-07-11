@@ -22,7 +22,7 @@ MOCK_GUARD_STRING = {
     "id": "mock-guard-id",
     "name": "mock-guard",
     "description": "mock guard description",
-    "history": [],
+    "history": Stack(),
 }
 
 
@@ -185,7 +185,7 @@ def test_guard__put_pg(mocker):
         "name": "mock-guard",
         "id": "mock-guard-id",
         "description": "mock guard description",
-        "history": [],
+        "history": Stack(),
     }
     mock_request = MockRequest("PUT", json=json_guard)
 

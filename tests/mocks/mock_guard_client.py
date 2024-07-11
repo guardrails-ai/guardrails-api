@@ -1,7 +1,7 @@
 from typing import Any, List
 from guardrails_api_client import Guard as GuardStruct
 from pydantic import ConfigDict
-
+from guardrails.classes.generic import Stack
 
 class MockGuardStruct(GuardStruct):
     # Pydantic Config
@@ -10,7 +10,7 @@ class MockGuardStruct(GuardStruct):
     id: str = "mock-guard-id"
     name: str = "mock-guard"
     description: str = "mock guard description"
-    history: List[Any] = []
+    history: Stack[Any] = Stack()
 
     def to_guard(self, *args):
         return self

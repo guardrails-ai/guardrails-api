@@ -197,7 +197,7 @@ def openai_v1_chat_completions(guard_name: str):
             num_reasks=0,
             **payload,
         )
-        llm_response = guard.history[-1].iterations[-1].outputs.llm_response_info
+        llm_response = guard.history.last.iterations.last.outputs.llm_response_info
         result = outcome_to_chat_completion(
             validation_outcome=validation_outcome,
             llm_response=llm_response,
