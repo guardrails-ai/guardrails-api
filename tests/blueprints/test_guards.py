@@ -11,6 +11,7 @@ from guardrails.classes import ValidationOutcome
 from guardrails.classes.generic import Stack
 from guardrails.classes.history import Call, Iteration
 from guardrails_api.app import register_config
+from guardrails.errors import ValidationError
 
 # TODO: Should we mock this somehow?
 #   Right now it's just empty, but it technically does a file read
@@ -21,7 +22,7 @@ MOCK_GUARD_STRING = {
     "id": "mock-guard-id",
     "name": "mock-guard",
     "description": "mock guard description",
-    "history": [],
+    "history": Stack(),
 }
 
 
@@ -184,7 +185,7 @@ def test_guard__put_pg(mocker):
         "name": "mock-guard",
         "id": "mock-guard-id",
         "description": "mock guard description",
-        "history": [],
+        "history": Stack(),
     }
     mock_request = MockRequest("PUT", json=json_guard)
 
@@ -545,6 +546,71 @@ def test_validate__call(mocker):
         "validatedOutput": None,
         "rawLlmOutput": "Hello world!",
     }
+
+    del os.environ["PGHOST"]
+
+def test_validate__call_throws_validation_error(mocker):
+    os.environ["PGHOST"] = "localhost"
+
+    mock___call__ = mocker.patch.object(MockGuardStruct, "__call__")
+    mock___call__.side_effect = ValidationError("Test guard validation error")
+
+    mock_guard = MockGuardStruct()
+    mock_from_dict = mocker.patch("guardrails_api.blueprints.guards.Guard.from_dict")
+    mock_from_dict.return_value = mock_guard
+
+    # mock_tracer = MockTracer()
+    mock_request = MockRequest(
+        "POST",
+        json={
+            "llmApi": "openai.Completion.create",
+            "promptParams": {"p1": "bar"},
+            "args": [1, 2, 3],
+            "some_kwarg": "foo",
+            "prompt": "Hello world!",
+        },
+        headers={"x-openai-api-key": "mock-key"},
+    )
+
+    mocker.patch("flask.Blueprint", new=MockBlueprint)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
+    mock_get_guard = mocker.patch(
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
+    )
+    mocker.patch(
+        "guardrails_api.blueprints.guards.get_llm_callable",
+        return_value="openai.Completion.create",
+    )
+
+    mocker.patch("guardrails_api.blueprints.guards.CacheClient.set")
+
+    mock_status = mocker.patch(
+        "guardrails.classes.history.call.Call.status", new_callable=PropertyMock
+    )
+    mock_status.return_value = "fail"
+    mock_guard.history = Stack(Call())
+    from guardrails_api.blueprints.guards import validate
+
+    response = validate("My%20Guard's%20Name")
+
+    mock_get_guard.assert_called_once_with("My Guard's Name")
+
+    assert mock___call__.call_count == 1
+
+    mock___call__.assert_called_once_with(
+        1,
+        2,
+        3,
+        llm_api="openai.Completion.create",
+        prompt_params={"p1": "bar"},
+        num_reasks=None,
+        some_kwarg="foo",
+        api_key="mock-key",
+        prompt="Hello world!",
+    )
+
+    assert response == ('Test guard validation error', 400)
 
     del os.environ["PGHOST"]
 

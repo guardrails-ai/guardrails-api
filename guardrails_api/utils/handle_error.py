@@ -3,6 +3,7 @@ import traceback
 from werkzeug.exceptions import HTTPException
 from guardrails_api.classes.http_error import HttpError
 from guardrails_api.utils.logger import logger
+from guardrails.errors import ValidationError
 
 
 def handle_error(fn):
@@ -10,6 +11,10 @@ def handle_error(fn):
     def decorator(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
+        except ValidationError as validation_error:
+            logger.error(validation_error)
+            traceback.print_exception(type(validation_error), validation_error, validation_error.__traceback__)
+            return str(validation_error), 400
         except HttpError as http_error:
             logger.error(http_error)
             traceback.print_exception(http_error)
