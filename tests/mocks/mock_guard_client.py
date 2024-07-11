@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 from guardrails_api_client import Guard as GuardStruct
 from pydantic import ConfigDict
 from guardrails.classes.generic import Stack
