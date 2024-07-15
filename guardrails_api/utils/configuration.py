@@ -12,7 +12,7 @@ def valid_configuration(config: Optional[str]=""):
     # then raise ConfigurationError
     has_default_config_file = os.path.isfile(default_config_file_path)
 
-    has_config_file = (config != "" and config != None) and os.path.isfile(os.path.abspath(config))
+    has_config_file = (config != "" and config is not None) and os.path.isfile(os.path.abspath(config))
     if not has_default_config_file and not has_config_file and not postgres_is_enabled():
         raise ConfigurationError("Can not start. Configuration not provided and default"
                         " configuration not found and postgres is not enabled.")
