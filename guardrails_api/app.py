@@ -34,8 +34,7 @@ class ReverseProxied(object):
 
 
 def register_config(config: Optional[str] = None):
-    default_config_file = os.path.join(os.path.dirname(__file__), "config.py")
-
+    default_config_file = os.path.join(os.getcwd(), "./config.py")
     config_file = config or default_config_file
     config_file_path = os.path.abspath(config_file)
     if os.path.isfile(config_file_path):

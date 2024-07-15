@@ -28,3 +28,4 @@ requirements-lock-old.txt
 opensearch
 build
 *.egg-info
+config.py
