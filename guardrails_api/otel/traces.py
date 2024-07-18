@@ -16,9 +16,16 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcSpanExporter,
 )
-from openinference.instrumentation.guardrails import GuardrailsInstrumentor
 from guardrails_api.otel.constants import none
 
+
+class GuardrailsInstrumentorSentinel:
+    pass
+
+try:
+    from openinference.instrumentation.guardrails import GuardrailsInstrumentor
+except ImportError:
+    GuardrailsInstrumentor = GuardrailsInstrumentorSentinel()
 
 def traces_are_disabled() -> bool:
     otel_traces_exporter = os.environ.get("OTEL_TRACES_EXPORTER", none)
@@ -69,8 +76,9 @@ def initialize_tracer():
         for exporter in trace_exporters:
             set_span_processors(tracer_provider, exporter, use_batch)
 
-        # Instrument with OpenInference
-        GuardrailsInstrumentor().instrument(tracer_provider=tracer_provider)
+        if not isinstance(GuardrailsInstrumentor, GuardrailsInstrumentorSentinel):
+            # Instrument with OpenInference
+            GuardrailsInstrumentor().instrument(tracer_provider=tracer_provider)
 
         # Initialize singleton
         get_tracer()

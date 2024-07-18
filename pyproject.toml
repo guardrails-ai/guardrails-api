@@ -27,7 +27,6 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-grpc>=1.0.0,<2",
     "opentelemetry-exporter-otlp-proto-http>=1.0.0,<2",
     "opentelemetry-instrumentation-flask>=0.12b0,<1",
-    "openinference-instrumentation-guardrails>=0.1.0"
 ]
 
 [tool.setuptools.dynamic]
@@ -43,6 +42,10 @@ dev = [
     "coverage",
     "pytest-mock",
     "gunicorn>=22.0.0,<23",
+]
+
+openinference = [
+    "openinference-instrumentation-guardrails>=0.1.0"
 ]
 
 [tool.pytest.ini_options]
