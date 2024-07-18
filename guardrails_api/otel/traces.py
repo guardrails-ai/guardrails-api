@@ -16,6 +16,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcSpanExporter,
 )
+from openinference.instrumentation.guardrails import GuardrailsInstrumentor
 from guardrails_api.otel.constants import none
 
 
@@ -67,6 +68,9 @@ def initialize_tracer():
         use_batch = os.environ.get("OTEL_PROCESS_IN_BATCH", "true") == "true"
         for exporter in trace_exporters:
             set_span_processors(tracer_provider, exporter, use_batch)
+
+        # Instrument with OpenInference
+        GuardrailsInstrumentor().instrument(tracer_provider=tracer_provider)
 
         # Initialize singleton
         get_tracer()

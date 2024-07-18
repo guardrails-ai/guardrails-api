@@ -65,8 +65,6 @@ def create_app(
     self_endpoint = os.environ.get("SELF_ENDPOINT", f"{host}:{set_port}")
     os.environ["SELF_ENDPOINT"] = self_endpoint
 
-    register_config(config)
-
     app = Flask(__name__)
     app.json = OverrideJsonProvider(app)
 
@@ -83,6 +81,8 @@ def create_app(
     if not otel_is_disabled():
         FlaskInstrumentor().instrument_app(app)
         initialize()
+
+    register_config(config)
 
     # if no pg_host is set, don't set up postgres
     if postgres_is_enabled():
