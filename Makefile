@@ -7,7 +7,7 @@ install-dev:
 	pip install ".[dev]";
 
 lock:
-	pip freeze --exclude guardrails-api-client > requirements-lock.txt
+	pip freeze --exclude guardrails-api > requirements-lock.txt
 
 install-lock:
 	pip install -r requirements-lock.txt

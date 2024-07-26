@@ -33,29 +33,29 @@ services:
     image: guardrails-api:latest
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       args:
         PORT: "8000"
     ports:
       - "8000:8000"
     environment:
-      APP_ENVIRONMENT: local
-      AWS_PROFILE: dev
-      AWS_DEFAULT_REGION: us-east-1
-      PGPORT: 5432
-      PGDATABASE: postgres
-      PGHOST: postgres
-      PGUSER: ${PGUSER:-postgres}
-      PGPASSWORD: ${PGPASSWORD:-changeme}
+      # APP_ENVIRONMENT: local
+      # AWS_PROFILE: dev
+      # AWS_DEFAULT_REGION: us-east-1
+      # PGPORT: 5432
+      # PGDATABASE: postgres
+      # PGHOST: postgres
+      # PGUSER: ${PGUSER:-postgres}
+      # PGPASSWORD: ${PGPASSWORD:-changeme}
       NLTK_DATA: /opt/nltk_data
-      OTEL_PYTHON_TRACER_PROVIDER: sdk_tracer_provider
-      OTEL_SERVICE_NAME: guardrails-api
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp #,console
-      OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST: "Accept-Encoding,User-Agent,Referer"
-      OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE: "Last-Modified,Content-Type"
-      OTEL_METRICS_EXPORTER: otlp #,console
-      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      # OTEL_PYTHON_TRACER_PROVIDER: sdk_tracer_provider
+      # OTEL_SERVICE_NAME: guardrails-api
+      # OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      # OTEL_TRACES_EXPORTER: otlp #,console
+      # OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST: "Accept-Encoding,User-Agent,Referer"
+      # OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE: "Last-Modified,Content-Type"
+      # OTEL_METRICS_EXPORTER: otlp #,console
+      # OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       # # Disable logging for now to reduce noise
       # OTEL_LOGS_EXPORTER: otlp,console
       # OTEL_PYTHON_LOG_CORRELATION: true
@@ -68,9 +68,9 @@ services:
       # OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4317
       # OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://otel-collector:4317
       # OTEL_PYTHON_LOG_FORMAT: "%(msg)s [span_id=%(span_id)s]"
-    depends_on:
-      - postgres
-      - otel-collector
+    # depends_on:
+    #   - postgres
+    #   - otel-collector
   opensearch-node1:
     profiles: ["all", "otel", "infra"]
     image: opensearchproject/opensearch:latest
