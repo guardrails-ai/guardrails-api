@@ -10,7 +10,8 @@ from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
 from guardrails_api.clients.cache_client import CacheClient
-
+from rich.console import Console
+from rich.rule import Rule
 
 # TODO: Move this to a separate file
 class OverrideJsonProvider(DefaultJSONProvider):
@@ -49,6 +50,9 @@ def register_config(config: Optional[str] = None):
 def create_app(
     env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None
 ):
+    # used to print user-facing messages during server startup
+    console = Console()
+
     if os.environ.get("APP_ENVIRONMENT") != "production":
         from dotenv import load_dotenv
 
@@ -95,9 +99,23 @@ def create_app(
     cache_client.initialize(app)
 
     from guardrails_api.blueprints.root import root_bp
-    from guardrails_api.blueprints.guards import guards_bp
+    from guardrails_api.blueprints.guards import guards_bp, guard_client
 
     app.register_blueprint(root_bp)
     app.register_blueprint(guards_bp)
+
+    console.print(
+        f"\n:rocket: Guardrails API is available at {self_endpoint}"
+    )
+    console.print(f":book: Visit {self_endpoint}/docs to see available API endpoints.\n")
+
+    console.print(":green_circle: Active guards and OpenAI compatible endpoints:")
+
+    for g in guard_client.get_guards():
+        g = g.to_dict()
+        console.print(f"- Guard: [bold white]{g.get('name')}[/bold white] {self_endpoint}/guards/{g.get('name')}/openai/v1")
+
+    console.print("")
+    console.print(Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white"))
 
     return app
