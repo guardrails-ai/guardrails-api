@@ -99,7 +99,7 @@ def create_app(
     cache_client.initialize(app)
 
     from guardrails_api.blueprints.root import root_bp
-    from guardrails_api.blueprints.guards import guards_bp, guard_client
+    from guardrails_api.blueprints.guards import guards_bp
 
     app.register_blueprint(root_bp)
     app.register_blueprint(guards_bp)
@@ -111,9 +111,11 @@ def create_app(
 
     console.print(":green_circle: Active guards and OpenAI compatible endpoints:")
 
-    for g in guard_client.get_guards():
-        g = g.to_dict()
-        console.print(f"- Guard: [bold white]{g.get('name')}[/bold white] {self_endpoint}/guards/{g.get('name')}/openai/v1")
+    with app.app_context():
+        from guardrails_api.blueprints.guards import guard_client
+        for g in guard_client.get_guards():
+            g = g.to_dict()
+            console.print(f"- Guard: [bold white]{g.get('name')}[/bold white] {self_endpoint}/guards/{g.get('name')}/openai/v1")
 
     console.print("")
     console.print(Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white"))

@@ -1,13 +1,16 @@
+import threading
 from flask_caching import Cache
 
 
 # TODO: Add option to connect to Redis or MemCached backend with environment variables
 class CacheClient:
     _instance = None
+    _lock = threading.Lock()
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(CacheClient, cls).__new__(cls)
+            with cls._lock:
+                cls._instance = super(CacheClient, cls).__new__(cls)
         return cls._instance
 
     def initialize(self, app):
