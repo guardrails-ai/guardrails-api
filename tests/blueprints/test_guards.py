@@ -634,10 +634,11 @@ def test_openai_v1_chat_completions__raises_404(mocker):
         return_value=mock_guard,
     )
     mocker.patch("guardrails_api.blueprints.guards.CacheClient.set")
-    # expect 404 HttpError
-    with pytest.raises(Exception) as e:
-        openai_v1_chat_completions("My%20Guard's%20Name")
-    assert str(e.value) == '404 Not Found: Guard not found'
+
+    response = openai_v1_chat_completions("My%20Guard's%20Name")
+    assert response[1] == 404
+    assert response[0]["message"] == 'NotFound'
+
 
     mock_get_guard.assert_called_once_with("My Guard's Name")
 
