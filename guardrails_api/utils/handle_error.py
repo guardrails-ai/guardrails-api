@@ -17,7 +17,7 @@ def handle_error(fn):
             return str(validation_error), 400
         except HttpError as http_error:
             logger.error(http_error)
-            traceback.print_exception(http_error)
+            traceback.print_exception(type(http_error), http_error, http_error.__traceback__)
             return http_error.to_dict(), http_error.status
         except HTTPException as http_exception:
             logger.error(http_exception)
