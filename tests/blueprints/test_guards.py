@@ -614,6 +614,36 @@ def test_validate__call_throws_validation_error(mocker):
 
     del os.environ["PGHOST"]
 
+def test_openai_v1_chat_completions__raises_404(mocker):
+    from guardrails_api.blueprints.guards import openai_v1_chat_completions
+    os.environ["PGHOST"] = "localhost"
+    mock_guard = None
+
+    mock_request = MockRequest(
+        "POST",
+        json={
+            "messages": [{"role":"user", "content":"Hello world!"}],
+        },
+        headers={"x-openai-api-key": "mock-key"},
+    )
+
+    mocker.patch("flask.Blueprint", new=MockBlueprint)
+    mocker.patch("guardrails_api.blueprints.guards.request", mock_request)
+    mock_get_guard = mocker.patch(
+        "guardrails_api.blueprints.guards.guard_client.get_guard",
+        return_value=mock_guard,
+    )
+    mocker.patch("guardrails_api.blueprints.guards.CacheClient.set")
+
+    response = openai_v1_chat_completions("My%20Guard's%20Name")
+    assert response[1] == 404
+    assert response[0]["message"] == 'NotFound'
+
+
+    mock_get_guard.assert_called_once_with("My Guard's Name")
+
+    del os.environ["PGHOST"]
+
 def test_openai_v1_chat_completions__call(mocker):
     from guardrails_api.blueprints.guards import openai_v1_chat_completions
     os.environ["PGHOST"] = "localhost"

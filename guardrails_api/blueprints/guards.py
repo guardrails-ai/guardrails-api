@@ -178,6 +178,15 @@ def openai_v1_chat_completions(guard_name: str):
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
     guard = guard_struct
+    if guard_struct is None:
+        raise HttpError(
+            404,
+            "NotFound",
+            "A Guard with the name {guard_name} does not exist!".format(
+                guard_name=decoded_guard_name
+            ),
+        )
+
     if not isinstance(guard_struct, Guard):
         guard: Guard = Guard.from_dict(guard_struct.to_dict())
     stream = payload.get("stream", False)
