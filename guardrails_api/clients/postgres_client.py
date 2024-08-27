@@ -1,6 +1,7 @@
 import boto3
 import json
 import os
+import threading
 from flask import Flask
 from sqlalchemy import text
 from typing import Tuple
@@ -13,10 +14,12 @@ def postgres_is_enabled() -> bool:
 
 class PostgresClient:
     _instance = None
+    _lock = threading.Lock()
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(PostgresClient, cls).__new__(cls)
+            with cls._lock:
+                cls._instance = super(PostgresClient, cls).__new__(cls)
         return cls._instance
 
     def fetch_pg_secret(self, secret_arn: str) -> dict:
