@@ -9,9 +9,11 @@ from guardrails import configure_logging
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
+from guardrails_api.utils.trace_server_start_if_enabled import trace_server_start_if_enabled
 from guardrails_api.clients.cache_client import CacheClient
 from rich.console import Console
 from rich.rule import Rule
+
 
 # TODO: Move this to a separate file
 class OverrideJsonProvider(DefaultJSONProvider):
@@ -50,6 +52,7 @@ def register_config(config: Optional[str] = None):
 def create_app(
     env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None
 ):
+    trace_server_start_if_enabled()
     # used to print user-facing messages during server startup
     console = Console()
 
