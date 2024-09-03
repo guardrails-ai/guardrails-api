@@ -22,7 +22,7 @@ setup(
         "Werkzeug>=3.0.3,<4",
         "jsonschema>=4.22.0,<5",
         "referencing>=0.35.1,<1",
-        "Flask-Cors>=4.0.1,<5",
+        "Flask-Cors>=4.0.1,<6",
         "boto3>=1.34.115,<2",
         "psycopg2-binary>=2.9.9,<3",
         "litellm>=1.39.3,<2",
