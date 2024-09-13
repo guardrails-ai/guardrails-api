@@ -1,22 +1,75 @@
-import os
-from typing import Optional
-from flask import Flask
-from flask.json.provider import DefaultJSONProvider
-from flask_cors import CORS
-from werkzeug.middleware.proxy_fix import ProxyFix
-from urllib.parse import urlparse
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from guardrails import configure_logging
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from guardrails_api.clients.cache_client import CacheClient
+from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
 from guardrails_api.utils.trace_server_start_if_enabled import trace_server_start_if_enabled
-from guardrails_api.clients.cache_client import CacheClient
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from rich.console import Console
 from rich.rule import Rule
+from starlette.middleware.base import BaseHTTPMiddleware
+from typing import Optional
+from urllib.parse import urlparse
+import importlib.util
+import json
+import os
 
 
-# TODO: Move this to a separate file
-class OverrideJsonProvider(DefaultJSONProvider):
+# from pyinstrument import Profiler
+# from pyinstrument.renderers.html import HTMLRenderer
+# from pyinstrument.renderers.speedscope import SpeedscopeRenderer
+# from starlette.middleware.base import RequestResponseEndpoint
+# class ProfilingMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+#         """Profile the current request
+
+#         Taken from https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi
+#         with small improvements.
+
+#         """
+#         # we map a profile type to a file extension, as well as a pyinstrument profile renderer
+#         profile_type_to_ext = {"html": "html", "speedscope": "speedscope.json"}
+#         profile_type_to_renderer = {
+#             "html": HTMLRenderer,
+#             "speedscope": SpeedscopeRenderer,
+#         }
+
+#         if request.headers.get("X-Profile-Request"):
+#                 # The default profile format is speedscope
+#                 profile_type = request.query_params.get("profile_format", "speedscope")
+
+#                 # we profile the request along with all additional middlewares, by interrupting
+#                 # the program every 1ms1 and records the entire stack at that point
+#                 with Profiler(interval=0.001, async_mode="enabled") as profiler:
+#                     response = await call_next(request)
+
+#                 # we dump the profiling into a file
+#                 # Generate a unique filename based on timestamp and request properties
+#                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#                 method = request.method
+#                 path = request.url.path.replace("/", "_").strip("_")
+#                 extension = profile_type_to_ext[profile_type]
+#                 filename = f"profile_{timestamp}_{method}_{path}.{extension}"
+
+#                 # Ensure the profiling directory exists
+#                 profiling_dir = "profiling"
+#                 os.makedirs(profiling_dir, exist_ok=True)
+
+#                 # Dump the profiling into a file
+#                 renderer = profile_type_to_renderer[profile_type]()
+#                 filepath = os.path.join(profiling_dir, filename)
+#                 with open(filepath, "w") as out:
+#                     out.write(profiler.output(renderer=renderer))
+
+#                 return response
+#         else:
+#             return await call_next(request)
+
+# Custom JSON encoder
+class CustomJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, set):
             return list(o)
@@ -24,30 +77,23 @@ class OverrideJsonProvider(DefaultJSONProvider):
             return str(o)
         return super().default(o)
 
-
-class ReverseProxied(object):
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
+# Custom middleware for reverse proxy
+class ReverseProxyMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
         self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
         url = urlparse(self_endpoint)
-        environ["wsgi.url_scheme"] = url.scheme
-        return self.app(environ, start_response)
-
+        request.scope["scheme"] = url.scheme
+        response = await call_next(request)
+        return response
 
 def register_config(config: Optional[str] = None):
     default_config_file = os.path.join(os.getcwd(), "./config.py")
     config_file = config or default_config_file
     config_file_path = os.path.abspath(config_file)
     if os.path.isfile(config_file_path):
-        from importlib.machinery import SourceFileLoader
-
-        # This creates a module named "validators" with the contents of the init file
-        # This allow statements like `from validators import StartsWith`
-        # But more importantly, it registers all of the validators imported in the init
-        SourceFileLoader("config", config_file_path).load_module()
-
+        spec = importlib.util.spec_from_file_location("config", config_file_path)
+        config_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config_module)
 
 def create_app(
     env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None
@@ -74,21 +120,29 @@ def create_app(
 
     register_config(config)
 
-    app = Flask(__name__)
-    app.json = OverrideJsonProvider(app)
+    app = FastAPI()
 
-    app.config["APPLICATION_ROOT"] = "/"
-    app.config["PREFERRED_URL_SCHEME"] = "https"
-    app.wsgi_app = ReverseProxied(app.wsgi_app)
-    CORS(app)
+    # Initialize FastAPIInstrumentor
+    FastAPIInstrumentor.instrument_app(app)
 
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+    # app.add_middleware(ProfilingMiddleware)
+    
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Add reverse proxy middleware
+    app.add_middleware(ReverseProxyMiddleware)
 
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)
 
     if not otel_is_disabled():
-        FlaskInstrumentor().instrument_app(app)
         initialize()
 
     # if no pg_host is set, don't set up postgres
@@ -101,11 +155,19 @@ def create_app(
     cache_client = CacheClient()
     cache_client.initialize(app)
 
-    from guardrails_api.blueprints.root import root_bp
-    from guardrails_api.blueprints.guards import guards_bp
+    from guardrails_api.api.root import router as root_router
+    from guardrails_api.api.guards import router as guards_router, guard_client
 
-    app.register_blueprint(root_bp)
-    app.register_blueprint(guards_bp)
+    app.include_router(root_router)
+    app.include_router(guards_router)
+
+    # Custom JSON encoder
+    @app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError):
+        return JSONResponse(
+            status_code=400,
+            content={"message": str(exc)},
+        )
 
     console.print(
         f"\n:rocket: Guardrails API is available at {self_endpoint}"
@@ -114,13 +176,18 @@ def create_app(
 
     console.print(":green_circle: Active guards and OpenAI compatible endpoints:")
 
-    with app.app_context():
-        from guardrails_api.blueprints.guards import guard_client
-        for g in guard_client.get_guards():
-            g = g.to_dict()
-            console.print(f"- Guard: [bold white]{g.get('name')}[/bold white] {self_endpoint}/guards/{g.get('name')}/openai/v1")
+    guards = guard_client.get_guards()
+
+    for g in guards:
+        g_dict = g.to_dict()
+        console.print(f"- Guard: [bold white]{g_dict.get('name')}[/bold white] {self_endpoint}/guards/{g_dict.get('name')}/openai/v1")
 
     console.print("")
     console.print(Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white"))
 
     return app
+
+if __name__ == "__main__":
+    import uvicorn
+    app = create_app()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
