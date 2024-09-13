@@ -4,6 +4,7 @@ from guardrails_api.cli.cli import cli
 from guardrails_api.app import create_app
 from guardrails_api.utils.configuration import valid_configuration
 
+
 @cli.command("start")
 def start(
     env: Optional[str] = typer.Option(

@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 import os
 
+
 def test_start(mocker):
     mocker.patch("guardrails_api.cli.start.cli")
 
@@ -10,6 +11,7 @@ def test_start(mocker):
     )
 
     from guardrails_api.cli.start import start
+
     # pg enabled
     os.environ["PGHOST"] = "localhost"
     start("env", "config", 8000)

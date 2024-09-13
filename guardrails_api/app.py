@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from guardrails import configure_logging
 from guardrails_api.clients.cache_client import CacheClient
-from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
-from guardrails_api.utils.trace_server_start_if_enabled import trace_server_start_if_enabled
+from guardrails_api.utils.trace_server_start_if_enabled import (
+    trace_server_start_if_enabled,
+)
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from rich.console import Console
 from rich.rule import Rule
@@ -68,6 +69,7 @@ import os
 #         else:
 #             return await call_next(request)
 
+
 # Custom JSON encoder
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -76,6 +78,7 @@ class CustomJSONEncoder(json.JSONEncoder):
         if callable(o):
             return str(o)
         return super().default(o)
+
 
 # Custom middleware for reverse proxy
 class ReverseProxyMiddleware(BaseHTTPMiddleware):
@@ -86,6 +89,7 @@ class ReverseProxyMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         return response
 
+
 def register_config(config: Optional[str] = None):
     default_config_file = os.path.join(os.getcwd(), "./config.py")
     config_file = config or default_config_file
@@ -94,6 +98,7 @@ def register_config(config: Optional[str] = None):
         spec = importlib.util.spec_from_file_location("config", config_file_path)
         config_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config_module)
+
 
 def create_app(
     env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None
@@ -126,7 +131,7 @@ def create_app(
     FastAPIInstrumentor.instrument_app(app)
 
     # app.add_middleware(ProfilingMiddleware)
-    
+
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -169,10 +174,10 @@ def create_app(
             content={"message": str(exc)},
         )
 
+    console.print(f"\n:rocket: Guardrails API is available at {self_endpoint}")
     console.print(
-        f"\n:rocket: Guardrails API is available at {self_endpoint}"
+        f":book: Visit {self_endpoint}/docs to see available API endpoints.\n"
     )
-    console.print(f":book: Visit {self_endpoint}/docs to see available API endpoints.\n")
 
     console.print(":green_circle: Active guards and OpenAI compatible endpoints:")
 
@@ -180,14 +185,20 @@ def create_app(
 
     for g in guards:
         g_dict = g.to_dict()
-        console.print(f"- Guard: [bold white]{g_dict.get('name')}[/bold white] {self_endpoint}/guards/{g_dict.get('name')}/openai/v1")
+        console.print(
+            f"- Guard: [bold white]{g_dict.get('name')}[/bold white] {self_endpoint}/guards/{g_dict.get('name')}/openai/v1"
+        )
 
     console.print("")
-    console.print(Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white"))
+    console.print(
+        Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white")
+    )
 
     return app
 
+
 if __name__ == "__main__":
     import uvicorn
+
     app = create_app()
     uvicorn.run(app, host="0.0.0.0", port=8000)

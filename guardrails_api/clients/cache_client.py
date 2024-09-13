@@ -1,7 +1,7 @@
 import threading
 from fastapi import FastAPI
-from aiocache import caches, Cache
-from aiocache.serializers import JsonSerializer
+from aiocache import caches
+
 
 class CacheClient:
     _instance = None
@@ -15,16 +15,16 @@ class CacheClient:
         return cls._instance
 
     def initialize(self, app: FastAPI):
-        caches.set_config({
-            'default': {
-                'cache': "aiocache.SimpleMemoryCache",
-                'serializer': {
-                    'class': "aiocache.serializers.JsonSerializer"
-                },
-                'ttl': 300
+        caches.set_config(
+            {
+                "default": {
+                    "cache": "aiocache.SimpleMemoryCache",
+                    "serializer": {"class": "aiocache.serializers.JsonSerializer"},
+                    "ttl": 300,
+                }
             }
-        })
-        self.cache = caches.get('default')
+        )
+        self.cache = caches.get("default")
 
     async def get(self, key: str):
         return await self.cache.get(key)

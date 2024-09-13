@@ -9,15 +9,18 @@ from tests.mocks.mock_postgres_client import MockPostgresClient
 # Assuming you have a similar structure in your FastAPI app
 from guardrails_api.api import root
 
+
 @pytest.fixture
 def app():
     app = FastAPI()
     app.include_router(root.router)
     return app
 
+
 @pytest.fixture
 def client(app):
     return TestClient(app)
+
 
 def test_home(client):
     response = client.get("/")
@@ -30,6 +33,7 @@ def test_home(client):
     assert "/health-check" in routes
     assert "/openapi.json" in routes  # This is FastAPI's equivalent to /api-docs
     assert "/docs" in routes
+
 
 def test_health_check(client, mocker):
     os.environ["PGHOST"] = "localhost"

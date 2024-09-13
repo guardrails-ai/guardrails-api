@@ -1,11 +1,9 @@
-import asyncio
 import json
 import os
 import inspect
-from typing import Any, Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Request, Response, APIRouter
+from typing import Any, Dict, Optional
+from fastapi import HTTPException, Request, APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
 from urllib.parse import unquote_plus
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
@@ -16,7 +14,10 @@ from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.get_llm_callable import get_llm_callable
-from guardrails_api.utils.openai import outcome_to_chat_completion, outcome_to_stream_response
+from guardrails_api.utils.openai import (
+    outcome_to_chat_completion,
+    outcome_to_stream_response,
+)
 from guardrails_api.utils.handle_error import handle_error
 from string import Template
 
@@ -39,19 +40,25 @@ cache_client = CacheClient()
 
 router = APIRouter()
 
+
 @router.get("/guards")
 @handle_error
 async def get_guards():
     guards = guard_client.get_guards()
     return [g.to_dict() for g in guards]
 
+
 @router.post("/guards")
 @handle_error
 async def create_guard(guard: GuardStruct):
     if not postgres_is_enabled():
-        raise HTTPException(status_code=501, detail="Not Implemented POST /guards is not implemented for in-memory guards.")
+        raise HTTPException(
+            status_code=501,
+            detail="Not Implemented POST /guards is not implemented for in-memory guards.",
+        )
     new_guard = guard_client.create_guard(guard)
     return new_guard.to_dict()
+
 
 @router.get("/guards/{guard_name}")
 @handle_error
@@ -59,26 +66,38 @@ async def get_guard(guard_name: str, asOf: Optional[str] = None):
     decoded_guard_name = unquote_plus(guard_name)
     guard = guard_client.get_guard(decoded_guard_name, asOf)
     if guard is None:
-        raise HTTPException(status_code=404, detail=f"A Guard with the name {decoded_guard_name} does not exist!")
+        raise HTTPException(
+            status_code=404,
+            detail=f"A Guard with the name {decoded_guard_name} does not exist!",
+        )
     return guard.to_dict()
+
 
 @router.put("/guards/{guard_name}")
 @handle_error
 async def update_guard(guard_name: str, guard: GuardStruct):
     if not postgres_is_enabled():
-        raise HTTPException(status_code=501, detail="PUT /<guard_name> is not implemented for in-memory guards.")
+        raise HTTPException(
+            status_code=501,
+            detail="PUT /<guard_name> is not implemented for in-memory guards.",
+        )
     decoded_guard_name = unquote_plus(guard_name)
     updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
     return updated_guard.to_dict()
+
 
 @router.delete("/guards/{guard_name}")
 @handle_error
 async def delete_guard(guard_name: str):
     if not postgres_is_enabled():
-        raise HTTPException(status_code=501, detail="DELETE /<guard_name> is not implemented for in-memory guards.")
+        raise HTTPException(
+            status_code=501,
+            detail="DELETE /<guard_name> is not implemented for in-memory guards.",
+        )
     decoded_guard_name = unquote_plus(guard_name)
     guard = guard_client.delete_guard(decoded_guard_name)
     return guard.to_dict()
+
 
 @router.post("/guards/{guard_name}/openai/v1/chat/completions")
 @handle_error
@@ -87,11 +106,21 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
     if guard_struct is None:
-        raise HTTPException(status_code=404, detail=f"A Guard with the name {decoded_guard_name} does not exist!")
+        raise HTTPException(
+            status_code=404,
+            detail=f"A Guard with the name {decoded_guard_name} does not exist!",
+        )
 
-    guard = Guard.from_dict(guard_struct.to_dict()) if not isinstance(guard_struct, Guard) else guard_struct
+    guard = (
+        Guard.from_dict(guard_struct.to_dict())
+        if not isinstance(guard_struct, Guard)
+        else guard_struct
+    )
     stream = payload.get("stream", False)
-    has_tool_gd_tool_call = any(tool.get("function", {}).get("name") == "gd_response_tool" for tool in payload.get("tools", []))
+    has_tool_gd_tool_call = any(
+        tool.get("function", {}).get("name") == "gd_response_tool"
+        for tool in payload.get("tools", [])
+    )
 
     if not stream:
         validation_outcome: ValidationOutcome = guard(num_reasks=0, **payload)
@@ -103,23 +132,29 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
         )
         return JSONResponse(content=result)
     else:
+
         async def openai_streamer():
             guard_stream = guard(num_reasks=0, **payload)
             for result in guard_stream:
-                chunk = json.dumps(outcome_to_stream_response(validation_outcome=result))
+                chunk = json.dumps(
+                    outcome_to_stream_response(validation_outcome=result)
+                )
                 yield f"data: {chunk}\n\n"
             yield "\n"
 
         return StreamingResponse(openai_streamer(), media_type="text/event-stream")
 
+
 @router.post("/guards/{guard_name}/validate")
 @handle_error
 async def validate(guard_name: str, request: Request):
     payload = await request.json()
-    openai_api_key = request.headers.get("x-openai-api-key", os.environ.get("OPENAI_API_KEY"))
+    openai_api_key = request.headers.get(
+        "x-openai-api-key", os.environ.get("OPENAI_API_KEY")
+    )
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
-    
+
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", None)
     prompt_params = payload.pop("promptParams", {})
@@ -132,25 +167,33 @@ async def validate(guard_name: str, request: Request):
     if llm_api is not None:
         llm_api = get_llm_callable(llm_api)
         if openai_api_key is None:
-            raise HTTPException(status_code=400, detail="Cannot perform calls to OpenAI without an api key.")
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot perform calls to OpenAI without an api key.",
+            )
 
     guard = guard_struct
     is_async = inspect.iscoroutinefunction(llm_api)
-   
+
     if not isinstance(guard_struct, Guard):
         if is_async:
             guard = AsyncGuard.from_dict(guard_struct.to_dict())
         else:
             guard: Guard = Guard.from_dict(guard_struct.to_dict())
     elif is_async:
-        guard:Guard = AsyncGuard.from_dict(guard_struct.to_dict())
+        guard: Guard = AsyncGuard.from_dict(guard_struct.to_dict())
 
     if llm_api is None and num_reasks and num_reasks > 1:
-        raise HTTPException(status_code=400, detail="Cannot perform re-asks without an LLM API. Specify llm_api when calling guard(...).")
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot perform re-asks without an LLM API. Specify llm_api when calling guard(...).",
+        )
 
     if llm_output is not None:
         if stream:
-            raise HTTPException(status_code=400, detail="Streaming is not supported for parse calls!")
+            raise HTTPException(
+                status_code=400, detail="Streaming is not supported for parse calls!"
+            )
         result: ValidationOutcome = guard.parse(
             llm_output=llm_output,
             num_reasks=num_reasks,
@@ -160,6 +203,7 @@ async def validate(guard_name: str, request: Request):
         )
     else:
         if stream:
+
             async def guard_streamer():
                 guard_stream = guard(
                     llm_api=llm_api,
@@ -170,7 +214,9 @@ async def validate(guard_name: str, request: Request):
                     **payload,
                 )
                 for result in guard_stream:
-                    validation_output = ValidationOutcome.from_guard_history(guard.history.last)
+                    validation_output = ValidationOutcome.from_guard_history(
+                        guard.history.last
+                    )
                     yield validation_output, result
 
             async def validate_streamer(guard_iter):
@@ -201,7 +247,9 @@ async def validate(guard_name: str, request: Request):
                 cache_key = f"{guard.name}-{final_validation_output.call_id}"
                 await cache_client.set(cache_key, serialized_history, 300)
 
-            return StreamingResponse(validate_streamer(guard_streamer()), media_type="application/json")
+            return StreamingResponse(
+                validate_streamer(guard_streamer()), media_type="application/json"
+            )
         else:
             result: ValidationOutcome = guard(
                 llm_api=llm_api,
@@ -216,11 +264,13 @@ async def validate(guard_name: str, request: Request):
     # await cache_client.set(cache_key, serialized_history, 300)
     return result.to_dict()
 
+
 @router.get("/guards/{guard_name}/history/{call_id}")
 @handle_error
 async def guard_history(guard_name: str, call_id: str):
     cache_key = f"{guard_name}-{call_id}"
     return await cache_client.get(cache_key)
+
 
 def collect_telemetry(
     *,
