@@ -1,6 +1,6 @@
 gunicorn --bind 0.0.0.0:8000 \
          --timeout 120 \
-         --workers 3 \
+         --workers 2 \
          --threads 2 \
          --worker-class=uvicorn.workers.UvicornWorker \
          "guardrails_api.app:create_app()" \

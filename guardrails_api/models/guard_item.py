@@ -1,9 +1,9 @@
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.dialects.postgresql import JSONB
-from guardrails_api.models.base import db
+from guardrails_api.clients.postgres_client import Base
 
 
-class GuardItem(db.Model):
+class GuardItem(Base):
     __tablename__ = "guards"
     # TODO: Make primary key a composite between guard.name and the guard owner's userId
     name = Column(String, primary_key=True)

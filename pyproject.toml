@@ -11,7 +11,6 @@ keywords = ["Guardrails", "Guardrails AI", "Guardrails API", "Guardrails API"]
 requires-python = ">= 3.8.1"
 dependencies = [
     "guardrails-ai>=0.5.6",
-    "Flask-SQLAlchemy>=3.1.1,<4",
     "Werkzeug>=3.0.3,<4",
     "jsonschema>=4.22.0,<5",
     "referencing>=0.35.1,<1",
@@ -27,6 +26,7 @@ dependencies = [
     "requests>=2.32.3",
     "aiocache>=0.11.1",
     "fastapi>=0.114.1",
+    "SQLAlchemy>=2.0.34",
 ]
 
 [tool.setuptools.dynamic]
@@ -42,6 +42,7 @@ dev = [
     "coverage",
     "pytest-mock",
     "gunicorn>=22.0.0,<23",
+    "uvicorn",
 ]
 
 [tool.pytest.ini_options]

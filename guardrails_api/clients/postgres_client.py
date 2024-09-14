@@ -2,14 +2,22 @@ import boto3
 import json
 import os
 import threading
-from flask import Flask
-from sqlalchemy import text
+from fastapi import FastAPI
 from typing import Tuple
-from guardrails_api.models.base import db, INIT_EXTENSIONS
+from sqlalchemy import create_engine, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()
 
 
 def postgres_is_enabled() -> bool:
     return os.environ.get("PGHOST", None) is not None
+
+
+# Global variables for database session
+postgres_client = None
+SessionLocal = None
 
 
 class PostgresClient:
@@ -45,7 +53,17 @@ class PostgresClient:
         pg_password = pg_password or os.environ.get("PGPASSWORD")
         return pg_user, pg_password
 
-    def initialize(self, app: Flask):
+    def get_db(self):
+        if postgres_is_enabled():
+            db = self.SessionLocal()
+            try:
+                yield db
+            finally:
+                db.close()
+        else:
+            yield None
+
+    def initialize(self, app: FastAPI):
         pg_user, pg_password = self.get_pg_creds()
         pg_host = os.environ.get("PGHOST", "localhost")
         pg_port = os.environ.get("PGPORT", "5432")
@@ -64,23 +82,64 @@ class PostgresClient:
         if os.environ.get("NODE_ENV") == "production":
             conf = f"{conf}?sslmode=verify-ca&sslrootcert=global-bundle.pem"
 
-        app.config["SQLALCHEMY_DATABASE_URI"] = conf
+        engine = create_engine(conf)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        app.secret_key = "secret"
         self.app = app
-        self.db = db
-        db.init_app(app)
-        from guardrails_api.models.guard_item import GuardItem  # NOQA
-        from guardrails_api.models.guard_item_audit import (  # NOQA
-            GuardItemAudit,
-            AUDIT_FUNCTION,
-            AUDIT_TRIGGER,
-        )
+        self.engine = engine
+        self.SessionLocal = SessionLocal
+        # Create tables
+        from guardrails_api.models import GuardItem, GuardItemAudit  # noqa
 
-        with self.app.app_context():
-            self.db.session.execute(text(INIT_EXTENSIONS))
-            self.db.create_all()
-            self.db.session.execute(text(AUDIT_FUNCTION))
-            self.db.session.execute(text(AUDIT_TRIGGER))
-            self.db.session.commit()
+        Base.metadata.create_all(bind=engine)
+
+        # Execute custom SQL
+        with engine.connect() as connection:
+            connection.execute(text(INIT_EXTENSIONS))
+            connection.execute(text(AUDIT_FUNCTION))
+            connection.execute(text(AUDIT_TRIGGER))
+            connection.commit()
+
+
+# Define INIT_EXTENSIONS, AUDIT_FUNCTION, and AUDIT_TRIGGER here as they were in your original code
+INIT_EXTENSIONS = """
+-- Your SQL for initializing extensions
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp') THEN
+        CREATE EXTENSION "uuid-ossp";
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
+        CREATE EXTENSION "vector";
+    END IF;
+END $$;
+"""
+
+AUDIT_FUNCTION = """
+CREATE OR REPLACE FUNCTION guard_audit_function() RETURNS TRIGGER AS $guard_audit$
+BEGIN
+    IF (TG_OP = 'DELETE') THEN
+    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'D';
+    ELSIF (TG_OP = 'UPDATE') THEN
+    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'U';
+    ELSIF (TG_OP = 'INSERT') THEN
+    INSERT INTO guards_audit SELECT uuid_generate_v4(), NEW.*, now(), 'I';
+    END IF;
+    RETURN null;
+END;
+$guard_audit$
+LANGUAGE plpgsql;
+"""
+
+AUDIT_TRIGGER = """
+DROP TRIGGER IF EXISTS guard_audit_trigger
+  ON guards;
+CREATE TRIGGER guard_audit_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON guards
+    FOR EACH ROW
+    EXECUTE PROCEDURE guard_audit_function();
+"""
