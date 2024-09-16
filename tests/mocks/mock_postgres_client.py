@@ -49,7 +49,14 @@ class MockDb:
     def __init__(self) -> None:
         self.session = MockSession()
 
+    def SessionLocal(self):
+        return self.session
+
 
 class MockPostgresClient:
     def __init__(self):
         self.db = MockDb()
+        self.pgClient = self.db
+
+    def get_db(self):
+        return MockSession()
