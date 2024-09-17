@@ -11,62 +11,10 @@ from guardrails_api.utils.trace_server_start_if_enabled import (
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from rich.console import Console
 from rich.rule import Rule
-from starlette.middleware.base import BaseHTTPMiddleware
 from typing import Optional
-from urllib.parse import urlparse
 import importlib.util
 import json
 import os
-
-# from pyinstrument import Profiler
-# from pyinstrument.renderers.html import HTMLRenderer
-# from pyinstrument.renderers.speedscope import SpeedscopeRenderer
-# from starlette.middleware.base import RequestResponseEndpoint
-# class ProfilingMiddleware(BaseHTTPMiddleware):
-#     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-#         """Profile the current request
-
-#         Taken from https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi
-#         with small improvements.
-
-#         """
-#         # we map a profile type to a file extension, as well as a pyinstrument profile renderer
-#         profile_type_to_ext = {"html": "html", "speedscope": "speedscope.json"}
-#         profile_type_to_renderer = {
-#             "html": HTMLRenderer,
-#             "speedscope": SpeedscopeRenderer,
-#         }
-
-#         if request.headers.get("X-Profile-Request"):
-#                 # The default profile format is speedscope
-#                 profile_type = request.query_params.get("profile_format", "speedscope")
-
-#                 # we profile the request along with all additional middlewares, by interrupting
-#                 # the program every 1ms1 and records the entire stack at that point
-#                 with Profiler(interval=0.001, async_mode="enabled") as profiler:
-#                     response = await call_next(request)
-
-#                 # we dump the profiling into a file
-#                 # Generate a unique filename based on timestamp and request properties
-#                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-#                 method = request.method
-#                 path = request.url.path.replace("/", "_").strip("_")
-#                 extension = profile_type_to_ext[profile_type]
-#                 filename = f"profile_{timestamp}_{method}_{path}.{extension}"
-
-#                 # Ensure the profiling directory exists
-#                 profiling_dir = "profiling"
-#                 os.makedirs(profiling_dir, exist_ok=True)
-
-#                 # Dump the profiling into a file
-#                 renderer = profile_type_to_renderer[profile_type]()
-#                 filepath = os.path.join(profiling_dir, filename)
-#                 with open(filepath, "w") as out:
-#                     out.write(profiler.output(renderer=renderer))
-
-#                 return response
-#         else:
-#             return await call_next(request)
 
 
 # Custom JSON encoder
@@ -77,16 +25,6 @@ class CustomJSONEncoder(json.JSONEncoder):
         if callable(o):
             return str(o)
         return super().default(o)
-
-
-# Custom middleware for reverse proxy
-class ReverseProxyMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        self_endpoint = os.environ.get("SELF_ENDPOINT", "http://localhost:8000")
-        url = urlparse(self_endpoint)
-        request.scope["scheme"] = url.scheme
-        response = await call_next(request)
-        return response
 
 
 def register_config(config: Optional[str] = None):
@@ -124,7 +62,7 @@ def create_app(
 
     register_config(config)
 
-    app = FastAPI()
+    app = FastAPI(openapi_url="")
 
     # Initialize FastAPIInstrumentor
     FastAPIInstrumentor.instrument_app(app)
@@ -139,9 +77,6 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Add reverse proxy middleware
-    app.add_middleware(ReverseProxyMiddleware)
 
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)

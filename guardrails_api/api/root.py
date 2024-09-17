@@ -22,7 +22,7 @@ router = APIRouter()
 
 @router.get("/")
 async def home():
-    return "Hello, FastAPI!"
+    return "Hello, world!"
 
 
 @router.get("/health-check", response_model=HealthCheckResponse)
