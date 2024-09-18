@@ -28,7 +28,7 @@ setup(
         "opentelemetry-sdk>=1.0.0,<2",
         "opentelemetry-exporter-otlp-proto-grpc>=1.0.0,<2",
         "opentelemetry-exporter-otlp-proto-http>=1.0.0,<2",
-        "opentelemetry-instrumentation-fastapi>=0.47b0",
+        "opentelemetry-instrumentation-fastapi>=0.48b0",
         "requests>=2.32.3",
         "aiocache>=0.11.1",
         "fastapi>=0.114.1",
