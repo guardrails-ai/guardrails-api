@@ -14,7 +14,7 @@ class CacheClient:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def initialize(self, app: FastAPI):
+    def initialize(self):
         caches.set_config(
             {
                 "default": {

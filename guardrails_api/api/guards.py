@@ -37,6 +37,9 @@ else:
             guard_client.create_guard(export)
 
 cache_client = CacheClient()
+
+cache_client.initialize()
+
 router = APIRouter()
 
 
