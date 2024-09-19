@@ -127,7 +127,7 @@ def create_app(
         pg_client.initialize(app)
 
     cache_client = CacheClient()
-    cache_client.initialize(app)
+    cache_client.initialize()
 
     from guardrails_api.api.root import router as root_router
     from guardrails_api.api.guards import router as guards_router, guard_client

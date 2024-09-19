@@ -16,8 +16,7 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8, <4",
     install_requires=[
-        "guardrails-ai>=0.5.6",
-        "Werkzeug>=3.0.3,<4",
+        "guardrails-ai>=0.5.10",
         "jsonschema>=4.22.0,<5",
         "referencing>=0.35.1,<1",
         "boto3>=1.34.115,<2",
@@ -33,6 +32,7 @@ setup(
         "aiocache>=0.11.1",
         "fastapi>=0.114.1",
         "SQLAlchemy>=2.0.34",
+        "uvicorn>=0.30.6",
     ],
     package_data={"guardrails_api": ["py.typed", "open-api-spec.json"]},
 )
