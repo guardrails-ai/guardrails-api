@@ -10,6 +10,8 @@ def test_start(mocker):
         "guardrails_api.cli.start.create_app", return_value=mock_app
     )
 
+    mocker.patch("uvicorn.run")
+
     from guardrails_api.cli.start import start
 
     # pg enabled

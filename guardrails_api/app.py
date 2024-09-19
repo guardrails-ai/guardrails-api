@@ -20,6 +20,7 @@ import os
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
+
 class RequestInfoMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         tracer = trace.get_tracer(__name__)
