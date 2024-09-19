@@ -1,5 +1,4 @@
 import threading
-from fastapi import FastAPI
 from aiocache import caches
 
 

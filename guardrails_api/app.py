@@ -19,7 +19,6 @@ import json
 import os
 
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
 
 class RequestInfoMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -49,6 +48,7 @@ class RequestInfoMiddleware(BaseHTTPMiddleware):
 
             response = await call_next(request)
             return response
+
 
 # Custom JSON encoder
 class CustomJSONEncoder(json.JSONEncoder):
@@ -102,7 +102,6 @@ def create_app(
 
     # Initialize FastAPIInstrumentor
     FastAPIInstrumentor.instrument_app(app)
-
 
     # Add CORS middleware
     app.add_middleware(
