@@ -1,8 +1,7 @@
 import threading
-from flask_caching import Cache
+from aiocache import caches
 
 
-# TODO: Add option to connect to Redis or MemCached backend with environment variables
 class CacheClient:
     _instance = None
     _lock = threading.Lock()
@@ -10,27 +9,30 @@ class CacheClient:
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
-                cls._instance = super(CacheClient, cls).__new__(cls)
+                if cls._instance is None:  # Double-checked locking
+                    cls._instance = super().__new__(cls)
         return cls._instance
 
-    def initialize(self, app):
-        self.cache = Cache(
-            app,
-            config={
-                "CACHE_TYPE": "SimpleCache",
-                "CACHE_DEFAULT_TIMEOUT": 300,
-                "CACHE_THRESHOLD": 50,
-            },
+    def initialize(self):
+        caches.set_config(
+            {
+                "default": {
+                    "cache": "aiocache.SimpleMemoryCache",
+                    "serializer": {"class": "aiocache.serializers.JsonSerializer"},
+                    "ttl": 300,
+                }
+            }
         )
+        self.cache = caches.get("default")
 
-    def get(self, key):
-        return self.cache.get(key)
+    async def get(self, key: str):
+        return await self.cache.get(key)
 
-    def set(self, key, value, ttl):
-        self.cache.set(key, value, timeout=ttl)
+    async def set(self, key: str, value: str, ttl: int):
+        await self.cache.set(key, value, ttl=ttl)
 
-    def delete(self, key):
-        self.cache.delete(key)
+    async def delete(self, key: str):
+        await self.cache.delete(key)
 
-    def clear(self):
-        self.cache.clear()
+    async def clear(self):
+        await self.cache.clear()

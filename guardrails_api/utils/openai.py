@@ -1,5 +1,6 @@
 from guardrails.classes import ValidationOutcome
 
+
 def outcome_to_stream_response(validation_outcome: ValidationOutcome):
     stream_chunk_template = {
         "choices": [

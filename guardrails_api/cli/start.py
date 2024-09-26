@@ -3,6 +3,8 @@ from typing import Optional
 from guardrails_api.cli.cli import cli
 from guardrails_api.app import create_app
 from guardrails_api.utils.configuration import valid_configuration
+import uvicorn
+
 
 @cli.command("start")
 def start(
@@ -24,4 +26,5 @@ def start(
     env = env or None
     config = config or None
     valid_configuration(config)
-    create_app(env, config, port).run(port=port)
+    app = create_app(env, config, port)
+    uvicorn.run(app, port=port)

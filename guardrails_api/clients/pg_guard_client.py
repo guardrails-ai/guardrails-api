@@ -18,14 +18,20 @@ class PGGuardClient(GuardClient):
         self.initialized = True
         self.pgClient = PostgresClient()
 
+    def get_db(self):  # generator for local sessions
+        db = self.pgClient.SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
     def get_guard(self, guard_name: str, as_of_date: str = None) -> GuardStruct:
-        latest_guard_item = (
-            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
-        )
+        db = next(self.get_db())
+        latest_guard_item = db.query(GuardItem).filter_by(name=guard_name).first()
         audit_item = None
         if as_of_date is not None:
             audit_item = (
-                self.pgClient.db.session.query(GuardItemAudit)
+                db.query(GuardItemAudit)
                 .filter_by(name=guard_name)
                 .filter(GuardItemAudit.replaced_on > as_of_date)
                 .order_by(GuardItemAudit.replaced_on.asc())
@@ -43,27 +49,29 @@ class PGGuardClient(GuardClient):
         return from_guard_item(guard_item)
 
     def get_guard_item(self, guard_name: str) -> GuardItem:
-        return (
-            self.pgClient.db.session.query(GuardItem).filter_by(name=guard_name).first()
-        )
+        db = next(self.get_db())
+        return db.query(GuardItem).filter_by(name=guard_name).first()
 
     def get_guards(self) -> List[GuardStruct]:
-        guard_items = self.pgClient.db.session.query(GuardItem).all()
+        db = next(self.get_db())
+        guard_items = db.query(GuardItem).all()
 
         return [from_guard_item(gi) for gi in guard_items]
 
     def create_guard(self, guard: GuardStruct) -> GuardStruct:
+        db = next(self.get_db())
         guard_item = GuardItem(
             name=guard.name,
             railspec=guard.to_dict(),
             num_reasks=None,
             description=guard.description,
         )
-        self.pgClient.db.session.add(guard_item)
-        self.pgClient.db.session.commit()
+        db.add(guard_item)
+        db.commit()
         return from_guard_item(guard_item)
 
     def update_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
+        db = next(self.get_db())
         guard_item = self.get_guard_item(guard_name)
         if guard_item is None:
             raise HttpError(
@@ -76,21 +84,23 @@ class PGGuardClient(GuardClient):
         # guard_item.num_reasks = guard.num_reasks
         guard_item.railspec = guard.to_dict()
         guard_item.description = guard.description
-        self.pgClient.db.session.commit()
+        db.commit()
         return from_guard_item(guard_item)
 
     def upsert_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
+        db = next(self.get_db())
         guard_item = self.get_guard_item(guard_name)
         if guard_item is not None:
             guard_item.railspec = guard.to_dict()
             guard_item.description = guard.description
             # guard_item.num_reasks = guard.num_reasks
-            self.pgClient.db.session.commit()
+            db.commit()
             return from_guard_item(guard_item)
         else:
             return self.create_guard(guard)
 
     def delete_guard(self, guard_name: str) -> GuardStruct:
+        db = next(self.get_db())
         guard_item = self.get_guard_item(guard_name)
         if guard_item is None:
             raise HttpError(
@@ -100,7 +110,7 @@ class PGGuardClient(GuardClient):
                     guard_name=guard_name
                 ),
             )
-        self.pgClient.db.session.delete(guard_item)
-        self.pgClient.db.session.commit()
+        db.delete(guard_item)
+        db.commit()
         guard = from_guard_item(guard_item)
         return guard
