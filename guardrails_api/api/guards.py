@@ -114,7 +114,7 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
         )
 
     guard = (
-        Guard.from_dict(guard_struct.to_dict())
+        AsyncGuard.from_dict(guard_struct.to_dict())
         if not isinstance(guard_struct, Guard)
         else guard_struct
     )
@@ -125,7 +125,7 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
     )
 
     if not stream:
-        validation_outcome: ValidationOutcome = guard(num_reasks=0, **payload)
+        validation_outcome: ValidationOutcome = await guard(num_reasks=0, **payload)
         llm_response = guard.history.last.iterations.last.outputs.llm_response_info
         result = outcome_to_chat_completion(
             validation_outcome=validation_outcome,
@@ -136,8 +136,8 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
     else:
 
         async def openai_streamer():
-            guard_stream = guard(num_reasks=0, **payload)
-            for result in guard_stream:
+            guard_stream = await guard(num_reasks=0, **payload)
+            async for result in guard_stream:
                 chunk = json.dumps(
                     outcome_to_stream_response(validation_outcome=result)
                 )
@@ -253,22 +253,18 @@ async def validate(guard_name: str, request: Request):
                 validate_streamer(guard_streamer()), media_type="application/json"
             )
         else:
-            if inspect.iscoroutinefunction(guard):
-                result: ValidationOutcome = await guard(
-                    llm_api=llm_api,
-                    prompt_params=prompt_params,
-                    num_reasks=num_reasks,
-                    *args,
-                    **payload,
-                )
+            execution = guard(
+                llm_api=llm_api,
+                prompt_params=prompt_params,
+                num_reasks=num_reasks,
+                *args,
+                **payload,
+            )
+
+            if inspect.iscoroutine(execution):
+                result: ValidationOutcome = await execution
             else:
-                result: ValidationOutcome = guard(
-                    llm_api=llm_api,
-                    prompt_params=prompt_params,
-                    num_reasks=num_reasks,
-                    *args,
-                    **payload,
-                )
+                result: ValidationOutcome = execution
 
     serialized_history = [call.to_dict() for call in guard.history]
     cache_key = f"{guard.name}-{result.call_id}"
