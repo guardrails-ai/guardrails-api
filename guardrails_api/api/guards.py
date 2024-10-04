@@ -253,22 +253,18 @@ async def validate(guard_name: str, request: Request):
                 validate_streamer(guard_streamer()), media_type="application/json"
             )
         else:
-            if inspect.iscoroutinefunction(guard):
-                result: ValidationOutcome = await guard(
-                    llm_api=llm_api,
-                    prompt_params=prompt_params,
-                    num_reasks=num_reasks,
-                    *args,
-                    **payload,
-                )
+            execution = guard(
+                llm_api=llm_api,
+                prompt_params=prompt_params,
+                num_reasks=num_reasks,
+                *args,
+                **payload,
+            )
+
+            if inspect.iscoroutine(execution):
+                result: ValidationOutcome = await execution
             else:
-                result: ValidationOutcome = guard(
-                    llm_api=llm_api,
-                    prompt_params=prompt_params,
-                    num_reasks=num_reasks,
-                    *args,
-                    **payload,
-                )
+                result: ValidationOutcome = execution
 
     serialized_history = [call.to_dict() for call in guard.history]
     cache_key = f"{guard.name}-{result.call_id}"
