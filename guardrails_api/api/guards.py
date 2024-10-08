@@ -282,9 +282,9 @@ async def validate(guard_name: str, request: Request):
             else:
                 result: ValidationOutcome = execution
 
-    serialized_history = [call.to_dict() for call in guard.history]
-    cache_key = f"{guard.name}-{result.call_id}"
-    await cache_client.set(cache_key, serialized_history, 300)
+    # serialized_history = [call.to_dict() for call in guard.history]
+    # cache_key = f"{guard.name}-{result.call_id}"
+    # await cache_client.set(cache_key, serialized_history, 300)
     return result.to_dict()
 
 
