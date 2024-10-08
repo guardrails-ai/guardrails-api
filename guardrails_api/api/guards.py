@@ -136,13 +136,17 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
     else:
 
         async def openai_streamer():
-            guard_stream = await guard(num_reasks=0, **payload)
-            async for result in guard_stream:
-                chunk = json.dumps(
-                    outcome_to_stream_response(validation_outcome=result)
-                )
-                yield f"data: {chunk}\n\n"
-            yield "\n"
+            try:
+                guard_stream = await guard(num_reasks=0, **payload)
+                async for result in guard_stream:
+                    chunk = json.dumps(
+                        outcome_to_stream_response(validation_outcome=result)
+                    )
+                    yield f"data: {chunk}\n\n"
+                yield "\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': {'message':str(e)}})}\n\n"
+                yield "\n"
 
         return StreamingResponse(openai_streamer(), media_type="text/event-stream")
 
@@ -205,49 +209,61 @@ async def validate(guard_name: str, request: Request):
         )
     else:
         if stream:
-
             async def guard_streamer():
-                guard_stream = guard(
-                    llm_api=llm_api,
-                    prompt_params=prompt_params,
-                    num_reasks=num_reasks,
-                    stream=stream,
-                    *args,
-                    **payload,
-                )
-                for result in guard_stream:
-                    validation_output = ValidationOutcome.from_guard_history(
-                        guard.history.last
+                call = guard(
+                        llm_api=llm_api,
+                        prompt_params=prompt_params,
+                        num_reasks=num_reasks,
+                        stream=stream,
+                        *args,
+                        **payload,
                     )
-                    yield validation_output, result
+                is_async = inspect.iscoroutine(call)
+                if is_async:
+                    guard_stream = await call
+                    async for result in guard_stream:
+                        validation_output = ValidationOutcome.from_guard_history(
+                            guard.history.last
+                        )
+                        yield validation_output, result
+                else:
+                    guard_stream = call
+                    for result in guard_stream:
+                        validation_output = ValidationOutcome.from_guard_history(
+                            guard.history.last
+                        )
+                        yield validation_output, result
 
             async def validate_streamer(guard_iter):
-                async for validation_output, result in guard_iter:
-                    fragment_dict = result.to_dict()
-                    fragment_dict["error_spans"] = [
+                try:
+                    async for validation_output, result in guard_iter:
+                        fragment_dict = result.to_dict()
+                        fragment_dict["error_spans"] = [
+                            json.dumps({"start": x.start, "end": x.end, "reason": x.reason})
+                            for x in guard.error_spans_in_output()
+                        ]
+                        yield json.dumps(fragment_dict) + "\n"
+
+                    call = guard.history.last
+                    final_validation_output = ValidationOutcome(
+                        callId=call.id,
+                        validation_passed=result.validation_passed,
+                        validated_output=result.validated_output,
+                        history=guard.history,
+                        raw_llm_output=result.raw_llm_output,
+                    )
+                    final_output_dict = final_validation_output.to_dict()
+                    final_output_dict["error_spans"] = [
                         json.dumps({"start": x.start, "end": x.end, "reason": x.reason})
                         for x in guard.error_spans_in_output()
                     ]
-                    yield json.dumps(fragment_dict) + "\n"
+                    yield json.dumps(final_output_dict) + "\n"
+                except Exception as e:
+                    yield json.dumps({"error": {"message": str(e)}}) + "\n"
 
-                call = guard.history.last
-                final_validation_output = ValidationOutcome(
-                    callId=call.id,
-                    validation_passed=result.validation_passed,
-                    validated_output=result.validated_output,
-                    history=guard.history,
-                    raw_llm_output=result.raw_llm_output,
-                )
-                final_output_dict = final_validation_output.to_dict()
-                final_output_dict["error_spans"] = [
-                    json.dumps({"start": x.start, "end": x.end, "reason": x.reason})
-                    for x in guard.error_spans_in_output()
-                ]
-                yield json.dumps(final_output_dict) + "\n"
-
-                serialized_history = [call.to_dict() for call in guard.history]
-                cache_key = f"{guard.name}-{final_validation_output.call_id}"
-                await cache_client.set(cache_key, serialized_history, 300)
+                # serialized_history = [call.to_dict() for call in guard.history]
+                # cache_key = f"{guard.name}-{final_validation_output.call_id}"
+                # await cache_client.set(cache_key, serialized_history, 300)
 
             return StreamingResponse(
                 validate_streamer(guard_streamer()), media_type="application/json"
