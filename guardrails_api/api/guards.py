@@ -200,13 +200,17 @@ async def validate(guard_name: str, request: Request):
             raise HTTPException(
                 status_code=400, detail="Streaming is not supported for parse calls!"
             )
-        result: ValidationOutcome = guard.parse(
+        execution = guard.parse(
             llm_output=llm_output,
             num_reasks=num_reasks,
             prompt_params=prompt_params,
             llm_api=llm_api,
             **payload,
         )
+        if inspect.iscoroutine(execution):
+            result: ValidationOutcome = await execution
+        else:
+            result: ValidationOutcome = execution
     else:
         if stream:
             async def guard_streamer():
@@ -276,7 +280,6 @@ async def validate(guard_name: str, request: Request):
                 *args,
                 **payload,
             )
-
             if inspect.iscoroutine(execution):
                 result: ValidationOutcome = await execution
             else:
