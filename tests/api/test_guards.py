@@ -347,9 +347,8 @@ def test_openai_v1_chat_completions__call(mocker):
     )
 
     mock___call__ = mocker.patch.object(MockGuardStruct, "__call__")
-    future = asyncio.Future()
-    future.set_result(mock_outcome)
-    mock___call__.return_value = future
+
+    mock___call__.return_value = mock_outcome
 
     mock_from_dict = mocker.patch("guardrails_api.api.guards.Guard.from_dict")
     mock_from_dict.return_value = mock_guard
