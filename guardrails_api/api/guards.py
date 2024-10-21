@@ -127,7 +127,12 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
     )
 
     if not stream:
-        validation_outcome: ValidationOutcome = await guard(num_reasks=0, **payload)
+        execution = guard(num_reasks=0, **payload)
+        if inspect.iscoroutine(execution):
+            validation_outcome: ValidationOutcome = await execution
+        else:
+            validation_outcome: ValidationOutcome = execution
+
         llm_response = guard.history.last.iterations.last.outputs.llm_response_info
         result = outcome_to_chat_completion(
             validation_outcome=validation_outcome,
