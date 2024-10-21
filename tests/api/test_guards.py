@@ -14,9 +14,6 @@ from guardrails_api.app import register_config
 from tests.mocks.mock_guard_client import MockGuardStruct
 from guardrails_api.api.guards import router as guards_router
 
-
-import asyncio
-
 # TODO: Should we mock this somehow?
 #   Right now it's just empty, but it technically does a file read
 register_config()
