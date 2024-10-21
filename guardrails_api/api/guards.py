@@ -42,6 +42,8 @@ cache_client.initialize()
 
 router = APIRouter()
 
+def guard_history_is_enabled():
+    return os.environ.get("GUARD_HISTORY_ENABLED", "true").lower() == "true"
 
 @router.get("/guards")
 @handle_error
@@ -265,9 +267,10 @@ async def validate(guard_name: str, request: Request):
                 except Exception as e:
                     yield json.dumps({"error": {"message": str(e)}}) + "\n"
 
-                # serialized_history = [call.to_dict() for call in guard.history]
-                # cache_key = f"{guard.name}-{final_validation_output.call_id}"
-                # await cache_client.set(cache_key, serialized_history, 300)
+                if guard_history_is_enabled():
+                    serialized_history = [call.to_dict() for call in guard.history]
+                    cache_key = f"{guard.name}-{final_validation_output.call_id}"
+                    await cache_client.set(cache_key, serialized_history, 300)
 
             return StreamingResponse(
                 validate_streamer(guard_streamer()), media_type="application/json"
@@ -284,10 +287,10 @@ async def validate(guard_name: str, request: Request):
                 result: ValidationOutcome = await execution
             else:
                 result: ValidationOutcome = execution
-
-    # serialized_history = [call.to_dict() for call in guard.history]
-    # cache_key = f"{guard.name}-{result.call_id}"
-    # await cache_client.set(cache_key, serialized_history, 300)
+    if guard_history_is_enabled():
+        serialized_history = [call.to_dict() for call in guard.history]
+        cache_key = f"{guard.name}-{result.call_id}"
+        await cache_client.set(cache_key, serialized_history, 300)
     return result.to_dict()
 
 
