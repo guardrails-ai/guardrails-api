@@ -63,24 +63,21 @@ class PostgresClient:
         else:
             yield None
 
+
+    def generate_lock_id(self, name: str) -> int:
+        import hashlib
+        return int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**63)
+
     def initialize(self, app: FastAPI):
         pg_user, pg_password = self.get_pg_creds()
         pg_host = os.environ.get("PGHOST", "localhost")
         pg_port = os.environ.get("PGPORT", "5432")
         pg_database = os.environ.get("PGDATABASE", "postgres")
 
-        pg_endpoint = (
-            pg_host
-            if pg_host.endswith(
-                f":{pg_port}"
-            )  # FIXME: This is a cheap check; maybe use a regex instead?
-            else f"{pg_host}:{pg_port}"
-        )
-
+        pg_endpoint = f"{pg_host}:{pg_port}"
         conf = f"postgresql://{pg_user}:{pg_password}@{pg_endpoint}/{pg_database}"
-
         if os.environ.get("NODE_ENV") == "production":
-            conf = f"{conf}?sslmode=verify-ca&sslrootcert=global-bundle.pem"
+            conf += "?sslmode=verify-ca&sslrootcert=global-bundle.pem"
 
         engine = create_engine(conf)
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -88,17 +85,26 @@ class PostgresClient:
         self.app = app
         self.engine = engine
         self.SessionLocal = SessionLocal
-        # Create tables
+
+        lock_id = self.generate_lock_id("guardrails-api")
+
+        # Use advisory lock to ensure only one worker runs initialization
+        with engine.begin() as connection:
+            lock_acquired = connection.execute(text(f"SELECT pg_try_advisory_lock({lock_id});")).scalar()
+            if lock_acquired:
+                self.run_initialization(connection)
+                # Release the lock after initialization is complete
+                connection.execute(text("SELECT pg_advisory_unlock(12345);"))
+
+    def run_initialization(self, connection):
+        # Perform the actual initialization tasks
         from guardrails_api.models import GuardItem, GuardItemAudit  # noqa
-
-        Base.metadata.create_all(bind=engine)
-
-        # Execute custom SQL
-        with engine.connect() as connection:
-            connection.execute(text(INIT_EXTENSIONS))
-            connection.execute(text(AUDIT_FUNCTION))
-            connection.execute(text(AUDIT_TRIGGER))
-            connection.commit()
+        Base.metadata.create_all(bind=self.engine)
+        
+        # Execute custom SQL extensions and triggers
+        connection.execute(text(INIT_EXTENSIONS))
+        connection.execute(text(AUDIT_FUNCTION))
+        connection.execute(text(AUDIT_TRIGGER))
 
 
 # Define INIT_EXTENSIONS, AUDIT_FUNCTION, and AUDIT_TRIGGER here as they were in your original code
@@ -143,3 +149,4 @@ CREATE TRIGGER guard_audit_trigger
     FOR EACH ROW
     EXECUTE PROCEDURE guard_audit_function();
 """
+
