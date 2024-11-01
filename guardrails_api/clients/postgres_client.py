@@ -94,7 +94,7 @@ class PostgresClient:
             if lock_acquired:
                 self.run_initialization(connection)
                 # Release the lock after initialization is complete
-                connection.execute(text("SELECT pg_advisory_unlock(12345);"))
+                connection.execute(text(f"SELECT pg_advisory_unlock({lock_id});"))
 
     def run_initialization(self, connection):
         # Perform the actual initialization tasks
