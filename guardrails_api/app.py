@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from flask import Flask
+from flask import Flask, Response, request
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -81,6 +81,11 @@ def create_app(
     app.config["PREFERRED_URL_SCHEME"] = "https"
     app.wsgi_app = ReverseProxied(app.wsgi_app)
     CORS(app)
+
+    @app.before_request
+    def basic_cors():
+        if request.method.lower() == 'options':
+            return Response()
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
