@@ -18,7 +18,10 @@ from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.handle_error import handle_error
 from guardrails_api.utils.get_llm_callable import get_llm_callable
-from guardrails_api.utils.openai import outcome_to_chat_completion, outcome_to_stream_response
+from guardrails_api.utils.openai import (
+    outcome_to_chat_completion,
+    outcome_to_stream_response,
+)
 
 guards_bp = Blueprint("guards", __name__, url_prefix="/guards")
 
@@ -272,7 +275,6 @@ def validate(guard_name: str):
     # ) as validate_span:
     # guard: Guard = guard_struct.to_guard(openai_api_key, otel_tracer)
 
-
     # validate_span.set_attribute("guardName", decoded_guard_name)
     if llm_api is not None:
         llm_api = get_llm_callable(llm_api)
@@ -295,7 +297,7 @@ def validate(guard_name: str):
         else:
             guard: Guard = Guard.from_dict(guard_struct.to_dict())
     elif is_async:
-        guard:Guard = AsyncGuard.from_dict(guard_struct.to_dict())
+        guard: Guard = AsyncGuard.from_dict(guard_struct.to_dict())
 
     if llm_api is None and num_reasks and num_reasks > 1:
         raise HttpError(
@@ -322,6 +324,7 @@ def validate(guard_name: str):
         )
     else:
         if stream:
+
             def guard_streamer():
                 guard_stream = guard(
                     llm_api=llm_api,
@@ -452,24 +455,30 @@ def validate(guard_name: str):
                 cache_key = f"{guard.name}-{final_validation_output.call_id}"
                 cache_client.set(cache_key, serialized_history, 300)
                 yield f"{final_output_json}\n"
+
             # apropos of https://stackoverflow.com/questions/73949570/using-stream-with-context-as-async
             def iter_over_async(ait, loop):
                 ait = ait.__aiter__()
+
                 async def get_next():
-                    try: 
+                    try:
                         obj = await ait.__anext__()
                         return False, obj
-                    except StopAsyncIteration: 
+                    except StopAsyncIteration:
                         return True, None
+
                 while True:
                     done, obj = loop.run_until_complete(get_next())
-                    if done: 
+                    if done:
                         break
                     yield obj
+
             if is_async:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                iter = iter_over_async(async_validate_streamer(async_guard_streamer()), loop)
+                iter = iter_over_async(
+                    async_validate_streamer(async_guard_streamer()), loop
+                )
             else:
                 iter = validate_streamer(guard_streamer())
             return Response(

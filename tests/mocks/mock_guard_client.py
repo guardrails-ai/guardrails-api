@@ -3,6 +3,7 @@ from guardrails_api_client import Guard as GuardStruct
 from pydantic import ConfigDict
 from guardrails.classes.generic import Stack
 
+
 class MockGuardStruct(GuardStruct):
     # Pydantic Config
     model_config = ConfigDict(arbitrary_types_allowed=True)

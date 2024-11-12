@@ -549,6 +549,7 @@ def test_validate__call(mocker):
 
     del os.environ["PGHOST"]
 
+
 def test_validate__call_throws_validation_error(mocker):
     os.environ["PGHOST"] = "localhost"
 
@@ -610,19 +611,24 @@ def test_validate__call_throws_validation_error(mocker):
         prompt="Hello world!",
     )
 
-    assert response == ('Test guard validation error', 400)
+    assert response == (
+        {"status_code": 400, "detail": "Test guard validation error"},
+        400,
+    )
 
     del os.environ["PGHOST"]
 
+
 def test_openai_v1_chat_completions__raises_404(mocker):
     from guardrails_api.blueprints.guards import openai_v1_chat_completions
+
     os.environ["PGHOST"] = "localhost"
     mock_guard = None
 
     mock_request = MockRequest(
         "POST",
         json={
-            "messages": [{"role":"user", "content":"Hello world!"}],
+            "messages": [{"role": "user", "content": "Hello world!"}],
         },
         headers={"x-openai-api-key": "mock-key"},
     )
@@ -637,15 +643,16 @@ def test_openai_v1_chat_completions__raises_404(mocker):
 
     response = openai_v1_chat_completions("My%20Guard's%20Name")
     assert response[1] == 404
-    assert response[0]["message"] == 'NotFound'
-
+    assert response[0]["message"] == "NotFound"
 
     mock_get_guard.assert_called_once_with("My Guard's Name")
 
     del os.environ["PGHOST"]
 
+
 def test_openai_v1_chat_completions__call(mocker):
     from guardrails_api.blueprints.guards import openai_v1_chat_completions
+
     os.environ["PGHOST"] = "localhost"
     mock_guard = MockGuardStruct()
     mock_outcome = ValidationOutcome(
@@ -664,7 +671,7 @@ def test_openai_v1_chat_completions__call(mocker):
     mock_request = MockRequest(
         "POST",
         json={
-            "messages": [{"role":"user", "content":"Hello world!"}],
+            "messages": [{"role": "user", "content": "Hello world!"}],
         },
         headers={"x-openai-api-key": "mock-key"},
     )
@@ -687,7 +694,7 @@ def test_openai_v1_chat_completions__call(mocker):
     )
     mock_status.return_value = "fail"
     mock_call = Call()
-    mock_call.iterations= Stack(Iteration('some-id', 1))
+    mock_call.iterations = Stack(Iteration("some-id", 1))
     mock_guard.history = Stack(mock_call)
 
     response = openai_v1_chat_completions("My%20Guard's%20Name")
@@ -698,7 +705,7 @@ def test_openai_v1_chat_completions__call(mocker):
 
     mock___call__.assert_called_once_with(
         num_reasks=0,
-        messages=[{"role":"user", "content":"Hello world!"}],
+        messages=[{"role": "user", "content": "Hello world!"}],
     )
 
     assert response == {
