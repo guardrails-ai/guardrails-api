@@ -6,6 +6,7 @@ from guardrails_api.utils.logger import logger
 from guardrails.errors import ValidationError
 
 
+# TODO: Return status_code and detail
 def handle_error(fn):
     @wraps(fn)
     def decorator(*args, **kwargs):
@@ -14,19 +15,33 @@ def handle_error(fn):
         except ValidationError as validation_error:
             logger.error(validation_error)
             traceback.print_exception(type(validation_error), validation_error, validation_error.__traceback__)
-            return str(validation_error), 400
+            resp_body = {
+                "status_code": 400,
+                "detail": str(validation_error)
+            }
+            return resp_body, 400
         except HttpError as http_error:
             logger.error(http_error)
             traceback.print_exception(type(http_error), http_error, http_error.__traceback__)
-            return http_error.to_dict(), http_error.status
+            resp_body = http_error.to_dict()
+            resp_body["status_code"] = http_error.status
+            resp_body["detail"] = http_error.message
+            return resp_body, http_error.status
         except HTTPException as http_exception:
             logger.error(http_exception)
             traceback.print_exception(http_exception)
             http_error = HttpError(http_exception.code, http_exception.description)
-            return http_error.to_dict(), http_error.status
+            resp_body = http_error.to_dict()
+            resp_body["status_code"] = http_error.status
+            resp_body["detail"] = http_error.message
+
+            return resp_body, http_error.status
         except Exception as e:
             logger.error(e)
             traceback.print_exception(e)
-            return HttpError(500, "Internal Server Error").to_dict(), 500
+            resp_body = HttpError(500, "Internal Server Error").to_dict()
+            resp_body["status_code"] = 500
+            resp_body["detail"] = "Internal Server Error"
+            return resp_body, 500
 
     return decorator
