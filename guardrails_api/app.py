@@ -9,7 +9,9 @@ from guardrails import configure_logging
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.otel import otel_is_disabled, initialize
-from guardrails_api.utils.trace_server_start_if_enabled import trace_server_start_if_enabled
+from guardrails_api.utils.trace_server_start_if_enabled import (
+    trace_server_start_if_enabled,
+)
 from guardrails_api.clients.cache_client import CacheClient
 from rich.console import Console
 from rich.rule import Rule
@@ -84,7 +86,7 @@ def create_app(
 
     @app.before_request
     def basic_cors():
-        if request.method.lower() == 'options':
+        if request.method.lower() == "options":
             return Response()
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
@@ -112,20 +114,25 @@ def create_app(
     app.register_blueprint(root_bp)
     app.register_blueprint(guards_bp)
 
+    console.print(f"\n:rocket: Guardrails API is available at {self_endpoint}")
     console.print(
-        f"\n:rocket: Guardrails API is available at {self_endpoint}"
+        f":book: Visit {self_endpoint}/docs to see available API endpoints.\n"
     )
-    console.print(f":book: Visit {self_endpoint}/docs to see available API endpoints.\n")
 
     console.print(":green_circle: Active guards and OpenAI compatible endpoints:")
 
     with app.app_context():
         from guardrails_api.blueprints.guards import guard_client
+
         for g in guard_client.get_guards():
             g = g.to_dict()
-            console.print(f"- Guard: [bold white]{g.get('name')}[/bold white] {self_endpoint}/guards/{g.get('name')}/openai/v1")
+            console.print(
+                f"- Guard: [bold white]{g.get('name')}[/bold white] {self_endpoint}/guards/{g.get('name')}/openai/v1"
+            )
 
     console.print("")
-    console.print(Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white"))
+    console.print(
+        Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white")
+    )
 
     return app

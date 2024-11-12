@@ -8,6 +8,7 @@ def trace_server_start_if_enabled():
     config = Credentials.from_rc_file()
     if config.enable_metrics is True and has_internet_connection():
         from guardrails.utils.hub_telemetry_utils import HubTelemetry
+
         HubTelemetry().create_new_span(
             "guardrails-api/start",
             [
