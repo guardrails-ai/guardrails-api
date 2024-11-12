@@ -6,7 +6,6 @@ from guardrails_api.utils.logger import logger
 from guardrails.errors import ValidationError
 
 
-# TODO: Return status_code and detail
 def handle_error(fn):
     @wraps(fn)
     def decorator(*args, **kwargs):
