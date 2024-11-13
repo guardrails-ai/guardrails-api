@@ -9,7 +9,7 @@ services:
     volumes:
        - ./postgres:/data/postgres
     ports:
-      - "5432:5432"
+      - "5932:5432"
     restart: always
   pgadmin:
     profiles: ["all", "db", "infra"]
@@ -30,23 +30,23 @@ services:
       - postgres
   guardrails-api:
     profiles: ["all", "api"]
-    image: guardrails-api:latest
     build:
       context: .
       dockerfile: Dockerfile
       args:
         PORT: "8000"
+        GUARDRAILS_TOKEN: ${GUARDRAILS_TOKEN:-changeme}
     ports:
       - "8000:8000"
     environment:
       # APP_ENVIRONMENT: local
       # AWS_PROFILE: dev
       # AWS_DEFAULT_REGION: us-east-1
-      # PGPORT: 5432
-      # PGDATABASE: postgres
-      # PGHOST: postgres
-      # PGUSER: ${PGUSER:-postgres}
-      # PGPASSWORD: ${PGPASSWORD:-changeme}
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGHOST: postgres
+      PGUSER: ${PGUSER:-postgres}
+      PGPASSWORD: ${PGPASSWORD:-changeme}
       NLTK_DATA: /opt/nltk_data
       # OTEL_PYTHON_TRACER_PROVIDER: sdk_tracer_provider
       # OTEL_SERVICE_NAME: guardrails-api
@@ -68,8 +68,8 @@ services:
       # OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4317
       # OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://otel-collector:4317
       # OTEL_PYTHON_LOG_FORMAT: "%(msg)s [span_id=%(span_id)s]"
-    # depends_on:
-    #   - postgres
+    depends_on:
+      - postgres
     #   - otel-collector
   opensearch-node1:
     profiles: ["all", "otel", "infra"]
