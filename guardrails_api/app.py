@@ -78,7 +78,7 @@ def register_config(config: Optional[str] = None):
     return config_file_path
 
 # Support for providing env vars as uvicorn does not support supplying args to create_app
-# - Usage: uvicorn --factory 'guardrails_api.app:create_app' --host 0.0.0.0 --port $PORT --workers 2 --timeout-keep-alive 90
+# - Usage: GR_CONFIG_FILE_PATH=config.py GR_ENV_FILE=.env PORT=8080 uvicorn --factory 'guardrails_api.app:create_app' --host 0.0.0.0 --port $PORT --workers 2 --timeout-keep-alive 90
 # - Usage: gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout=90 --workers=2 "guardrails_api.app:create_app(None, None, $PORT)"
 def create_app(
     env: Optional[str] = GR_ENV_FILE, config: Optional[str] = GR_CONFIG_FILE_PATH, port: Optional[int] = PORT
