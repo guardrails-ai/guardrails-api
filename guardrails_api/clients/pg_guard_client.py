@@ -27,6 +27,9 @@ class PGGuardClient(GuardClient):
         finally:
             db.close()
 
+
+    # These are only internal utilities and do not start db sessions
+
     def util_get_guard_item(self, guard_name: str, db) -> GuardItem:
         item = db.query(GuardItem).filter_by(name=guard_name).first()
         return item
