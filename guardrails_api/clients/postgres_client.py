@@ -74,10 +74,18 @@ class PostgresClient:
         pg_port = os.environ.get("PGPORT", "5432")
         pg_database = os.environ.get("PGDATABASE", "postgres")
 
-        pg_endpoint = f"{pg_host}:{pg_port}"
+        pg_endpoint = (
+            pg_host
+            if pg_host.endswith(
+                f":{pg_port}"
+            )  # FIXME: This is a cheap check; maybe use a regex instead?
+            else f"{pg_host}:{pg_port}"
+        )
+
         conf = f"postgresql://{pg_user}:{pg_password}@{pg_endpoint}/{pg_database}"
+
         if os.environ.get("NODE_ENV") == "production":
-            conf += "?sslmode=verify-ca&sslrootcert=global-bundle.pem"
+            conf = f"{conf}?sslmode=verify-ca&sslrootcert=global-bundle.pem"
 
         engine = create_engine(conf)
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
