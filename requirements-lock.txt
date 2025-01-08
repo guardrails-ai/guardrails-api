@@ -39,7 +39,7 @@ importlib_metadata==8.0.0
 iniconfig==2.0.0
 isoduration==20.11.0
 itsdangerous==2.2.0
-Jinja2==3.1.4
+Jinja2==3.1.5
 jmespath==1.0.1
 joblib==1.4.2
 jsonpatch==1.33
