@@ -9,7 +9,7 @@ services:
     volumes:
        - ./postgres:/data/postgres
     ports:
-      - "5932:5432"
+      - "5432:5432"
     restart: always
   pgadmin:
     profiles: ["all", "db", "infra"]
