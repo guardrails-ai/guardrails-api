@@ -178,7 +178,7 @@ def test_get_guard_item(mocker):
 
     guard_client = PGGuardClient()
 
-    result = guard_client.get_guard_item("guard")
+    result = guard_client.util_get_guard_item("guard", mock_session)
 
     query_spy.assert_called_once_with(GuardItem)
     filter_by_spy.assert_called_once_with(name="guard")
@@ -286,7 +286,7 @@ class TestUpdateGuard:
             return_value=mock_pg_client,
         )
         mock_get_guard_item = mocker.patch(
-            "guardrails_api.clients.pg_guard_client.PGGuardClient.get_guard_item"
+            "guardrails_api.clients.pg_guard_client.PGGuardClient.util_get_guard_item"
         )
         mock_get_guard_item.return_value = None
 
@@ -330,10 +330,10 @@ class TestUpdateGuard:
             "guardrails_api.clients.pg_guard_client.PostgresClient",
             return_value=mock_pg_client,
         )
-        mock_get_guard_item = mocker.patch(
-            "guardrails_api.clients.pg_guard_client.PGGuardClient.get_guard_item"
+        mock_util_get_guard_item = mocker.patch(
+            "guardrails_api.clients.pg_guard_client.PGGuardClient.util_get_guard_item"
         )
-        mock_get_guard_item.return_value = old_guard_item
+        mock_util_get_guard_item.return_value = old_guard_item
 
         commit_spy = mocker.spy(mock_session, "commit")
         mock_from_guard_item = mocker.patch(
@@ -347,7 +347,7 @@ class TestUpdateGuard:
 
         result = guard_client.update_guard("mock-guard", updated_guard)
 
-        mock_get_guard_item.assert_called_once_with("mock-guard")
+        mock_util_get_guard_item.assert_called_once_with("mock-guard", mock_session)
         assert commit_spy.call_count == 1
         mock_from_guard_item.assert_called_once_with(old_guard_item)
 
@@ -364,23 +364,24 @@ class TestUpsertGuard:
         new_guard = MockGuardStruct()
         mock_pg_client = MockPostgresClient()
         mock_pg_client.SessionLocal = MagicMock(return_value=MagicMock())
+        mock_session = mock_pg_client.SessionLocal()
         mocker.patch(
             "guardrails_api.clients.pg_guard_client.PostgresClient",
             return_value=mock_pg_client,
         )
-        mock_get_guard_item = mocker.patch(
-            "guardrails_api.clients.pg_guard_client.PGGuardClient.get_guard_item"
+        mock_util_get_guard_item = mocker.patch(
+            "guardrails_api.clients.pg_guard_client.PGGuardClient.util_get_guard_item"
         )
-        mock_get_guard_item.return_value = None
+        mock_util_get_guard_item.return_value = None
 
         commit_spy = mocker.spy(mock_pg_client.db.session, "commit")
         mock_from_guard_item = mocker.patch(
             "guardrails_api.clients.pg_guard_client.from_guard_item"
         )
-        mock_create_guard = mocker.patch(
-            "guardrails_api.clients.pg_guard_client.PGGuardClient.create_guard"
+        mock_util_create_guard = mocker.patch(
+            "guardrails_api.clients.pg_guard_client.PGGuardClient.util_create_guard"
         )
-        mock_create_guard.return_value = new_guard
+        mock_util_create_guard.return_value = new_guard
 
         from guardrails_api.clients.pg_guard_client import PGGuardClient
 
@@ -388,10 +389,11 @@ class TestUpsertGuard:
 
         result = guard_client.upsert_guard("mock-guard", input_guard)
 
-        mock_get_guard_item.assert_called_once_with("mock-guard")
+        mock_util_get_guard_item.assert_called_once_with("mock-guard", mock_session)
         assert commit_spy.call_count == 0
         assert mock_from_guard_item.call_count == 0
-        mock_create_guard.assert_called_once_with(input_guard)
+        mock_util_create_guard.assert_called_once_with(input_guard, mock_session)
+
 
         assert result == new_guard
 
@@ -415,10 +417,10 @@ class TestUpsertGuard:
 
         mock_session = mock_pg_client.SessionLocal()
 
-        mock_get_guard_item = mocker.patch(
-            "guardrails_api.clients.pg_guard_client.PGGuardClient.get_guard_item"
+        mock_util_get_guard_item = mocker.patch(
+            "guardrails_api.clients.pg_guard_client.PGGuardClient.util_get_guard_item"
         )
-        mock_get_guard_item.return_value = old_guard_item
+        mock_util_get_guard_item.return_value = old_guard_item
 
         commit_spy = mocker.spy(mock_session, "commit")
         mock_from_guard_item = mocker.patch(
@@ -432,7 +434,7 @@ class TestUpsertGuard:
 
         result = guard_client.upsert_guard("mock-guard", updated_guard)
 
-        mock_get_guard_item.assert_called_once_with("mock-guard")
+        mock_util_get_guard_item.assert_called_once_with("mock-guard", mock_session)
         assert commit_spy.call_count == 1
         mock_from_guard_item.assert_called_once_with(old_guard_item)
 
@@ -457,7 +459,7 @@ class TestDeleteGuard:
         mock_session = mock_pg_client.SessionLocal()
 
         mock_get_guard_item = mocker.patch(
-            "guardrails_api.clients.pg_guard_client.PGGuardClient.get_guard_item"
+            "guardrails_api.clients.pg_guard_client.PGGuardClient.util_get_guard_item"
         )
         mock_get_guard_item.return_value = None
 
@@ -496,7 +498,7 @@ class TestDeleteGuard:
         mock_session = mock_pg_client.SessionLocal()
 
         mock_get_guard_item = mocker.patch(
-            "guardrails_api.clients.pg_guard_client.PGGuardClient.get_guard_item"
+            "guardrails_api.clients.pg_guard_client.PGGuardClient.util_get_guard_item"
         )
         mock_get_guard_item.return_value = old_guard
 
@@ -515,7 +517,7 @@ class TestDeleteGuard:
 
         result = guard_client.delete_guard("mock-guard")
 
-        mock_get_guard_item.assert_called_once_with("mock-guard")
+        mock_get_guard_item.assert_called_once_with("mock-guard", mock_session)
         assert mock_session.delete.call_count == 1
         assert mock_session.commit.call_count == 1
         mock_from_guard_item.assert_called_once_with(old_guard)

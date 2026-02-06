@@ -20,13 +20,16 @@ import os
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
+GR_ENV_FILE = os.environ.get("GR_ENV_FILE", None)
+GR_CONFIG_FILE_PATH = os.environ.get("GR_CONFIG_FILE_PATH", None)
+PORT = int(os.environ.get("PORT", 8000))
 
 class RequestInfoMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         tracer = trace.get_tracer(__name__)
         # Get the current context and attach it to this task
         with tracer.start_as_current_span("request_info") as span:
-            client_ip = request.client.host
+            client_ip = request.client.host if request.client else None
             user_agent = request.headers.get("user-agent", "unknown")
             referrer = request.headers.get("referrer", "unknown")
             user_id = request.headers.get("x-user-id", "unknown")
@@ -40,12 +43,14 @@ class RequestInfoMiddleware(BaseHTTPMiddleware):
             context.attach(baggage.set_baggage("organization", organization))
             context.attach(baggage.set_baggage("app", app))
 
-            span.set_attribute("client.ip", client_ip)
             span.set_attribute("http.user_agent", user_agent)
             span.set_attribute("http.referrer", referrer)
             span.set_attribute("user.id", user_id)
             span.set_attribute("organization", organization)
             span.set_attribute("app", app)
+
+            if client_ip:
+                span.set_attribute("client.ip", client_ip)
 
             response = await call_next(request)
             return response
@@ -70,9 +75,13 @@ def register_config(config: Optional[str] = None):
         config_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config_module)
 
+    return config_file_path
 
+# Support for providing env vars as uvicorn does not support supplying args to create_app
+# - Usage: GR_CONFIG_FILE_PATH=config.py GR_ENV_FILE=.env PORT=8080 uvicorn --factory 'guardrails_api.app:create_app' --host 0.0.0.0 --port $PORT --workers 2 --timeout-keep-alive 90
+# - Usage: gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout=90 --workers=2 "guardrails_api.app:create_app(None, None, $PORT)"
 def create_app(
-    env: Optional[str] = None, config: Optional[str] = None, port: Optional[int] = None
+    env: Optional[str] = GR_ENV_FILE, config: Optional[str] = GR_CONFIG_FILE_PATH, port: Optional[int] = PORT
 ):
     trace_server_start_if_enabled()
     # used to print user-facing messages during server startup
@@ -89,12 +98,12 @@ def create_app(
             env_file_path = os.path.abspath(env)
             load_dotenv(env_file_path, override=True)
 
-    set_port = port or os.environ.get("PORT", 8000)
+    set_port = port or PORT
     host = os.environ.get("HOST", "http://localhost")
     self_endpoint = os.environ.get("SELF_ENDPOINT", f"{host}:{set_port}")
     os.environ["SELF_ENDPOINT"] = self_endpoint
 
-    register_config(config)
+    resolved_config_file_path = register_config(config)
 
     app = FastAPI(openapi_url="")
 
@@ -159,6 +168,10 @@ def create_app(
         )
 
     console.print("")
+    console.print("Using the following configuration:")
+    console.print(f"- Guardrails Log Level: {guardrails_log_level}")
+    console.print(f"- Self Endpoint: {self_endpoint}")
+    console.print(f"- Config File Path: {resolved_config_file_path} [Provided: {config}]")
     console.print(
         Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white")
     )
@@ -170,4 +183,4 @@ if __name__ == "__main__":
     import uvicorn
 
     app = create_app()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
