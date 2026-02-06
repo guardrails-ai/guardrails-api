@@ -39,6 +39,7 @@ def outcome_to_chat_completion(
         "reask": validation_outcome.reask or None,
         "validation_passed": validation_outcome.validation_passed,
         "error": validation_outcome.error or None,
+        "validation_summaries": [summary.model_dump() for summary in (validation_outcome.validation_summaries or [])],
     }
 
     # string completion
