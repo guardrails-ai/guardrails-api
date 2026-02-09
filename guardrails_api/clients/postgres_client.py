@@ -110,38 +110,20 @@ class PostgresClient:
         Base.metadata.create_all(bind=self.engine)
         
         # Execute custom SQL extensions and triggers
-        connection.execute(text(INIT_EXTENSIONS))
         connection.execute(text(AUDIT_FUNCTION))
         connection.execute(text(AUDIT_TRIGGER))
 
 
-# Define INIT_EXTENSIONS, AUDIT_FUNCTION, and AUDIT_TRIGGER here as they were in your original code
-INIT_EXTENSIONS = """
--- Your SQL for initializing extensions
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp') THEN
-        CREATE EXTENSION "uuid-ossp";
-    END IF;
-END $$;
-
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
-        CREATE EXTENSION "vector";
-    END IF;
-END $$;
-"""
 
 AUDIT_FUNCTION = """
 CREATE OR REPLACE FUNCTION guard_audit_function() RETURNS TRIGGER AS $guard_audit$
 BEGIN
     IF (TG_OP = 'DELETE') THEN
-    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'D';
+    INSERT INTO guards_audit SELECT gen_random_uuid(), OLD.*, now(), 'D';
     ELSIF (TG_OP = 'UPDATE') THEN
-    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'U';
+    INSERT INTO guards_audit SELECT gen_random_uuid(), OLD.*, now(), 'U';
     ELSIF (TG_OP = 'INSERT') THEN
-    INSERT INTO guards_audit SELECT uuid_generate_v4(), NEW.*, now(), 'I';
+    INSERT INTO guards_audit SELECT gen_random_uuid(), NEW.*, now(), 'I';
     END IF;
     RETURN null;
 END;

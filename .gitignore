@@ -29,3 +29,5 @@ opensearch
 build
 *.egg-info
 config.py
+client-admin-test.py
+client-consumer-test.py

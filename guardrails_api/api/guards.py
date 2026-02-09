@@ -54,13 +54,18 @@ async def get_guards():
 
 @router.post("/guards")
 @handle_error
-async def create_guard(guard: GuardStruct):
+async def create_guard(request: Request):
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
             detail="Not Implemented POST /guards is not implemented for in-memory guards.",
         )
-    new_guard = guard_client.create_guard(guard)
+    body = await request.body()
+    guard = GuardStruct.from_json(body.decode("utf-8"))
+    if not guard:
+        raise HTTPException(status_code=422)
+
+    new_guard = guard_client.create_guard(guard)  # type: ignore
     return new_guard.to_dict()
 
 
@@ -79,14 +84,19 @@ async def get_guard(guard_name: str, asOf: Optional[str] = None):
 
 @router.put("/guards/{guard_name}")
 @handle_error
-async def update_guard(guard_name: str, guard: GuardStruct):
+async def update_guard(guard_name: str, request: Request):
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
             detail="PUT /<guard_name> is not implemented for in-memory guards.",
         )
+    body = await request.body()
+    guard = GuardStruct.from_json(body.decode("utf-8"))
+    if not guard:
+        raise HTTPException(status_code=422)
+
     decoded_guard_name = unquote_plus(guard_name)
-    updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
+    updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)  # type: ignore
     return updated_guard.to_dict()
 
 
@@ -304,44 +314,3 @@ async def validate(guard_name: str, request: Request):
 async def guard_history(guard_name: str, call_id: str):
     cache_key = f"{guard_name}-{call_id}"
     return await cache_client.get(cache_key)
-
-
-def collect_telemetry(
-    *,
-    guard: Guard,
-    validate_span: Span,
-    validation_output: ValidationOutcome,
-    prompt_params: Dict[str, Any],
-    result: ValidationOutcome,
-):
-    # Below is all telemetry collection and
-    # should have no impact on what is returned to the user
-    prompt = guard.history.last.inputs.prompt
-    if prompt:
-        prompt = Template(prompt).safe_substitute(**prompt_params)
-        validate_span.set_attribute("prompt", prompt)
-
-    instructions = guard.history.last.inputs.instructions
-    if instructions:
-        instructions = Template(instructions).safe_substitute(**prompt_params)
-        validate_span.set_attribute("instructions", instructions)
-
-    validate_span.set_attribute("validation_status", guard.history.last.status)
-    validate_span.set_attribute("raw_llm_ouput", result.raw_llm_output)
-
-    # Use the serialization from the class instead of re-writing it
-    valid_output: str = (
-        json.dumps(validation_output.validated_output)
-        if isinstance(validation_output.validated_output, dict)
-        else str(validation_output.validated_output)
-    )
-    validate_span.set_attribute("validated_output", valid_output)
-
-    validate_span.set_attribute("tokens_consumed", guard.history.last.tokens_consumed)
-
-    num_of_reasks = (
-        guard.history.last.iterations.length - 1
-        if guard.history.last.iterations.length > 0
-        else 0
-    )
-    validate_span.set_attribute("num_of_reasks", num_of_reasks)
