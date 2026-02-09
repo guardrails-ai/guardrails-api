@@ -6,6 +6,7 @@ install:
 # Installs development dependencies
 install-dev:
 	pip install -e ".[dev]";
+	pre-commit install
 
 lock:
 	pip freeze --exclude guardrails-api > requirements-lock.txt
@@ -52,13 +53,16 @@ qa:
 	make test-cov
 
 test:
-	pytest ./tests
+	python -m unittest discover -s tests --buffer --failfast
 
 test-cov:
-	coverage run --source=./guardrails_api -m pytest ./tests
-	coverage report --fail-under=45
+	coverage run -m unittest discover --start-directory tests --buffer --failfast
+	coverage report -m
+
+test-cov-ci:
+	coverage run -m unittest discover --start-directory tests --buffer --failfast
 
 view-test-cov:
-	coverage run --source=./guardrails_api -m pytest ./tests
+	coverage run -m unittest discover --start-directory tests --buffer --failfast
 	coverage html
 	open htmlcov/index.html

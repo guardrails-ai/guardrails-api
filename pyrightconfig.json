@@ -1,0 +1,16 @@
+{
+  "include": [
+    "guardrails_api"
+  ],
+
+  "exclude": ["**/__pycache__"],
+
+  "defineConstant": {
+    "DEBUG": true
+  },
+
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": false,
+
+  "pythonVersion": "3.11"
+}

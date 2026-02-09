@@ -38,20 +38,9 @@ guardrails-api = "guardrails_api.cli:cli"
 [project.optional-dependencies]
 dev = [
     "ruff",
-    "pytest",
     "coverage",
-    "pytest-mock",
     "gunicorn>=22.0.0,<23",
-]
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-rP"
-testpaths = [
-    "tests"
-]
-pythonpath = [
-    ".", "guardrails_api"
+    "pre-commit"
 ]
 
 [tool.pyright]
