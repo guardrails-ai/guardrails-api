@@ -1,8 +1,7 @@
 """Unit tests for guardrails_api.clients.pg_guard_client module."""
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from guardrails_api.clients.pg_guard_client import PGGuardClient, from_guard_item
-from guardrails_api.models.guard_item import GuardItem
 
 
 class TestFromGuardItem(unittest.TestCase):

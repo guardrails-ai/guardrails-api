@@ -1,6 +1,5 @@
 """Unit tests for guardrails_api.cli.start module."""
 import unittest
-from unittest.mock import patch, Mock
 from guardrails_api.cli import start
 
 

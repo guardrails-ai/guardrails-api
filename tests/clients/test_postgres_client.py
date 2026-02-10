@@ -1,6 +1,6 @@
 """Unit tests for guardrails_api.clients.postgres_client module."""
 import unittest
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, Mock
 from guardrails_api.clients.postgres_client import (
     postgres_is_enabled,
     PostgresClient

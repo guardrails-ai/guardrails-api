@@ -1,6 +1,6 @@
 """Unit tests for guardrails_api.api.root module."""
 import unittest
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import patch, Mock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from guardrails_api.api.root import router, HealthCheckResponse

@@ -1,17 +1,15 @@
 import json
 import os
 import inspect
-from typing import Any, Dict, Optional
+from typing import Optional
 from fastapi import HTTPException, Request, APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from urllib.parse import unquote_plus
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
-from opentelemetry.trace import Span
 from guardrails_api_client import Guard as GuardStruct
+from guardrails_api.clients.get_guard_client import get_guard_client
 from guardrails_api.clients.cache_client import CacheClient
-from guardrails_api.clients.memory_guard_client import MemoryGuardClient
-from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
@@ -19,22 +17,6 @@ from guardrails_api.utils.openai import (
     outcome_to_stream_response,
 )
 from guardrails_api.utils.handle_error import handle_error
-from string import Template
-
-# if no pg_host is set, use in memory guards
-if postgres_is_enabled():
-    guard_client = PGGuardClient()
-else:
-    guard_client = MemoryGuardClient()
-    # Will be defined at runtime
-    import config  # noqa
-
-    exports = config.__dir__()
-    for export_name in exports:
-        export = getattr(config, export_name)
-        is_guard = isinstance(export, Guard)
-        if is_guard:
-            guard_client.create_guard(export)
 
 cache_client = CacheClient()
 
@@ -48,6 +30,7 @@ def guard_history_is_enabled():
 @router.get("/guards")
 @handle_error
 async def get_guards():
+    guard_client = get_guard_client()
     guards = guard_client.get_guards()
     return [g.to_dict() for g in guards]
 
@@ -55,6 +38,7 @@ async def get_guards():
 @router.post("/guards")
 @handle_error
 async def create_guard(request: Request):
+    guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
@@ -72,6 +56,7 @@ async def create_guard(request: Request):
 @router.get("/guards/{guard_name}")
 @handle_error
 async def get_guard(guard_name: str, asOf: Optional[str] = None):
+    guard_client = get_guard_client()
     decoded_guard_name = unquote_plus(guard_name)
     guard = guard_client.get_guard(decoded_guard_name, asOf)
     if guard is None:
@@ -85,6 +70,7 @@ async def get_guard(guard_name: str, asOf: Optional[str] = None):
 @router.put("/guards/{guard_name}")
 @handle_error
 async def update_guard(guard_name: str, request: Request):
+    guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
@@ -103,6 +89,7 @@ async def update_guard(guard_name: str, request: Request):
 @router.delete("/guards/{guard_name}")
 @handle_error
 async def delete_guard(guard_name: str):
+    guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
@@ -116,6 +103,7 @@ async def delete_guard(guard_name: str):
 @router.post("/guards/{guard_name}/openai/v1/chat/completions")
 @handle_error
 async def openai_v1_chat_completions(guard_name: str, request: Request):
+    guard_client = get_guard_client()
     payload = await request.json()
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
@@ -171,6 +159,7 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
 @router.post("/guards/{guard_name}/validate")
 @handle_error
 async def validate(guard_name: str, request: Request):
+    guard_client = get_guard_client()
     payload = await request.json()
     openai_api_key = request.headers.get(
         "x-openai-api-key", os.environ.get("OPENAI_API_KEY")

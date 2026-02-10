@@ -1,6 +1,5 @@
 """Unit tests for guardrails_api.open_api_spec module."""
 import unittest
-import os
 from unittest.mock import patch, mock_open
 from guardrails_api import open_api_spec
 

@@ -1,7 +1,7 @@
 """Unit tests for guardrails_api.utils.handle_error module."""
 import unittest
 import asyncio
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import patch
 from guardrails_api.utils.handle_error import handle_error
 from guardrails_api.classes.http_error import HttpError
 from fastapi import HTTPException

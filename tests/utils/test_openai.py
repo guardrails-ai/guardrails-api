@@ -1,6 +1,6 @@
 """Unit tests for guardrails_api.utils.openai module."""
 import unittest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from guardrails_api.utils.openai import (
     outcome_to_stream_response,
     outcome_to_chat_completion

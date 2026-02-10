@@ -1,6 +1,5 @@
 """Unit tests for guardrails_api.models.guard_item module."""
 import unittest
-from unittest.mock import Mock, patch
 from guardrails_api.models.guard_item import GuardItem
 
 

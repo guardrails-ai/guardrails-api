@@ -57,6 +57,7 @@ class TestGetTracer(unittest.TestCase):
         result = get_tracer()
 
         mock_get_tracer.assert_called_once_with("custom-service")
+        self.assertEqual(result, mock_tracer)
 
     @patch('guardrails_api.otel.traces.trace.get_tracer')
     def test_get_tracer_with_explicit_name(self, mock_get_tracer):

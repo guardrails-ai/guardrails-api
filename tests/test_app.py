@@ -1,6 +1,5 @@
 """Unit tests for guardrails_api.app module."""
 import unittest
-from unittest.mock import patch, Mock
 from guardrails_api import app
 
 
@@ -23,6 +22,7 @@ class TestAppModule(unittest.TestCase):
         """Test that create_app function has correct signature."""
         import inspect
         sig = inspect.signature(app.create_app)
+        self.assertIsInstance(sig, inspect.Signature)
         # create_app should be callable
         self.assertTrue(callable(app.create_app))
         # Verify it's a function

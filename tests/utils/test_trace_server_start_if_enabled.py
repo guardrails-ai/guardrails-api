@@ -1,6 +1,6 @@
 """Unit tests for guardrails_api.utils.trace_server_start_if_enabled module."""
 import unittest
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, Mock
 from guardrails_api.utils.trace_server_start_if_enabled import trace_server_start_if_enabled
 
 

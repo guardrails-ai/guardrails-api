@@ -56,6 +56,7 @@ class TestGetMeter(unittest.TestCase):
         result = get_meter()
 
         mock_get_meter.assert_called_once_with("custom-service")
+        self.assertEqual(result, mock_meter)
 
     @patch('guardrails_api.otel.metrics.metrics.get_meter')
     def test_get_meter_with_explicit_name(self, mock_get_meter):

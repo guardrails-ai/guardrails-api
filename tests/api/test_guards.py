@@ -1,9 +1,9 @@
 """Unit tests for guardrails_api.api.guards module."""
 import unittest
-import json
-from unittest.mock import patch, Mock, AsyncMock, MagicMock
+from unittest.mock import patch, Mock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from guardrails_api.api import guards
 from guardrails_api.api.guards import router, guard_history_is_enabled
 
 
@@ -56,9 +56,12 @@ class TestGuardsAPI(unittest.TestCase):
         self.app.include_router(router)
         self.client = TestClient(self.app)
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_get_guards(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_get_guards(self, mock_get_guard_client):
         """Test GET /guards endpoint."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_guard1 = Mock()
         mock_guard1.to_dict.return_value = {"name": "guard1", "description": "Test 1"}
         mock_guard2 = Mock()
@@ -74,9 +77,12 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(data[0]["name"], "guard1")
         self.assertEqual(data[1]["name"], "guard2")
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_get_guards_empty_list(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_get_guards_empty_list(self, mock_get_guard_client):
         """Test GET /guards when no guards exist."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_guard_client.get_guards.return_value = []
 
         response = self.client.get("/guards")
@@ -97,13 +103,16 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 501)
         self.assertIn("Not Implemented", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.guard_client')
+    @patch('guardrails_api.api.guards.get_guard_client')
     @patch('guardrails_api.api.guards.postgres_is_enabled')
     @patch('guardrails_api.api.guards.GuardStruct')
     def test_create_guard_success(
-        self, mock_guard_struct_class, mock_postgres, mock_guard_client
+        self, mock_guard_struct_class, mock_postgres, mock_get_guard_client
     ):
         """Test POST /guards successfully creates a guard."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_postgres.return_value = True
 
         mock_guard = Mock()
@@ -123,9 +132,12 @@ class TestGuardsAPI(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["name"], "test_guard")
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_get_guard_success(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_get_guard_success(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} successfully retrieves a guard."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_guard = Mock()
         mock_guard.to_dict.return_value = {"name": "test_guard", "description": "Test"}
         mock_guard_client.get_guard.return_value = mock_guard
@@ -136,9 +148,12 @@ class TestGuardsAPI(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["name"], "test_guard")
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_get_guard_not_found(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_get_guard_not_found(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} returns 404 when guard not found."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_guard_client.get_guard.return_value = None
 
         response = self.client.get("/guards/nonexistent")
@@ -146,9 +161,12 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("does not exist", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_get_guard_url_encoded_name(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_get_guard_url_encoded_name(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} handles URL-encoded names."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_guard = Mock()
         mock_guard.to_dict.return_value = {"name": "test guard", "description": "Test"}
         mock_guard_client.get_guard.return_value = mock_guard
@@ -160,9 +178,12 @@ class TestGuardsAPI(unittest.TestCase):
         # Verify the decoded name was passed to get_guard
         mock_guard_client.get_guard.assert_called_once_with("test guard", None)
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_get_guard_with_as_of_date(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_get_guard_with_as_of_date(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} with asOf parameter."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_guard = Mock()
         mock_guard.to_dict.return_value = {"name": "test_guard"}
         mock_guard_client.get_guard.return_value = mock_guard
@@ -185,13 +206,16 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 501)
         self.assertIn("not implemented", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.guard_client')
+    @patch('guardrails_api.api.guards.get_guard_client')
     @patch('guardrails_api.api.guards.postgres_is_enabled')
     @patch('guardrails_api.api.guards.GuardStruct')
     def test_update_guard_success(
-        self, mock_guard_struct_class, mock_postgres, mock_guard_client
+        self, mock_guard_struct_class, mock_postgres, mock_get_guard_client
     ):
         """Test PUT /guards/{guard_name} successfully updates a guard."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_postgres.return_value = True
 
         mock_guard = Mock()
@@ -223,10 +247,13 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 501)
         self.assertIn("not implemented", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.guard_client')
+    @patch('guardrails_api.api.guards.get_guard_client')
     @patch('guardrails_api.api.guards.postgres_is_enabled')
-    def test_delete_guard_success(self, mock_postgres, mock_guard_client):
+    def test_delete_guard_success(self, mock_postgres, mock_get_guard_client):
         """Test DELETE /guards/{guard_name} successfully deletes a guard."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_postgres.return_value = True
 
         mock_guard = Mock()
@@ -238,9 +265,12 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         mock_guard_client.delete_guard.assert_called_once_with("test_guard")
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_openai_chat_completions_guard_not_found(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_openai_chat_completions_guard_not_found(self, mock_get_guard_client):
         """Test OpenAI chat completions endpoint when guard not found."""
+        mock_guard_client = Mock()
+        mock_get_guard_client.return_value = mock_guard_client
+
         mock_guard_client.get_guard.return_value = None
 
         response = self.client.post(
@@ -250,8 +280,8 @@ class TestGuardsAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    @patch('guardrails_api.api.guards.guard_client')
-    def test_validate_endpoint_exists(self, mock_guard_client):
+    @patch('guardrails_api.api.guards.get_guard_client')
+    def test_validate_endpoint_exists(self, mock_get_guard_client):
         """Test that validate endpoint exists and is accessible."""
         # Just verify the endpoint is registered
         routes = [route.path for route in self.app.routes]
@@ -334,10 +364,11 @@ class TestGuardsModule(unittest.TestCase):
         from guardrails_api.api import guards
         self.assertTrue(hasattr(guards, 'router'))
 
-    def test_module_has_guard_client(self):
-        """Test that guards module has guard_client initialized."""
+    def test_module_has_get_guard_client(self):
+        """Test that guards module has get_guard_client function."""
         from guardrails_api.api import guards
-        self.assertTrue(hasattr(guards, 'guard_client'))
+        self.assertTrue(hasattr(guards, 'get_guard_client'))
+        self.assertTrue(callable(guards.get_guard_client))
 
     def test_module_has_cache_client(self):
         """Test that guards module has cache_client initialized."""
