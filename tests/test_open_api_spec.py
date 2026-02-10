@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.open_api_spec module."""
+
 import unittest
 from unittest.mock import patch, mock_open
 from guardrails_api import open_api_spec
@@ -11,10 +12,10 @@ class TestGetOpenApiSpec(unittest.TestCase):
         """Reset global variable before each test."""
         open_api_spec.open_api_spec = None
 
-    @patch('builtins.open', new_callable=mock_open, read_data='{"version": "1.0"}')
-    @patch('os.path.abspath')
-    @patch('os.path.join')
-    @patch('os.path.dirname')
+    @patch("builtins.open", new_callable=mock_open, read_data='{"version": "1.0"}')
+    @patch("os.path.abspath")
+    @patch("os.path.join")
+    @patch("os.path.dirname")
     def test_get_open_api_spec_loads_file(
         self, mock_dirname, mock_join, mock_abspath, mock_file
     ):
@@ -28,10 +29,10 @@ class TestGetOpenApiSpec(unittest.TestCase):
         self.assertEqual(result, {"version": "1.0"})
         mock_file.assert_called_once_with("/app/guardrails_api/open-api-spec.json")
 
-    @patch('builtins.open', new_callable=mock_open, read_data='{"openapi": "3.0.0"}')
-    @patch('os.path.abspath')
-    @patch('os.path.join')
-    @patch('os.path.dirname')
+    @patch("builtins.open", new_callable=mock_open, read_data='{"openapi": "3.0.0"}')
+    @patch("os.path.abspath")
+    @patch("os.path.join")
+    @patch("os.path.dirname")
     def test_get_open_api_spec_caches_result(
         self, mock_dirname, mock_join, mock_abspath, mock_file
     ):
@@ -50,10 +51,10 @@ class TestGetOpenApiSpec(unittest.TestCase):
         # File should only be opened once due to caching
         mock_file.assert_called_once()
 
-    @patch('builtins.open', new_callable=mock_open, read_data='{"paths": {}}')
-    @patch('os.path.abspath')
-    @patch('os.path.join')
-    @patch('os.path.dirname')
+    @patch("builtins.open", new_callable=mock_open, read_data='{"paths": {}}')
+    @patch("os.path.abspath")
+    @patch("os.path.join")
+    @patch("os.path.dirname")
     def test_get_open_api_spec_returns_dict(
         self, mock_dirname, mock_join, mock_abspath, mock_file
     ):

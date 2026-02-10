@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.cli.cli module."""
+
 import unittest
 from guardrails_api.cli.cli import cli
 
@@ -13,6 +14,7 @@ class TestCLI(unittest.TestCase):
     def test_cli_is_typer_instance(self):
         """Test that cli is a Typer instance."""
         import typer
+
         self.assertIsInstance(cli, typer.Typer)
 
     def test_cli_is_callable(self):

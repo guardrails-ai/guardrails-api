@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.utils.pluck module."""
+
 import unittest
 from guardrails_api.utils.pluck import pluck
 
@@ -58,9 +59,7 @@ class TestPluck(unittest.TestCase):
         }
         keys = ["list", "dict", "string", "number"]
         result = pluck(input_dict, keys)
-        self.assertEqual(
-            result, [[1, 2, 3], {"nested": "value"}, "text", 42]
-        )
+        self.assertEqual(result, [[1, 2, 3], {"nested": "value"}, "text", 42])
 
 
 if __name__ == "__main__":

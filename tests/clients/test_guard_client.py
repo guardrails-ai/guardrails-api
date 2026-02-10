@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.clients.guard_client module."""
+
 import unittest
 from guardrails_api.clients.guard_client import GuardClient
 
@@ -53,12 +54,12 @@ class TestGuardClient(unittest.TestCase):
         """Test that GuardClient is intended as a base class."""
         # All methods should raise NotImplementedError
         methods = [
-            ('get_guard', ('test',)),
-            ('get_guards', ()),
-            ('create_guard', (None,)),
-            ('update_guard', ('test', None)),
-            ('upsert_guard', ('test', None)),
-            ('delete_guard', ('test',)),
+            ("get_guard", ("test",)),
+            ("get_guards", ()),
+            ("create_guard", (None,)),
+            ("update_guard", ("test", None)),
+            ("upsert_guard", ("test", None)),
+            ("delete_guard", ("test",)),
         ]
 
         for method_name, args in methods:

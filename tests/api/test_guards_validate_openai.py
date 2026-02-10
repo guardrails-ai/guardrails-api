@@ -1,4 +1,5 @@
 """Unit tests for validate and openai_v1_chat_completions endpoints."""
+
 import unittest
 import os
 from unittest.mock import patch, Mock
@@ -21,9 +22,13 @@ class TestValidateEndpoint(unittest.TestCase):
         self.guard_name = "My Guard's Name"
         self.encoded_guard_name = "My%20Guard's%20Name"
 
-    @patch.dict(os.environ, {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.Guard.from_dict')
+    @patch.dict(
+        os.environ,
+        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
+        clear=False,
+    )
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.Guard.from_dict")
     def test_validate_parse(self, mock_from_dict, mock_get_guard_client):
         """Test validate endpoint with llmOutput (calls guard.parse)."""
         # Setup mock guard client first
@@ -73,9 +78,13 @@ class TestValidateEndpoint(unittest.TestCase):
         self.assertTrue(response_data["validationPassed"])
         self.assertEqual(response_data["rawLlmOutput"], "Hello world!")
 
-    @patch.dict(os.environ, {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.Guard.from_dict')
+    @patch.dict(
+        os.environ,
+        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
+        clear=False,
+    )
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.Guard.from_dict")
     def test_validate_call(self, mock_from_dict, mock_get_guard_client):
         """Test validate endpoint with prompt (calls guard.__call__)."""
         # Setup mock guard client first
@@ -134,9 +143,13 @@ class TestValidateEndpoint(unittest.TestCase):
         self.assertIsNone(response_data["validatedOutput"])
         self.assertEqual(response_data["rawLlmOutput"], "Hello world!")
 
-    @patch.dict(os.environ, {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.Guard.from_dict')
+    @patch.dict(
+        os.environ,
+        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
+        clear=False,
+    )
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.Guard.from_dict")
     def test_validate_call_throws_validation_error(
         self, mock_from_dict, mock_get_guard_client
     ):
@@ -175,9 +188,13 @@ class TestValidateEndpoint(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["detail"], "Test guard validation error")
 
-    @patch.dict(os.environ, {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.Guard.from_dict')
+    @patch.dict(
+        os.environ,
+        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
+        clear=False,
+    )
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.Guard.from_dict")
     def test_validate_parse_throws_validation_error(
         self, mock_from_dict, mock_get_guard_client
     ):
@@ -211,9 +228,17 @@ class TestValidateEndpoint(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["detail"], "Test parse validation error")
 
-    @patch.dict(os.environ, {"PGHOST": "localhost", "OPENAI_API_KEY": "env-api-key", "GUARD_HISTORY_ENABLED": "false"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.Guard.from_dict')
+    @patch.dict(
+        os.environ,
+        {
+            "PGHOST": "localhost",
+            "OPENAI_API_KEY": "env-api-key",
+            "GUARD_HISTORY_ENABLED": "false",
+        },
+        clear=False,
+    )
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.Guard.from_dict")
     def test_validate_with_api_key_from_env(
         self, mock_from_dict, mock_get_guard_client
     ):
@@ -252,8 +277,8 @@ class TestValidateEndpoint(unittest.TestCase):
         self.assertEqual(call_args[1]["api_key"], "env-api-key")
 
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.Guard.from_dict')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.Guard.from_dict")
     def test_validate_stream_with_parse_raises_error(
         self, mock_from_dict, mock_get_guard_client
     ):
@@ -283,10 +308,12 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Should raise 400 error
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Streaming is not supported for parse calls", response.json()["detail"])
+        self.assertIn(
+            "Streaming is not supported for parse calls", response.json()["detail"]
+        )
 
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.get_llm_callable')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.get_llm_callable")
     def test_validate_with_llm_api_but_no_api_key(
         self, mock_get_llm_callable, mock_get_guard_client
     ):
@@ -319,15 +346,18 @@ class TestValidateEndpoint(unittest.TestCase):
 
             # Should raise 400 error
             self.assertEqual(response.status_code, 400)
-            self.assertIn("Cannot perform calls to OpenAI without an api key", response.json()["detail"])
+            self.assertIn(
+                "Cannot perform calls to OpenAI without an api key",
+                response.json()["detail"],
+            )
         finally:
             # Restore old API key if it existed
             if old_api_key is not None:
                 os.environ["OPENAI_API_KEY"] = old_api_key
 
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.Guard.from_dict')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.Guard.from_dict")
     def test_validate_reasks_without_llm_api(
         self, mock_from_dict, mock_get_guard_client
     ):
@@ -357,7 +387,9 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Should raise 400 error
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Cannot perform re-asks without an LLM API", response.json()["detail"])
+        self.assertIn(
+            "Cannot perform re-asks without an LLM API", response.json()["detail"]
+        )
 
 
 class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
@@ -372,7 +404,7 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         self.encoded_guard_name = "My%20Guard's%20Name"
 
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_openai_v1_chat_completions_raises_404(self, mock_get_guard_client):
         """Test OpenAI chat completions endpoint returns 404 when guard not found."""
         # Setup mock guard client first
@@ -395,17 +427,21 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.json()["detail"],
-            f"A Guard with the name {self.guard_name} does not exist!"
+            f"A Guard with the name {self.guard_name} does not exist!",
         )
         mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
 
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.AsyncGuard.from_dict')
-    @patch('guardrails_api.api.guards.outcome_to_chat_completion')
-    @patch('guardrails_api.api.guards.inspect.iscoroutine')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    @patch("guardrails_api.api.guards.outcome_to_chat_completion")
+    @patch("guardrails_api.api.guards.inspect.iscoroutine")
     def test_openai_v1_chat_completions_call(
-        self, mock_iscoroutine, mock_outcome_to_chat, mock_async_from_dict, mock_get_guard_client
+        self,
+        mock_iscoroutine,
+        mock_outcome_to_chat,
+        mock_async_from_dict,
+        mock_get_guard_client,
     ):
         """Test OpenAI chat completions endpoint successful call."""
         # Setup mock guard client first
@@ -483,16 +519,22 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         response_data = response.json()
         self.assertIn("choices", response_data)
         self.assertIn("guardrails", response_data)
-        self.assertEqual(response_data["choices"][0]["message"]["content"], "Hello world!")
+        self.assertEqual(
+            response_data["choices"][0]["message"]["content"], "Hello world!"
+        )
         self.assertFalse(response_data["guardrails"]["validation_passed"])
 
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.AsyncGuard.from_dict')
-    @patch('guardrails_api.api.guards.outcome_to_chat_completion')
-    @patch('guardrails_api.api.guards.inspect.iscoroutine')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    @patch("guardrails_api.api.guards.outcome_to_chat_completion")
+    @patch("guardrails_api.api.guards.inspect.iscoroutine")
     def test_openai_v1_chat_completions_with_tools(
-        self, mock_iscoroutine, mock_outcome_to_chat, mock_async_from_dict, mock_get_guard_client
+        self,
+        mock_iscoroutine,
+        mock_outcome_to_chat,
+        mock_async_from_dict,
+        mock_get_guard_client,
     ):
         """Test OpenAI chat completions with gd_response_tool."""
         # Setup mock guard client first
@@ -536,10 +578,10 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
                             {
                                 "function": {
                                     "name": "gd_response_tool",
-                                    "arguments": '{"validated_output": "Tool response!"}'
+                                    "arguments": '{"validated_output": "Tool response!"}',
                                 }
                             }
-                        ]
+                        ],
                     },
                 }
             ],
@@ -568,10 +610,10 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
                         "type": "function",
                         "function": {
                             "name": "gd_response_tool",
-                            "description": "Guardrails response tool"
-                        }
+                            "description": "Guardrails response tool",
+                        },
                     }
-                ]
+                ],
             },
         )
 

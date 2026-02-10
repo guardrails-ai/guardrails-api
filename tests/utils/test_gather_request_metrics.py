@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.utils.gather_request_metrics module."""
+
 import unittest
 from guardrails_api.utils.gather_request_metrics import gather_request_metrics
 
@@ -12,6 +13,7 @@ class TestGatherRequestMetrics(unittest.TestCase):
 
     def test_gather_request_metrics_returns_function_result(self):
         """Test that decorator returns the function result."""
+
         @gather_request_metrics
         def test_function():
             return "test_result"
@@ -21,6 +23,7 @@ class TestGatherRequestMetrics(unittest.TestCase):
 
     def test_gather_request_metrics_with_arguments(self):
         """Test decorator with function that has arguments."""
+
         @gather_request_metrics
         def add(a, b):
             return a + b
@@ -30,6 +33,7 @@ class TestGatherRequestMetrics(unittest.TestCase):
 
     def test_gather_request_metrics_with_kwargs(self):
         """Test decorator with function that has keyword arguments."""
+
         @gather_request_metrics
         def greet(name, greeting="Hello"):
             return f"{greeting}, {name}!"
@@ -39,6 +43,7 @@ class TestGatherRequestMetrics(unittest.TestCase):
 
     def test_gather_request_metrics_preserves_function_name(self):
         """Test that decorator preserves function name."""
+
         @gather_request_metrics
         def my_function():
             return "test"
@@ -47,6 +52,7 @@ class TestGatherRequestMetrics(unittest.TestCase):
 
     def test_gather_request_metrics_with_exception(self):
         """Test decorator behavior when function raises exception."""
+
         @gather_request_metrics
         def raise_error():
             raise ValueError("Test error")
@@ -75,6 +81,7 @@ class TestGatherRequestMetrics(unittest.TestCase):
 
     def test_gather_request_metrics_with_none_return(self):
         """Test decorator with function that returns None."""
+
         @gather_request_metrics
         def returns_none():
             return None

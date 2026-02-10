@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.otel.constants module."""
+
 import unittest
 from guardrails_api.otel import constants
 
@@ -8,7 +9,7 @@ class TestOtelConstants(unittest.TestCase):
 
     def test_none_constant_exists(self):
         """Test that the 'none' constant exists."""
-        self.assertTrue(hasattr(constants, 'none'))
+        self.assertTrue(hasattr(constants, "none"))
 
     def test_none_constant_value(self):
         """Test that the 'none' constant has the correct value."""

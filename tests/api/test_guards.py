@@ -1,46 +1,46 @@
 """Unit tests for guardrails_api.api.guards module."""
+
 import unittest
 from unittest.mock import patch, Mock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
-from guardrails_api.api import guards
 from guardrails_api.api.guards import router, guard_history_is_enabled
 
 
 class TestGuardHistoryIsEnabled(unittest.TestCase):
     """Test cases for guard_history_is_enabled function."""
 
-    @patch.dict('os.environ', {}, clear=True)
+    @patch.dict("os.environ", {}, clear=True)
     def test_guard_history_enabled_by_default(self):
         """Test that guard history is enabled by default."""
         result = guard_history_is_enabled()
         self.assertTrue(result)
 
-    @patch.dict('os.environ', {'GUARD_HISTORY_ENABLED': 'true'})
+    @patch.dict("os.environ", {"GUARD_HISTORY_ENABLED": "true"})
     def test_guard_history_enabled_when_true(self):
         """Test guard history when explicitly set to true."""
         result = guard_history_is_enabled()
         self.assertTrue(result)
 
-    @patch.dict('os.environ', {'GUARD_HISTORY_ENABLED': 'True'})
+    @patch.dict("os.environ", {"GUARD_HISTORY_ENABLED": "True"})
     def test_guard_history_enabled_case_insensitive(self):
         """Test guard history setting is case insensitive."""
         result = guard_history_is_enabled()
         self.assertTrue(result)
 
-    @patch.dict('os.environ', {'GUARD_HISTORY_ENABLED': 'false'})
+    @patch.dict("os.environ", {"GUARD_HISTORY_ENABLED": "false"})
     def test_guard_history_disabled_when_false(self):
         """Test guard history when set to false."""
         result = guard_history_is_enabled()
         self.assertFalse(result)
 
-    @patch.dict('os.environ', {'GUARD_HISTORY_ENABLED': 'FALSE'})
+    @patch.dict("os.environ", {"GUARD_HISTORY_ENABLED": "FALSE"})
     def test_guard_history_disabled_case_insensitive(self):
         """Test guard history disabled is case insensitive."""
         result = guard_history_is_enabled()
         self.assertFalse(result)
 
-    @patch.dict('os.environ', {'GUARD_HISTORY_ENABLED': 'invalid'})
+    @patch.dict("os.environ", {"GUARD_HISTORY_ENABLED": "invalid"})
     def test_guard_history_disabled_with_invalid_value(self):
         """Test guard history with invalid value."""
         result = guard_history_is_enabled()
@@ -56,7 +56,7 @@ class TestGuardsAPI(unittest.TestCase):
         self.app.include_router(router)
         self.client = TestClient(self.app)
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_get_guards(self, mock_get_guard_client):
         """Test GET /guards endpoint."""
         mock_guard_client = Mock()
@@ -77,7 +77,7 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(data[0]["name"], "guard1")
         self.assertEqual(data[1]["name"], "guard2")
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_get_guards_empty_list(self, mock_get_guard_client):
         """Test GET /guards when no guards exist."""
         mock_guard_client = Mock()
@@ -90,22 +90,21 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), [])
 
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     def test_create_guard_not_implemented_for_memory(self, mock_postgres):
         """Test POST /guards fails for in-memory guards."""
         mock_postgres.return_value = False
 
         response = self.client.post(
-            "/guards",
-            json={"name": "test_guard", "description": "Test"}
+            "/guards", json={"name": "test_guard", "description": "Test"}
         )
 
         self.assertEqual(response.status_code, 501)
         self.assertIn("Not Implemented", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
-    @patch('guardrails_api.api.guards.GuardStruct')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
+    @patch("guardrails_api.api.guards.GuardStruct")
     def test_create_guard_success(
         self, mock_guard_struct_class, mock_postgres, mock_get_guard_client
     ):
@@ -124,15 +123,14 @@ class TestGuardsAPI(unittest.TestCase):
         mock_guard_client.create_guard.return_value = mock_new_guard
 
         response = self.client.post(
-            "/guards",
-            json={"name": "test_guard", "description": "Test"}
+            "/guards", json={"name": "test_guard", "description": "Test"}
         )
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["name"], "test_guard")
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_get_guard_success(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} successfully retrieves a guard."""
         mock_guard_client = Mock()
@@ -148,7 +146,7 @@ class TestGuardsAPI(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["name"], "test_guard")
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_get_guard_not_found(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} returns 404 when guard not found."""
         mock_guard_client = Mock()
@@ -161,7 +159,7 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("does not exist", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_get_guard_url_encoded_name(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} handles URL-encoded names."""
         mock_guard_client = Mock()
@@ -178,7 +176,7 @@ class TestGuardsAPI(unittest.TestCase):
         # Verify the decoded name was passed to get_guard
         mock_guard_client.get_guard.assert_called_once_with("test guard", None)
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_get_guard_with_as_of_date(self, mock_get_guard_client):
         """Test GET /guards/{guard_name} with asOf parameter."""
         mock_guard_client = Mock()
@@ -193,22 +191,21 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         mock_guard_client.get_guard.assert_called_once_with("test_guard", "2024-01-01")
 
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     def test_update_guard_not_implemented_for_memory(self, mock_postgres):
         """Test PUT /guards/{guard_name} fails for in-memory guards."""
         mock_postgres.return_value = False
 
         response = self.client.put(
-            "/guards/test_guard",
-            json={"name": "test_guard", "description": "Updated"}
+            "/guards/test_guard", json={"name": "test_guard", "description": "Updated"}
         )
 
         self.assertEqual(response.status_code, 501)
         self.assertIn("not implemented", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
-    @patch('guardrails_api.api.guards.GuardStruct')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
+    @patch("guardrails_api.api.guards.GuardStruct")
     def test_update_guard_success(
         self, mock_guard_struct_class, mock_postgres, mock_get_guard_client
     ):
@@ -224,20 +221,19 @@ class TestGuardsAPI(unittest.TestCase):
         mock_updated_guard = Mock()
         mock_updated_guard.to_dict.return_value = {
             "name": "test_guard",
-            "description": "Updated"
+            "description": "Updated",
         }
         mock_guard_client.upsert_guard.return_value = mock_updated_guard
 
         response = self.client.put(
-            "/guards/test_guard",
-            json={"name": "test_guard", "description": "Updated"}
+            "/guards/test_guard", json={"name": "test_guard", "description": "Updated"}
         )
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["description"], "Updated")
 
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     def test_delete_guard_not_implemented_for_memory(self, mock_postgres):
         """Test DELETE /guards/{guard_name} fails for in-memory guards."""
         mock_postgres.return_value = False
@@ -247,8 +243,8 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 501)
         self.assertIn("not implemented", response.json()["detail"])
 
-    @patch('guardrails_api.api.guards.get_guard_client')
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     def test_delete_guard_success(self, mock_postgres, mock_get_guard_client):
         """Test DELETE /guards/{guard_name} successfully deletes a guard."""
         mock_guard_client = Mock()
@@ -265,7 +261,7 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         mock_guard_client.delete_guard.assert_called_once_with("test_guard")
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_openai_chat_completions_guard_not_found(self, mock_get_guard_client):
         """Test OpenAI chat completions endpoint when guard not found."""
         mock_guard_client = Mock()
@@ -275,19 +271,19 @@ class TestGuardsAPI(unittest.TestCase):
 
         response = self.client.post(
             "/guards/nonexistent/openai/v1/chat/completions",
-            json={"messages": [{"role": "user", "content": "Hello"}]}
+            json={"messages": [{"role": "user", "content": "Hello"}]},
         )
 
         self.assertEqual(response.status_code, 404)
 
-    @patch('guardrails_api.api.guards.get_guard_client')
+    @patch("guardrails_api.api.guards.get_guard_client")
     def test_validate_endpoint_exists(self, mock_get_guard_client):
         """Test that validate endpoint exists and is accessible."""
         # Just verify the endpoint is registered
         routes = [route.path for route in self.app.routes]
         self.assertIn("/guards/{guard_name}/validate", routes)
 
-    @patch('guardrails_api.api.guards.cache_client')
+    @patch("guardrails_api.api.guards.cache_client")
     def test_guard_history_endpoint(self, mock_cache_client):
         """Test GET /guards/{guard_name}/history/{call_id} endpoint."""
         mock_history = [{"iteration": 1, "result": "passed"}]
@@ -300,6 +296,7 @@ class TestGuardsAPI(unittest.TestCase):
     def test_router_exists(self):
         """Test that router is properly created."""
         from fastapi import APIRouter
+
         self.assertIsInstance(router, APIRouter)
 
     def test_all_endpoints_registered(self):
@@ -311,7 +308,7 @@ class TestGuardsAPI(unittest.TestCase):
             "/guards/{guard_name}",
             "/guards/{guard_name}/openai/v1/chat/completions",
             "/guards/{guard_name}/validate",
-            "/guards/{guard_name}/history/{call_id}"
+            "/guards/{guard_name}/history/{call_id}",
         ]
 
         for expected_route in expected_routes:
@@ -321,7 +318,7 @@ class TestGuardsAPI(unittest.TestCase):
         """Test GET /guards endpoint exists."""
         methods = []
         for route in self.app.routes:
-            if route.path == "/guards" and hasattr(route, 'methods'):
+            if route.path == "/guards" and hasattr(route, "methods"):
                 methods.extend(route.methods)
         self.assertIn("GET", methods)
 
@@ -329,12 +326,12 @@ class TestGuardsAPI(unittest.TestCase):
         """Test POST /guards endpoint exists."""
         methods = []
         for route in self.app.routes:
-            if route.path == "/guards" and hasattr(route, 'methods'):
+            if route.path == "/guards" and hasattr(route, "methods"):
                 methods.extend(route.methods)
         self.assertIn("POST", methods)
 
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
-    @patch('guardrails_api.api.guards.GuardStruct')
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
+    @patch("guardrails_api.api.guards.GuardStruct")
     def test_create_guard_invalid_payload(self, mock_guard_struct, mock_postgres):
         """Test POST /guards with invalid payload returns 422."""
         mock_postgres.return_value = True
@@ -344,8 +341,8 @@ class TestGuardsAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
 
-    @patch('guardrails_api.api.guards.postgres_is_enabled')
-    @patch('guardrails_api.api.guards.GuardStruct')
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
+    @patch("guardrails_api.api.guards.GuardStruct")
     def test_update_guard_invalid_payload(self, mock_guard_struct, mock_postgres):
         """Test PUT /guards/{guard_name} with invalid payload returns 422."""
         mock_postgres.return_value = True
@@ -362,18 +359,21 @@ class TestGuardsModule(unittest.TestCase):
     def test_module_has_router(self):
         """Test that guards module exports a router."""
         from guardrails_api.api import guards
-        self.assertTrue(hasattr(guards, 'router'))
+
+        self.assertTrue(hasattr(guards, "router"))
 
     def test_module_has_get_guard_client(self):
         """Test that guards module has get_guard_client function."""
         from guardrails_api.api import guards
-        self.assertTrue(hasattr(guards, 'get_guard_client'))
+
+        self.assertTrue(hasattr(guards, "get_guard_client"))
         self.assertTrue(callable(guards.get_guard_client))
 
     def test_module_has_cache_client(self):
         """Test that guards module has cache_client initialized."""
         from guardrails_api.api import guards
-        self.assertTrue(hasattr(guards, 'cache_client'))
+
+        self.assertTrue(hasattr(guards, "cache_client"))
 
 
 if __name__ == "__main__":

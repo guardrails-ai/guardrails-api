@@ -1,9 +1,10 @@
 """Unit tests for guardrails_api.utils.openai module."""
+
 import unittest
 from unittest.mock import Mock
 from guardrails_api.utils.openai import (
     outcome_to_stream_response,
-    outcome_to_chat_completion
+    outcome_to_chat_completion,
 )
 
 
@@ -22,10 +23,7 @@ class TestOutcomeToStreamResponse(unittest.TestCase):
 
         self.assertIn("choices", result)
         self.assertIn("guardrails", result)
-        self.assertEqual(
-            result["choices"][0]["delta"]["content"],
-            "Test output"
-        )
+        self.assertEqual(result["choices"][0]["delta"]["content"], "Test output")
         self.assertTrue(result["guardrails"]["validation_passed"])
         self.assertIsNone(result["guardrails"]["reask"])
         self.assertIsNone(result["guardrails"]["error"])
@@ -75,17 +73,12 @@ class TestOutcomeToChatCompletion(unittest.TestCase):
         }
 
         result = outcome_to_chat_completion(
-            mock_outcome,
-            mock_llm_response,
-            has_tool_gd_tool_call=False
+            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
         )
 
         self.assertIn("choices", result)
         self.assertIn("guardrails", result)
-        self.assertEqual(
-            result["choices"][0]["message"]["content"],
-            "Test response"
-        )
+        self.assertEqual(result["choices"][0]["message"]["content"], "Test response")
         self.assertTrue(result["guardrails"]["validation_passed"])
 
     def test_outcome_to_chat_completion_with_tool_call(self):
@@ -99,24 +92,18 @@ class TestOutcomeToChatCompletion(unittest.TestCase):
 
         mock_llm_response = Mock()
         mock_llm_response.full_raw_llm_output = {
-            "choices": [{
-                "message": {
-                    "tool_calls": [{
-                        "function": {"arguments": "original"}
-                    }]
-                }
-            }]
+            "choices": [
+                {"message": {"tool_calls": [{"function": {"arguments": "original"}}]}}
+            ]
         }
 
         result = outcome_to_chat_completion(
-            mock_outcome,
-            mock_llm_response,
-            has_tool_gd_tool_call=True
+            mock_outcome, mock_llm_response, has_tool_gd_tool_call=True
         )
 
         self.assertEqual(
             result["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"],
-            '{"key": "value"}'
+            '{"key": "value"}',
         )
 
     def test_outcome_to_chat_completion_with_validation_summaries(self):
@@ -124,7 +111,7 @@ class TestOutcomeToChatCompletion(unittest.TestCase):
         mock_summary = Mock()
         mock_summary.model_dump.return_value = {
             "validator": "test_validator",
-            "result": "passed"
+            "result": "passed",
         }
 
         mock_outcome = Mock()
@@ -140,15 +127,13 @@ class TestOutcomeToChatCompletion(unittest.TestCase):
         }
 
         result = outcome_to_chat_completion(
-            mock_outcome,
-            mock_llm_response,
-            has_tool_gd_tool_call=False
+            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
         )
 
         self.assertEqual(len(result["guardrails"]["validation_summaries"]), 1)
         self.assertEqual(
             result["guardrails"]["validation_summaries"][0]["validator"],
-            "test_validator"
+            "test_validator",
         )
 
     def test_outcome_to_chat_completion_without_full_raw_llm_output(self):
@@ -163,16 +148,11 @@ class TestOutcomeToChatCompletion(unittest.TestCase):
         mock_llm_response = Mock(spec=[])  # No attributes
 
         result = outcome_to_chat_completion(
-            mock_outcome,
-            mock_llm_response,
-            has_tool_gd_tool_call=False
+            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
         )
 
         self.assertIn("guardrails", result)
-        self.assertEqual(
-            result["choices"][0]["message"]["content"],
-            "Test"
-        )
+        self.assertEqual(result["choices"][0]["message"]["content"], "Test")
 
     def test_outcome_to_chat_completion_with_reask_and_error(self):
         """Test chat completion with reask and error."""
@@ -189,9 +169,7 @@ class TestOutcomeToChatCompletion(unittest.TestCase):
         }
 
         result = outcome_to_chat_completion(
-            mock_outcome,
-            mock_llm_response,
-            has_tool_gd_tool_call=False
+            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
         )
 
         self.assertEqual(result["guardrails"]["reask"], "More info needed")

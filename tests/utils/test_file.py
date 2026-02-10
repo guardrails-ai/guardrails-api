@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.utils.file module."""
+
 import unittest
 import tempfile
 import os
@@ -24,7 +25,7 @@ class TestGetFileContents(unittest.TestCase):
 
     def create_temp_file(self, content):
         """Helper to create a temporary file with content."""
-        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
         temp_file.write(content)
         temp_file.close()
         self.temp_files.append(temp_file)
@@ -97,8 +98,8 @@ class TestGetFileContents(unittest.TestCase):
 
         result = get_file_contents(file_path)
         self.assertIsNotNone(result)
-        self.assertTrue(hasattr(result, 'read'))
-        self.assertTrue(hasattr(result, 'close'))
+        self.assertTrue(hasattr(result, "read"))
+        self.assertTrue(hasattr(result, "close"))
         result.close()
 
 

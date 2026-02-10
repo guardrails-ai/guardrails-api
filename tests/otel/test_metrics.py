@@ -1,30 +1,31 @@
 """Unit tests for guardrails_api.otel.metrics module."""
+
 import unittest
 from unittest.mock import patch, Mock
 from guardrails_api.otel.metrics import (
     metrics_are_disabled,
     get_meter,
     get_metrics_exporter,
-    initialize_metrics_collector
+    initialize_metrics_collector,
 )
 
 
 class TestMetricsAreDisabled(unittest.TestCase):
     """Test cases for the metrics_are_disabled function."""
 
-    @patch.dict('os.environ', {}, clear=True)
+    @patch.dict("os.environ", {}, clear=True)
     def test_metrics_disabled_by_default(self):
         """Test that metrics are disabled when no env var is set."""
         result = metrics_are_disabled()
         self.assertTrue(result)
 
-    @patch.dict('os.environ', {'OTEL_METRICS_EXPORTER': 'none'})
+    @patch.dict("os.environ", {"OTEL_METRICS_EXPORTER": "none"})
     def test_metrics_disabled_when_set_to_none(self):
         """Test that metrics are disabled when set to 'none'."""
         result = metrics_are_disabled()
         self.assertTrue(result)
 
-    @patch.dict('os.environ', {'OTEL_METRICS_EXPORTER': 'otlp'})
+    @patch.dict("os.environ", {"OTEL_METRICS_EXPORTER": "otlp"})
     def test_metrics_enabled_when_set_to_otlp(self):
         """Test that metrics are enabled when set to 'otlp'."""
         result = metrics_are_disabled()
@@ -34,8 +35,8 @@ class TestMetricsAreDisabled(unittest.TestCase):
 class TestGetMeter(unittest.TestCase):
     """Test cases for the get_meter function."""
 
-    @patch('guardrails_api.otel.metrics.metrics.get_meter')
-    @patch.dict('os.environ', {}, clear=True)
+    @patch("guardrails_api.otel.metrics.metrics.get_meter")
+    @patch.dict("os.environ", {}, clear=True)
     def test_get_meter_default_name(self, mock_get_meter):
         """Test get_meter with default service name."""
         mock_meter = Mock()
@@ -46,8 +47,8 @@ class TestGetMeter(unittest.TestCase):
         mock_get_meter.assert_called_once_with("guardrails-api")
         self.assertEqual(result, mock_meter)
 
-    @patch('guardrails_api.otel.metrics.metrics.get_meter')
-    @patch.dict('os.environ', {'OTEL_SERVICE_NAME': 'custom-service'})
+    @patch("guardrails_api.otel.metrics.metrics.get_meter")
+    @patch.dict("os.environ", {"OTEL_SERVICE_NAME": "custom-service"})
     def test_get_meter_custom_service_name(self, mock_get_meter):
         """Test get_meter with custom service name from env."""
         mock_meter = Mock()
@@ -58,7 +59,7 @@ class TestGetMeter(unittest.TestCase):
         mock_get_meter.assert_called_once_with("custom-service")
         self.assertEqual(result, mock_meter)
 
-    @patch('guardrails_api.otel.metrics.metrics.get_meter')
+    @patch("guardrails_api.otel.metrics.metrics.get_meter")
     def test_get_meter_with_explicit_name(self, mock_get_meter):
         """Test get_meter with explicitly provided name."""
         mock_meter = Mock()
@@ -67,13 +68,14 @@ class TestGetMeter(unittest.TestCase):
         result = get_meter("my-meter")
 
         mock_get_meter.assert_called_once_with("my-meter")
+        assert result == mock_meter
 
 
 class TestGetMetricsExporter(unittest.TestCase):
     """Test cases for the get_metrics_exporter function."""
 
-    @patch.dict('os.environ', {'OTEL_EXPORTER_OTLP_PROTOCOL': 'http/protobuf'})
-    @patch('guardrails_api.otel.metrics.HttpMetricExporter')
+    @patch.dict("os.environ", {"OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf"})
+    @patch("guardrails_api.otel.metrics.HttpMetricExporter")
     def test_get_metrics_exporter_otlp_http(self, mock_http_exporter):
         """Test getting OTLP HTTP metrics exporter."""
         mock_exporter = Mock()
@@ -84,8 +86,8 @@ class TestGetMetricsExporter(unittest.TestCase):
         mock_http_exporter.assert_called_once()
         self.assertEqual(result, mock_exporter)
 
-    @patch.dict('os.environ', {'OTEL_EXPORTER_OTLP_PROTOCOL': 'grpc'})
-    @patch('guardrails_api.otel.metrics.GrpcMetricExporter')
+    @patch.dict("os.environ", {"OTEL_EXPORTER_OTLP_PROTOCOL": "grpc"})
+    @patch("guardrails_api.otel.metrics.GrpcMetricExporter")
     def test_get_metrics_exporter_otlp_grpc(self, mock_grpc_exporter):
         """Test getting OTLP gRPC metrics exporter."""
         mock_exporter = Mock()
@@ -96,7 +98,7 @@ class TestGetMetricsExporter(unittest.TestCase):
         mock_grpc_exporter.assert_called_once()
         self.assertEqual(result, mock_exporter)
 
-    @patch('guardrails_api.otel.metrics.ConsoleMetricExporter')
+    @patch("guardrails_api.otel.metrics.ConsoleMetricExporter")
     def test_get_metrics_exporter_console(self, mock_console_exporter):
         """Test getting console metrics exporter."""
         mock_exporter = Mock()
@@ -111,7 +113,7 @@ class TestGetMetricsExporter(unittest.TestCase):
 class TestInitializeMetricsCollector(unittest.TestCase):
     """Test cases for the initialize_metrics_collector function."""
 
-    @patch('guardrails_api.otel.metrics.metrics_are_disabled')
+    @patch("guardrails_api.otel.metrics.metrics_are_disabled")
     def test_initialize_skipped_when_disabled(self, mock_disabled):
         """Test that initialization is skipped when metrics are disabled."""
         mock_disabled.return_value = True
@@ -121,16 +123,21 @@ class TestInitializeMetricsCollector(unittest.TestCase):
 
         mock_disabled.assert_called_once()
 
-    @patch('guardrails_api.otel.metrics.get_meter')
-    @patch('guardrails_api.otel.metrics.metrics.set_meter_provider')
-    @patch('guardrails_api.otel.metrics.MeterProvider')
-    @patch('guardrails_api.otel.metrics.PeriodicExportingMetricReader')
-    @patch('guardrails_api.otel.metrics.get_metrics_exporter')
-    @patch('guardrails_api.otel.metrics.metrics_are_disabled')
-    @patch.dict('os.environ', {'OTEL_METRICS_EXPORTER': 'console'})
+    @patch("guardrails_api.otel.metrics.get_meter")
+    @patch("guardrails_api.otel.metrics.metrics.set_meter_provider")
+    @patch("guardrails_api.otel.metrics.MeterProvider")
+    @patch("guardrails_api.otel.metrics.PeriodicExportingMetricReader")
+    @patch("guardrails_api.otel.metrics.get_metrics_exporter")
+    @patch("guardrails_api.otel.metrics.metrics_are_disabled")
+    @patch.dict("os.environ", {"OTEL_METRICS_EXPORTER": "console"})
     def test_initialize_with_console_exporter(
-        self, mock_disabled, mock_get_exporter, mock_reader_class,
-        mock_provider_class, mock_set_provider, mock_get_meter
+        self,
+        mock_disabled,
+        mock_get_exporter,
+        mock_reader_class,
+        mock_provider_class,
+        mock_set_provider,
+        mock_get_meter,
     ):
         """Test initialization with console exporter."""
         mock_disabled.return_value = False

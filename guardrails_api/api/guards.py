@@ -24,8 +24,10 @@ cache_client.initialize()
 
 router = APIRouter()
 
+
 def guard_history_is_enabled():
     return os.environ.get("GUARD_HISTORY_ENABLED", "true").lower() == "true"
+
 
 @router.get("/guards")
 @handle_error
@@ -150,7 +152,7 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
                     yield f"data: {chunk}\n\n"
                 yield "\n"
             except Exception as e:
-                yield f"data: {json.dumps({'error': {'message':str(e)}})}\n\n"
+                yield f"data: {json.dumps({'error': {'message': str(e)}})}\n\n"
                 yield "\n"
 
         return StreamingResponse(openai_streamer(), media_type="text/event-stream")
@@ -219,15 +221,16 @@ async def validate(guard_name: str, request: Request):
             result: ValidationOutcome = execution
     else:
         if stream:
+
             async def guard_streamer():
                 call = guard(
-                        llm_api=llm_api,
-                        prompt_params=prompt_params,
-                        num_reasks=num_reasks,
-                        stream=stream,
-                        *args,
-                        **payload,
-                    )
+                    llm_api=llm_api,
+                    prompt_params=prompt_params,
+                    num_reasks=num_reasks,
+                    stream=stream,
+                    *args,
+                    **payload,
+                )
                 is_async = inspect.iscoroutine(call)
                 if is_async:
                     guard_stream = await call
@@ -249,7 +252,9 @@ async def validate(guard_name: str, request: Request):
                     async for validation_output, result in guard_iter:
                         fragment_dict = result.to_dict()
                         fragment_dict["error_spans"] = [
-                            json.dumps({"start": x.start, "end": x.end, "reason": x.reason})
+                            json.dumps(
+                                {"start": x.start, "end": x.end, "reason": x.reason}
+                            )
                             for x in guard.error_spans_in_output()
                         ]
                         yield json.dumps(fragment_dict) + "\n"

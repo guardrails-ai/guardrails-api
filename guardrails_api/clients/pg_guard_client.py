@@ -27,13 +27,11 @@ class PGGuardClient(GuardClient):
         finally:
             db.close()
 
-
     # These are only internal utilities and do not start db sessions
 
     def util_get_guard_item(self, guard_name: str, db) -> GuardItem:
         item = db.query(GuardItem).filter_by(name=guard_name).first()
         return item
-
 
     def util_create_guard(self, guard: GuardStruct, db) -> GuardStruct:
         guard_item = GuardItem(
@@ -45,10 +43,12 @@ class PGGuardClient(GuardClient):
         db.add(guard_item)
         db.commit()
         return from_guard_item(guard_item)
-    
+
     # Below are used directly by Controllers and start db sessions
 
-    def get_guard(self, guard_name: str, as_of_date: Optional[str] = None) -> GuardStruct:
+    def get_guard(
+        self, guard_name: str, as_of_date: Optional[str] = None
+    ) -> GuardStruct:
         with self.get_db_context() as db:
             latest_guard_item = db.query(GuardItem).filter_by(name=guard_name).first()
             audit_item = None
@@ -75,7 +75,7 @@ class PGGuardClient(GuardClient):
         with self.get_db_context() as db:
             guard_items = db.query(GuardItem).all()
             return [from_guard_item(gi) for gi in guard_items]
-    
+
     def create_guard(self, guard: GuardStruct) -> GuardStruct:
         with self.get_db_context() as db:
             return self.util_create_guard(guard, db)

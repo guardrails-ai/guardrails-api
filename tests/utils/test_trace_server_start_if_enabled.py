@@ -1,14 +1,17 @@
 """Unit tests for guardrails_api.utils.trace_server_start_if_enabled module."""
+
 import unittest
 from unittest.mock import patch, Mock
-from guardrails_api.utils.trace_server_start_if_enabled import trace_server_start_if_enabled
+from guardrails_api.utils.trace_server_start_if_enabled import (
+    trace_server_start_if_enabled,
+)
 
 
 class TestTraceServerStartIfEnabled(unittest.TestCase):
     """Test cases for the trace_server_start_if_enabled function."""
 
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection')
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.Credentials')
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection")
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.Credentials")
     def test_trace_server_disabled(self, mock_credentials, mock_internet):
         """Test that tracing is skipped when metrics are disabled."""
         mock_config = Mock()
@@ -21,8 +24,8 @@ class TestTraceServerStartIfEnabled(unittest.TestCase):
 
         mock_credentials.from_rc_file.assert_called_once()
 
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection')
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.Credentials')
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection")
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.Credentials")
     def test_trace_server_no_internet(self, mock_credentials, mock_internet):
         """Test that tracing is skipped when there's no internet connection."""
         mock_config = Mock()
@@ -36,10 +39,12 @@ class TestTraceServerStartIfEnabled(unittest.TestCase):
         mock_credentials.from_rc_file.assert_called_once()
         mock_internet.assert_called_once()
 
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection')
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.Credentials')
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.platform')
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.GUARDRAILS_VERSION', '0.1.0')
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection")
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.Credentials")
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.platform")
+    @patch(
+        "guardrails_api.utils.trace_server_start_if_enabled.GUARDRAILS_VERSION", "0.1.0"
+    )
     def test_trace_server_enabled_with_internet(
         self, mock_platform, mock_credentials, mock_internet
     ):
@@ -58,7 +63,7 @@ class TestTraceServerStartIfEnabled(unittest.TestCase):
         mock_platform.processor.return_value = "x86_64"
 
         # Mock HubTelemetry at the point where it's imported
-        with patch('guardrails.utils.hub_telemetry_utils.HubTelemetry') as mock_hub:
+        with patch("guardrails.utils.hub_telemetry_utils.HubTelemetry") as mock_hub:
             mock_telemetry_instance = Mock()
             mock_hub.return_value = mock_telemetry_instance
 
@@ -78,8 +83,8 @@ class TestTraceServerStartIfEnabled(unittest.TestCase):
             self.assertEqual(attribute_dict["python-version"], "3.11.0")
             self.assertEqual(attribute_dict["system"], "Linux")
 
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection')
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.Credentials')
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection")
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.Credentials")
     def test_trace_server_with_metrics_none(self, mock_credentials, mock_internet):
         """Test that tracing is skipped when enable_metrics is None."""
         mock_config = Mock()
@@ -92,8 +97,8 @@ class TestTraceServerStartIfEnabled(unittest.TestCase):
 
         mock_credentials.from_rc_file.assert_called_once()
 
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection')
-    @patch('guardrails_api.utils.trace_server_start_if_enabled.Credentials')
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.has_internet_connection")
+    @patch("guardrails_api.utils.trace_server_start_if_enabled.Credentials")
     def test_loads_credentials_from_rc_file(self, mock_credentials, mock_internet):
         """Test that credentials are loaded from rc file."""
         mock_config = Mock()

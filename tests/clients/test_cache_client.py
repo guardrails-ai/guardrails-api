@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.clients.cache_client module."""
+
 import unittest
 import asyncio
 from unittest.mock import patch, Mock, AsyncMock
@@ -26,6 +27,7 @@ class TestCacheClient(unittest.TestCase):
             instances.append(CacheClient())
 
         import threading
+
         threads = [threading.Thread(target=create_instance) for _ in range(10)]
         for thread in threads:
             thread.start()
@@ -35,7 +37,7 @@ class TestCacheClient(unittest.TestCase):
         # All instances should be the same
         self.assertEqual(len(set(id(inst) for inst in instances)), 1)
 
-    @patch('guardrails_api.clients.cache_client.caches')
+    @patch("guardrails_api.clients.cache_client.caches")
     def test_initialize_sets_config(self, mock_caches):
         """Test that initialize sets up cache configuration."""
         mock_cache = Mock()
@@ -50,7 +52,7 @@ class TestCacheClient(unittest.TestCase):
         self.assertEqual(config["default"]["cache"], "aiocache.SimpleMemoryCache")
         self.assertEqual(config["default"]["ttl"], 300)
 
-    @patch('guardrails_api.clients.cache_client.caches')
+    @patch("guardrails_api.clients.cache_client.caches")
     def test_initialize_gets_cache(self, mock_caches):
         """Test that initialize retrieves default cache."""
         mock_cache = Mock()
@@ -62,7 +64,7 @@ class TestCacheClient(unittest.TestCase):
         mock_caches.get.assert_called_once_with("default")
         self.assertEqual(client.cache, mock_cache)
 
-    @patch('guardrails_api.clients.cache_client.caches')
+    @patch("guardrails_api.clients.cache_client.caches")
     def test_get_calls_cache_get(self, mock_caches):
         """Test that get method calls cache.get."""
         mock_cache = Mock()
@@ -77,7 +79,7 @@ class TestCacheClient(unittest.TestCase):
         mock_cache.get.assert_called_once_with("test_key")
         self.assertEqual(result, "value")
 
-    @patch('guardrails_api.clients.cache_client.caches')
+    @patch("guardrails_api.clients.cache_client.caches")
     def test_set_calls_cache_set(self, mock_caches):
         """Test that set method calls cache.set with correct parameters."""
         mock_cache = Mock()
@@ -91,7 +93,7 @@ class TestCacheClient(unittest.TestCase):
 
         mock_cache.set.assert_called_once_with("test_key", "test_value", ttl=600)
 
-    @patch('guardrails_api.clients.cache_client.caches')
+    @patch("guardrails_api.clients.cache_client.caches")
     def test_delete_calls_cache_delete(self, mock_caches):
         """Test that delete method calls cache.delete."""
         mock_cache = Mock()
@@ -105,7 +107,7 @@ class TestCacheClient(unittest.TestCase):
 
         mock_cache.delete.assert_called_once_with("test_key")
 
-    @patch('guardrails_api.clients.cache_client.caches')
+    @patch("guardrails_api.clients.cache_client.caches")
     def test_clear_calls_cache_clear(self, mock_caches):
         """Test that clear method calls cache.clear."""
         mock_cache = Mock()

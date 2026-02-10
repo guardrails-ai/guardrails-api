@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.utils.escape_curlys module."""
+
 import unittest
 from guardrails_api.utils.escape_curlys import (
     escape_curlys,

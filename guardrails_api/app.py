@@ -24,6 +24,7 @@ GR_ENV_FILE = os.environ.get("GR_ENV_FILE", None)
 GR_CONFIG_FILE_PATH = os.environ.get("GR_CONFIG_FILE_PATH", None)
 PORT = int(os.environ.get("PORT", 8000))
 
+
 class RequestInfoMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         tracer = trace.get_tracer(__name__)
@@ -77,11 +78,14 @@ def register_config(config: Optional[str] = None):
 
     return config_file_path
 
+
 # Support for providing env vars as uvicorn does not support supplying args to create_app
 # - Usage: GR_CONFIG_FILE_PATH=config.py GR_ENV_FILE=.env PORT=8080 uvicorn --factory 'guardrails_api.app:create_app' --host 0.0.0.0 --port $PORT --workers 2 --timeout-keep-alive 90
 # - Usage: gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout=90 --workers=2 "guardrails_api.app:create_app(None, None, $PORT)"
 def create_app(
-    env: Optional[str] = GR_ENV_FILE, config: Optional[str] = GR_CONFIG_FILE_PATH, port: Optional[int] = PORT
+    env: Optional[str] = GR_ENV_FILE,
+    config: Optional[str] = GR_CONFIG_FILE_PATH,
+    port: Optional[int] = PORT,
 ):
     trace_server_start_if_enabled()
     # used to print user-facing messages during server startup
@@ -171,7 +175,9 @@ def create_app(
     console.print("Using the following configuration:")
     console.print(f"- Guardrails Log Level: {guardrails_log_level}")
     console.print(f"- Self Endpoint: {self_endpoint}")
-    console.print(f"- Config File Path: {resolved_config_file_path} [Provided: {config}]")
+    console.print(
+        f"- Config File Path: {resolved_config_file_path} [Provided: {config}]"
+    )
     console.print(
         Rule("[bold grey]Server Logs[/bold grey]", characters="=", style="white")
     )

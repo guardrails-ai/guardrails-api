@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.app module."""
+
 import unittest
 from guardrails_api import app
 
@@ -12,7 +13,7 @@ class TestAppModule(unittest.TestCase):
 
     def test_app_module_has_create_app(self):
         """Test that app module has create_app function."""
-        self.assertTrue(hasattr(app, 'create_app'))
+        self.assertTrue(hasattr(app, "create_app"))
 
     def test_create_app_is_callable(self):
         """Test that create_app is callable."""
@@ -21,6 +22,7 @@ class TestAppModule(unittest.TestCase):
     def test_create_app_function_signature(self):
         """Test that create_app function has correct signature."""
         import inspect
+
         sig = inspect.signature(app.create_app)
         self.assertIsInstance(sig, inspect.Signature)
         # create_app should be callable

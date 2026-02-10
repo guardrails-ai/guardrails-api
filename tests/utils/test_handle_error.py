@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.utils.handle_error module."""
+
 import unittest
 import asyncio
 from unittest.mock import patch
@@ -14,9 +15,10 @@ class TestHandleError(unittest.TestCase):
         """Test that handle_error decorator exists and is callable."""
         self.assertTrue(callable(handle_error))
 
-    @patch('guardrails_api.utils.handle_error.logger')
+    @patch("guardrails_api.utils.handle_error.logger")
     def test_handle_error_with_successful_function(self, mock_logger):
         """Test decorator with function that executes successfully."""
+
         @handle_error
         async def successful_function():
             return "success"
@@ -25,19 +27,14 @@ class TestHandleError(unittest.TestCase):
         self.assertEqual(result, "success")
         mock_logger.error.assert_not_called()
 
-    @patch('guardrails_api.utils.handle_error.logger')
-    @patch('guardrails_api.utils.handle_error.traceback.print_exception')
-    def test_handle_error_with_http_error(
-        self, mock_traceback, mock_logger
-    ):
+    @patch("guardrails_api.utils.handle_error.logger")
+    @patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    def test_handle_error_with_http_error(self, mock_traceback, mock_logger):
         """Test decorator handling HttpError."""
+
         @handle_error
         async def raise_http_error():
-            raise HttpError(
-                status=404,
-                message="Not Found",
-                cause="Resource missing"
-            )
+            raise HttpError(status=404, message="Not Found", cause="Resource missing")
 
         with self.assertRaises(HTTPException) as context:
             asyncio.run(raise_http_error())
@@ -47,12 +44,11 @@ class TestHandleError(unittest.TestCase):
         self.assertEqual(exception.detail, "Not Found :: Resource missing")
         mock_logger.error.assert_called_once()
 
-    @patch('guardrails_api.utils.handle_error.logger')
-    @patch('guardrails_api.utils.handle_error.traceback.print_exception')
-    def test_handle_error_with_validation_error(
-        self, mock_traceback, mock_logger
-    ):
+    @patch("guardrails_api.utils.handle_error.logger")
+    @patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    def test_handle_error_with_validation_error(self, mock_traceback, mock_logger):
         """Test decorator handling ValidationError."""
+
         # Since we can't easily mock the import, test generic exception
         @handle_error
         async def raise_generic_error():
@@ -65,12 +61,11 @@ class TestHandleError(unittest.TestCase):
         self.assertEqual(exception.status_code, 500)
         mock_logger.error.assert_called()
 
-    @patch('guardrails_api.utils.handle_error.logger')
-    @patch('guardrails_api.utils.handle_error.traceback.print_exception')
-    def test_handle_error_with_http_exception(
-        self, mock_traceback, mock_logger
-    ):
+    @patch("guardrails_api.utils.handle_error.logger")
+    @patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    def test_handle_error_with_http_exception(self, mock_traceback, mock_logger):
         """Test decorator handling HTTPException."""
+
         @handle_error
         async def raise_http_exception():
             raise HTTPException(status_code=403, detail="Forbidden")
@@ -83,12 +78,11 @@ class TestHandleError(unittest.TestCase):
         self.assertEqual(exception.detail, "Forbidden")
         mock_logger.error.assert_called_once()
 
-    @patch('guardrails_api.utils.handle_error.logger')
-    @patch('guardrails_api.utils.handle_error.traceback.print_exception')
-    def test_handle_error_with_generic_exception(
-        self, mock_traceback, mock_logger
-    ):
+    @patch("guardrails_api.utils.handle_error.logger")
+    @patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    def test_handle_error_with_generic_exception(self, mock_traceback, mock_logger):
         """Test decorator handling generic Exception."""
+
         @handle_error
         async def raise_generic_exception():
             raise ValueError("Some error occurred")
@@ -101,9 +95,10 @@ class TestHandleError(unittest.TestCase):
         self.assertEqual(exception.detail, "Internal Server Error")
         mock_logger.error.assert_called_once()
 
-    @patch('guardrails_api.utils.handle_error.logger')
+    @patch("guardrails_api.utils.handle_error.logger")
     def test_handle_error_with_function_arguments(self, mock_logger):
         """Test decorator with function that takes arguments."""
+
         @handle_error
         async def function_with_args(a, b, c=None):
             return f"{a}-{b}-{c}"
@@ -111,21 +106,21 @@ class TestHandleError(unittest.TestCase):
         result = asyncio.run(function_with_args("x", "y", c="z"))
         self.assertEqual(result, "x-y-z")
 
-    @patch('guardrails_api.utils.handle_error.logger')
+    @patch("guardrails_api.utils.handle_error.logger")
     def test_handle_error_preserves_function_name(self, mock_logger):
         """Test that decorator preserves function name."""
+
         @handle_error
         async def my_function():
             return "test"
 
         self.assertEqual(my_function.__name__, "my_function")
 
-    @patch('guardrails_api.utils.handle_error.logger')
-    @patch('guardrails_api.utils.handle_error.traceback.print_exception')
-    def test_handle_error_logs_all_exceptions(
-        self, mock_traceback, mock_logger
-    ):
+    @patch("guardrails_api.utils.handle_error.logger")
+    @patch("guardrails_api.utils.handle_error.traceback.print_exception")
+    def test_handle_error_logs_all_exceptions(self, mock_traceback, mock_logger):
         """Test that all exceptions are logged."""
+
         @handle_error
         async def raise_error():
             raise RuntimeError("Runtime error")
@@ -138,6 +133,7 @@ class TestHandleError(unittest.TestCase):
 
     def test_handle_error_can_be_called_with_or_without_parens(self):
         """Test that decorator can be used with or without parentheses."""
+
         @handle_error
         async def func1():
             return "test1"

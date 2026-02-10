@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.models.guard_item_audit module."""
+
 import unittest
 from datetime import datetime
 from guardrails_api.models.guard_item_audit import GuardItemAudit
@@ -19,7 +20,7 @@ class TestGuardItemAudit(unittest.TestCase):
             num_reasks=3,
             description="Test guard audit",
             replaced_on=timestamp,
-            operation="U"
+            operation="U",
         )
 
         self.assertEqual(audit.id, "audit-123")
@@ -41,7 +42,7 @@ class TestGuardItemAudit(unittest.TestCase):
             num_reasks=None,
             description=None,
             replaced_on=timestamp,
-            operation="D"
+            operation="D",
         )
 
         self.assertEqual(audit.id, "audit-456")
@@ -65,7 +66,7 @@ class TestGuardItemAudit(unittest.TestCase):
             num_reasks=0,
             description="New guard created",
             replaced_on=timestamp,
-            operation="I"
+            operation="I",
         )
 
         self.assertEqual(audit.operation, "I")
@@ -81,7 +82,7 @@ class TestGuardItemAudit(unittest.TestCase):
             num_reasks=1,
             description="Guard updated",
             replaced_on=timestamp,
-            operation="U"
+            operation="U",
         )
 
         self.assertEqual(audit.operation, "U")
@@ -97,7 +98,7 @@ class TestGuardItemAudit(unittest.TestCase):
             num_reasks=2,
             description="Guard deleted",
             replaced_on=timestamp,
-            operation="D"
+            operation="D",
         )
 
         self.assertEqual(audit.operation, "D")
@@ -107,12 +108,9 @@ class TestGuardItemAudit(unittest.TestCase):
         railspec = {
             "validators": [
                 {"name": "validator1", "params": {"key": "value"}},
-                {"name": "validator2", "params": {"key2": "value2"}}
+                {"name": "validator2", "params": {"key2": "value2"}},
             ],
-            "output_schema": {
-                "type": "object",
-                "properties": {}
-            }
+            "output_schema": {"type": "object", "properties": {}},
         }
         timestamp = datetime.now()
 
@@ -123,7 +121,7 @@ class TestGuardItemAudit(unittest.TestCase):
             num_reasks=5,
             description="Complex guard",
             replaced_on=timestamp,
-            operation="U"
+            operation="U",
         )
 
         self.assertEqual(audit.railspec, railspec)
@@ -140,7 +138,7 @@ class TestGuardItemAudit(unittest.TestCase):
             num_reasks=0,
             description="",
             replaced_on=timestamp,
-            operation="I"
+            operation="I",
         )
 
         self.assertEqual(audit.id, "primary-key-test")

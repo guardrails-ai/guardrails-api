@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.utils.try_json_loads module."""
+
 import unittest
 from guardrails_api.utils.try_json_loads import try_json_loads
 
@@ -14,7 +15,7 @@ class TestTryJsonLoads(unittest.TestCase):
 
     def test_valid_json_array(self):
         """Test parsing a valid JSON array."""
-        json_str = '[1, 2, 3, 4, 5]'
+        json_str = "[1, 2, 3, 4, 5]"
         result = try_json_loads(json_str)
         self.assertEqual(result, [1, 2, 3, 4, 5])
 

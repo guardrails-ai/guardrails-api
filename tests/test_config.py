@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.config module."""
+
 import unittest
 from guardrails_api import config
 
@@ -17,6 +18,7 @@ class TestConfig(unittest.TestCase):
     def test_config_is_module(self):
         """Test that config is a module."""
         import types
+
         self.assertIsInstance(config, types.ModuleType)
 
 

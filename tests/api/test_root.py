@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.api.root module."""
+
 import unittest
 from unittest.mock import patch, Mock
 from fastapi.testclient import TestClient
@@ -21,7 +22,7 @@ class TestRootAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), "Hello, world!")
 
-    @patch('guardrails_api.api.root.postgres_is_enabled')
+    @patch("guardrails_api.api.root.postgres_is_enabled")
     def test_health_check_without_postgres(self, mock_postgres_enabled):
         """Test health check when postgres is disabled."""
         mock_postgres_enabled.return_value = False
@@ -33,9 +34,9 @@ class TestRootAPI(unittest.TestCase):
         self.assertEqual(data["status"], 200)
         self.assertEqual(data["message"], "Ok")
 
-    @patch('guardrails_api.api.root.logger')
-    @patch('guardrails_api.api.root.PostgresClient')
-    @patch('guardrails_api.api.root.postgres_is_enabled')
+    @patch("guardrails_api.api.root.logger")
+    @patch("guardrails_api.api.root.PostgresClient")
+    @patch("guardrails_api.api.root.postgres_is_enabled")
     def test_health_check_with_postgres(
         self, mock_postgres_enabled, mock_pg_client_class, mock_logger
     ):
@@ -56,9 +57,9 @@ class TestRootAPI(unittest.TestCase):
         self.assertEqual(data["status"], 200)
         self.assertEqual(data["message"], "Ok")
 
-    @patch('guardrails_api.api.root.logger')
-    @patch('guardrails_api.api.root.PostgresClient')
-    @patch('guardrails_api.api.root.postgres_is_enabled')
+    @patch("guardrails_api.api.root.logger")
+    @patch("guardrails_api.api.root.PostgresClient")
+    @patch("guardrails_api.api.root.postgres_is_enabled")
     def test_health_check_postgres_error(
         self, mock_postgres_enabled, mock_pg_client_class, mock_logger
     ):
@@ -74,7 +75,7 @@ class TestRootAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         mock_logger.error.assert_called()
 
-    @patch('guardrails_api.api.root.get_open_api_spec')
+    @patch("guardrails_api.api.root.get_open_api_spec")
     def test_api_docs_endpoint(self, mock_get_spec):
         """Test the API docs endpoint."""
         mock_spec = {"openapi": "3.0.0", "info": {"title": "Test API"}}

@@ -63,9 +63,9 @@ class PostgresClient:
         else:
             yield None
 
-
     def generate_lock_id(self, name: str) -> int:
         import hashlib
+
         return int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**63)
 
     def initialize(self, app: FastAPI):
@@ -98,7 +98,9 @@ class PostgresClient:
 
         # Use advisory lock to ensure only one worker runs initialization
         with engine.begin() as connection:
-            lock_acquired = connection.execute(text(f"SELECT pg_try_advisory_lock({lock_id});")).scalar()
+            lock_acquired = connection.execute(
+                text(f"SELECT pg_try_advisory_lock({lock_id});")
+            ).scalar()
             if lock_acquired:
                 self.run_initialization(connection)
                 # Release the lock after initialization is complete
@@ -107,12 +109,12 @@ class PostgresClient:
     def run_initialization(self, connection):
         # Perform the actual initialization tasks
         from guardrails_api.models import GuardItem, GuardItemAudit  # noqa
+
         Base.metadata.create_all(bind=self.engine)
-        
+
         # Execute custom SQL extensions and triggers
         connection.execute(text(AUDIT_FUNCTION))
         connection.execute(text(AUDIT_TRIGGER))
-
 
 
 AUDIT_FUNCTION = """
@@ -139,4 +141,3 @@ CREATE TRIGGER guard_audit_trigger
     FOR EACH ROW
     EXECUTE PROCEDURE guard_audit_function();
 """
-

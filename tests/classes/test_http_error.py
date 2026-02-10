@@ -1,4 +1,5 @@
 """Unit tests for guardrails_api.classes.http_error module."""
+
 import unittest
 from guardrails_api.classes.http_error import HttpError
 
@@ -22,33 +23,26 @@ class TestHttpError(unittest.TestCase):
         error = HttpError(
             status=500,
             message="Internal Server Error",
-            cause="Database connection failed"
+            cause="Database connection failed",
         )
         self.assertEqual(error.status, 500)
         self.assertEqual(error.message, "Internal Server Error")
         self.assertEqual(error.cause, "Database connection failed")
         self.assertEqual(
-            error.detail,
-            "Internal Server Error :: Database connection failed"
+            error.detail, "Internal Server Error :: Database connection failed"
         )
 
     def test_http_error_with_fields(self):
         """Test HttpError with fields parameter."""
         fields = {"email": "Invalid format", "age": "Must be positive"}
-        error = HttpError(
-            status=400,
-            message="Validation Error",
-            fields=fields
-        )
+        error = HttpError(status=400, message="Validation Error", fields=fields)
         self.assertEqual(error.status, 400)
         self.assertEqual(error.fields, fields)
 
     def test_http_error_with_context(self):
         """Test HttpError with context parameter."""
         error = HttpError(
-            status=403,
-            message="Forbidden",
-            context="User lacks required permissions"
+            status=403, message="Forbidden", context="User lacks required permissions"
         )
         self.assertEqual(error.status, 403)
         self.assertEqual(error.context, "User lacks required permissions")
@@ -62,47 +56,31 @@ class TestHttpError(unittest.TestCase):
 
     def test_http_error_to_dict_with_cause(self):
         """Test HttpError to_dict including cause."""
-        error = HttpError(
-            status=500,
-            message="Server Error",
-            cause="Timeout"
-        )
+        error = HttpError(status=500, message="Server Error", cause="Timeout")
         result = error.to_dict()
-        expected = {
-            "status": 500,
-            "message": "Server Error",
-            "cause": "Timeout"
-        }
+        expected = {"status": 500, "message": "Server Error", "cause": "Timeout"}
         self.assertEqual(result, expected)
 
     def test_http_error_to_dict_with_fields(self):
         """Test HttpError to_dict including fields."""
         fields = {"username": "Required field"}
-        error = HttpError(
-            status=400,
-            message="Bad Request",
-            fields=fields
-        )
+        error = HttpError(status=400, message="Bad Request", fields=fields)
         result = error.to_dict()
         expected = {
             "status": 400,
             "message": "Bad Request",
-            "fields": {"username": "Required field"}
+            "fields": {"username": "Required field"},
         }
         self.assertEqual(result, expected)
 
     def test_http_error_to_dict_with_context(self):
         """Test HttpError to_dict including context."""
-        error = HttpError(
-            status=401,
-            message="Unauthorized",
-            context="Token expired"
-        )
+        error = HttpError(status=401, message="Unauthorized", context="Token expired")
         result = error.to_dict()
         expected = {
             "status": 401,
             "message": "Unauthorized",
-            "context": "Token expired"
+            "context": "Token expired",
         }
         self.assertEqual(result, expected)
 
@@ -114,7 +92,7 @@ class TestHttpError(unittest.TestCase):
             message="Unprocessable Entity",
             cause="Validation failed",
             fields=fields,
-            context="Request processing"
+            context="Request processing",
         )
         result = error.to_dict()
         expected = {
@@ -122,7 +100,7 @@ class TestHttpError(unittest.TestCase):
             "message": "Unprocessable Entity",
             "cause": "Validation failed",
             "fields": fields,
-            "context": "Request processing"
+            "context": "Request processing",
         }
         self.assertEqual(result, expected)
 
@@ -146,11 +124,7 @@ class TestHttpError(unittest.TestCase):
 
     def test_http_error_detail_with_cause(self):
         """Test that detail combines message and cause."""
-        error = HttpError(
-            status=500,
-            message="Error",
-            cause="Root cause"
-        )
+        error = HttpError(status=500, message="Error", cause="Root cause")
         self.assertEqual(error.detail, "Error :: Root cause")
 
 

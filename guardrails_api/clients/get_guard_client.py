@@ -6,6 +6,7 @@ from guardrails_api.clients.postgres_client import postgres_is_enabled
 
 guard_client = None
 
+
 def get_guard_client():
     global guard_client
 
