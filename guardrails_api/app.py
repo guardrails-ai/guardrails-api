@@ -143,7 +143,8 @@ def create_app(
     cache_client.initialize()
 
     from guardrails_api.api.root import router as root_router
-    from guardrails_api.api.guards import router as guards_router, guard_client
+    from guardrails_api.api.guards import router as guards_router
+    from guardrails_api.clients.get_guard_client import get_guard_client
 
     app.include_router(root_router)
     app.include_router(guards_router)
@@ -163,6 +164,7 @@ def create_app(
 
     console.print(":green_circle: Active guards and OpenAI compatible endpoints:")
 
+    guard_client = get_guard_client()
     guards = guard_client.get_guards()
 
     for g in guards:

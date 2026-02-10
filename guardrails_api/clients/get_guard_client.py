@@ -17,7 +17,7 @@ def get_guard_client():
         else:
             guard_client = MemoryGuardClient()
             # Will be defined at runtime
-            import config  # noqa
+            from guardrails_api import config
 
             exports = config.__dir__()
             for export_name in exports:
