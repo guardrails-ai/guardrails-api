@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 import typer
 from typing import Optional
 from guardrails_api.cli.cli import cli
@@ -21,10 +23,16 @@ def start(
         help="The port to run the server on.",
     ),
 ):
-    # TODO: If these are empty,
-    #   look for them in a .guardrailsrc in the current directory.
     env = env or None
+    env_file_path = None
+    if env:
+        env_file_path = os.path.abspath(env)
+        load_dotenv(env_file_path, override=True)
+    
     config = config or None
     valid_configuration(config)
+
+    port = port or 8000
+
     app = create_app(env, config, port)
-    uvicorn.run(app, port=port)
+    uvicorn.run(app, port=port, env_file=env_file_path)
