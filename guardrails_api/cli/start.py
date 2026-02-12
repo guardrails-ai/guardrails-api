@@ -28,7 +28,7 @@ def start(
     if env:
         env_file_path = os.path.abspath(env)
         load_dotenv(env_file_path, override=True)
-    
+
     config = config or None
     valid_configuration(config)
 

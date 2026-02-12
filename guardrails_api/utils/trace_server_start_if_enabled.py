@@ -19,5 +19,5 @@ def trace_server_start_if_enabled():
                 ("arch", platform.architecture()[0]),
                 ("machine", platform.machine()),
                 ("processor", platform.processor()),
-            ]
+            ],
         )
