@@ -4,10 +4,6 @@ from fastapi.responses import JSONResponse
 from guardrails import configure_logging
 from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
-from guardrails_api.otel import otel_is_disabled, initialize
-from guardrails_api.utils.trace_server_start_if_enabled import (
-    trace_server_start_if_enabled,
-)
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry import trace, context, baggage
 
@@ -23,38 +19,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 GR_ENV_FILE = os.environ.get("GR_ENV_FILE", None)
 GR_CONFIG_FILE_PATH = os.environ.get("GR_CONFIG_FILE_PATH", None)
 PORT = int(os.environ.get("PORT", 8000))
-
-
-class RequestInfoMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        tracer = trace.get_tracer(__name__)
-        # Get the current context and attach it to this task
-        with tracer.start_as_current_span("request_info") as span:
-            client_ip = request.client.host if request.client else None
-            user_agent = request.headers.get("user-agent", "unknown")
-            referrer = request.headers.get("referrer", "unknown")
-            user_id = request.headers.get("x-user-id", "unknown")
-            organization = request.headers.get("x-organization", "unknown")
-            app = request.headers.get("x-app", "unknown")
-
-            context.attach(baggage.set_baggage("client.ip", client_ip))
-            context.attach(baggage.set_baggage("http.user_agent", user_agent))
-            context.attach(baggage.set_baggage("http.referrer", referrer))
-            context.attach(baggage.set_baggage("user.id", user_id))
-            context.attach(baggage.set_baggage("organization", organization))
-            context.attach(baggage.set_baggage("app", app))
-
-            span.set_attribute("http.user_agent", user_agent)
-            span.set_attribute("http.referrer", referrer)
-            span.set_attribute("user.id", user_id)
-            span.set_attribute("organization", organization)
-            span.set_attribute("app", app)
-
-            if client_ip:
-                span.set_attribute("client.ip", client_ip)
-
-            response = await call_next(request)
-            return response
 
 
 # Custom JSON encoder
@@ -87,7 +51,6 @@ def create_app(
     config: Optional[str] = GR_CONFIG_FILE_PATH,
     port: Optional[int] = PORT,
 ):
-    trace_server_start_if_enabled()
     # used to print user-facing messages during server startup
     console = Console()
 
@@ -111,9 +74,6 @@ def create_app(
 
     app = FastAPI(openapi_url="")
 
-    # Add the custom middleware
-    app.add_middleware(RequestInfoMiddleware)
-
     # Initialize FastAPIInstrumentor
     FastAPIInstrumentor.instrument_app(app)
 
@@ -128,9 +88,6 @@ def create_app(
 
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)
-
-    if not otel_is_disabled():
-        initialize()
 
     # if no pg_host is set, don't set up postgres
     if postgres_is_enabled():
