@@ -6,8 +6,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Image
+  publish:
+    name: Publish To PyPI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
