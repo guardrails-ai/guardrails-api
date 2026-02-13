@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from guardrails import Guard
 from guardrails_api.classes.http_error import HttpError
@@ -12,7 +12,7 @@ class MemoryGuardClient(GuardClient):
     def __init__(self):
         self.initialized = True
 
-    def get_guard(self, guard_name: str, as_of_date: str = None) -> Guard:
+    def get_guard(self, guard_name: str, as_of_date: Optional[str] = None) -> Guard:
         guard = self.guards.get(guard_name, None)
         return guard
 

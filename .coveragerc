@@ -1,4 +1,2 @@
-[run]
-omit =
-    # omit any struct classes bc they will go away soon
-    src/classes/*_struct.py
+[report]
+fail_under = 85

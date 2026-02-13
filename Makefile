@@ -1,10 +1,12 @@
+.PHONY: install install-dev lock install-lock build serve db env refresh format lint qa test test-cov view-test-cov
 # Installs production dependencies
 install:
 	pip install .;
 
 # Installs development dependencies
 install-dev:
-	pip install ".[dev]";
+	pip install -e ".[dev]";
+	pre-commit install
 
 lock:
 	pip freeze --exclude guardrails-api > requirements-lock.txt
@@ -12,24 +14,17 @@ lock:
 install-lock:
 	pip install -r requirements-lock.txt
 
-.PHONY: build
 build:
 	make install
 	
 	cp "$$(python -c "import guardrails_api_client as _; print(_.__path__[0])")/openapi-spec.json" ./guardrails_api/open-api-spec.json
 	
 
-start:
-	make build
-	bash ./guardrails_api/start.sh
+serve:
+	python ./guardrails_api/app.py
 
-start-dev:
-	make install-dev
-	make build
-	bash ./guardrails_api/start-dev.sh
-
-infra:
-	docker compose --profile infra up --build
+db:
+	docker compose up
 
 env:
 	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
@@ -57,18 +52,17 @@ qa:
 	make lint
 	make test-cov
 
-# This doesn't actually work, but it's nice to be able to just copy/paste instead of typing this out in the terminal.
-source:
-	source ./.venv/bin/activate
-
 test:
-	pytest ./tests
+	python -m unittest discover -s tests --buffer --failfast
 
 test-cov:
-	coverage run --source=./guardrails_api -m pytest ./tests
-	coverage report --fail-under=45
+	coverage run -m unittest discover --start-directory tests --buffer --failfast
+	coverage report -m
+
+test-cov-ci:
+	coverage run -m unittest discover --start-directory tests --buffer --failfast
 
 view-test-cov:
-	coverage run --source=./guardrails_api -m pytest ./tests
+	coverage run -m unittest discover --start-directory tests --buffer --failfast
 	coverage html
 	open htmlcov/index.html

@@ -8,8 +8,10 @@ class HttpError(Exception):
         context: str = None,
     ):
         self.status = status
+        self.status_code = status
         self.message = message
         self.cause = cause
+        self.detail = f"{message} :: {cause}" if cause is not None else message
         self.fields = fields
         self.context = context
 

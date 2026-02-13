@@ -63,6 +63,11 @@ class PostgresClient:
         else:
             yield None
 
+    def generate_lock_id(self, name: str) -> int:
+        import hashlib
+
+        return int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**63)
+
     def initialize(self, app: FastAPI):
         pg_user, pg_password = self.get_pg_creds()
         pg_host = os.environ.get("PGHOST", "localhost")
@@ -88,46 +93,39 @@ class PostgresClient:
         self.app = app
         self.engine = engine
         self.SessionLocal = SessionLocal
-        # Create tables
+
+        lock_id = self.generate_lock_id("guardrails-api")
+
+        # Use advisory lock to ensure only one worker runs initialization
+        with engine.begin() as connection:
+            lock_acquired = connection.execute(
+                text(f"SELECT pg_try_advisory_lock({lock_id});")
+            ).scalar()
+            if lock_acquired:
+                self.run_initialization(connection)
+                # Release the lock after initialization is complete
+                connection.execute(text(f"SELECT pg_advisory_unlock({lock_id});"))
+
+    def run_initialization(self, connection):
+        # Perform the actual initialization tasks
         from guardrails_api.models import GuardItem, GuardItemAudit  # noqa
 
-        Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=self.engine)
 
-        # Execute custom SQL
-        with engine.connect() as connection:
-            connection.execute(text(INIT_EXTENSIONS))
-            connection.execute(text(AUDIT_FUNCTION))
-            connection.execute(text(AUDIT_TRIGGER))
-            connection.commit()
+        # Execute custom SQL extensions and triggers
+        connection.execute(text(AUDIT_FUNCTION))
+        connection.execute(text(AUDIT_TRIGGER))
 
-
-# Define INIT_EXTENSIONS, AUDIT_FUNCTION, and AUDIT_TRIGGER here as they were in your original code
-INIT_EXTENSIONS = """
--- Your SQL for initializing extensions
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp') THEN
-        CREATE EXTENSION "uuid-ossp";
-    END IF;
-END $$;
-
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
-        CREATE EXTENSION "vector";
-    END IF;
-END $$;
-"""
 
 AUDIT_FUNCTION = """
 CREATE OR REPLACE FUNCTION guard_audit_function() RETURNS TRIGGER AS $guard_audit$
 BEGIN
     IF (TG_OP = 'DELETE') THEN
-    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'D';
+    INSERT INTO guards_audit SELECT gen_random_uuid(), OLD.*, now(), 'D';
     ELSIF (TG_OP = 'UPDATE') THEN
-    INSERT INTO guards_audit SELECT uuid_generate_v4(), OLD.*, now(), 'U';
+    INSERT INTO guards_audit SELECT gen_random_uuid(), OLD.*, now(), 'U';
     ELSIF (TG_OP = 'INSERT') THEN
-    INSERT INTO guards_audit SELECT uuid_generate_v4(), NEW.*, now(), 'I';
+    INSERT INTO guards_audit SELECT gen_random_uuid(), NEW.*, now(), 'I';
     END IF;
     RETURN null;
 END;
