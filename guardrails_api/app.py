@@ -4,8 +4,6 @@ from fastapi.responses import JSONResponse
 from guardrails import configure_logging
 from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry import trace, context, baggage
 
 from rich.console import Console
 from rich.rule import Rule
@@ -14,7 +12,6 @@ import importlib.util
 import json
 import os
 
-from starlette.middleware.base import BaseHTTPMiddleware
 
 GR_ENV_FILE = os.environ.get("GR_ENV_FILE", None)
 GR_CONFIG_FILE_PATH = os.environ.get("GR_CONFIG_FILE_PATH", None)
@@ -54,16 +51,11 @@ def create_app(
     # used to print user-facing messages during server startup
     console = Console()
 
-    if os.environ.get("APP_ENVIRONMENT") != "production":
+    if env:
         from dotenv import load_dotenv
 
-        # Always load default env file, but let user specified file override it.
-        default_env_file = os.path.join(os.path.dirname(__file__), "default.env")
-        load_dotenv(default_env_file, override=True)
-
-        if env:
-            env_file_path = os.path.abspath(env)
-            load_dotenv(env_file_path, override=True)
+        env_file_path = os.path.abspath(env)
+        load_dotenv(env_file_path, override=True)
 
     set_port = port or PORT
     host = os.environ.get("HOST", "http://localhost")
@@ -73,9 +65,6 @@ def create_app(
     resolved_config_file_path = register_config(config)
 
     app = FastAPI(openapi_url="")
-
-    # Initialize FastAPIInstrumentor
-    FastAPIInstrumentor.instrument_app(app)
 
     # Add CORS middleware
     app.add_middleware(
@@ -112,7 +101,7 @@ def create_app(
         return JSONResponse(
             status_code=400,
             content={"message": str(exc)},
-        )
+        )   
 
     console.print(f"\n:rocket: Guardrails API is available at {self_endpoint}")
     console.print(

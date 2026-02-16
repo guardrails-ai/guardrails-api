@@ -18,16 +18,31 @@ build:
 	make install
 	
 	cp "$$(python -c "import guardrails_api_client as _; print(_.__path__[0])")/openapi-spec.json" ./guardrails_api/open-api-spec.json
+
+	opentelemetry-bootstrap -a install
 	
 
 serve:
 	python ./guardrails_api/app.py
 
-db:
-	docker compose up
+serve-w-otel:
+	source ./.env.sh && opentelemetry-instrument guardrails-api start
 
-env:
-	if [ ! -d "./.venv" ]; then echo "Creating virtual environment..."; python3 -m venv ./.venv; fi;
+# Only launch the postgres database from docker compose
+db:
+	docker compose --profile db up
+
+# Launch the postgres database, jaeger, and otel collector from docker compose
+infra:
+	docker compose --profile infra up
+
+# Launch the postgres database and guardrails server from docker compose
+docker-serve:
+	docker compose --profile db --profile server up
+
+# Launch all services from docker compose
+docker-serve-all:
+	docker compose --profile all up
 
 refresh:
 	echo "Removing old virtual environment"
