@@ -50,13 +50,14 @@ class TestPostgresClient(unittest.TestCase):
         self.assertEqual(password, "envpass")
 
     @patch.dict("os.environ", {}, clear=True)
-    def test_get_pg_creds_defaults(self):
-        """Test getting PostgreSQL credentials with defaults."""
+    def test_get_pg_creds_missing_raises_error(self):
+        """Test that missing credentials raise RuntimeError."""
         client = PostgresClient()
-        user, password = client.get_pg_creds()
 
-        self.assertEqual(user, "postgres")
-        self.assertIsNone(password)
+        with self.assertRaises(RuntimeError) as context:
+            client.get_pg_creds()
+
+        self.assertIn("PGUSER", str(context.exception))
 
     def test_generate_lock_id(self):
         """Test generating lock ID from name."""
