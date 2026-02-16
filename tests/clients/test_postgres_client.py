@@ -40,34 +40,6 @@ class TestPostgresClient(unittest.TestCase):
         client2 = PostgresClient()
         self.assertIs(client1, client2)
 
-    @patch("boto3.client")
-    def test_fetch_pg_secret(self, mock_boto_client):
-        """Test fetching PostgreSQL secret from AWS Secrets Manager."""
-        mock_sm_client = Mock()
-        mock_sm_client.get_secret_value.return_value = {
-            "SecretString": '{"username": "testuser", "password": "testpass"}'
-        }
-        mock_boto_client.return_value = mock_sm_client
-
-        client = PostgresClient()
-        result = client.fetch_pg_secret(
-            "arn:aws:secretsmanager:us-east-1:123456789:secret:db-secret"
-        )
-
-        self.assertEqual(result, {"username": "testuser", "password": "testpass"})
-        mock_sm_client.get_secret_value.assert_called_once()
-
-    @patch("boto3.client")
-    def test_fetch_pg_secret_invalid_json(self, mock_boto_client):
-        """Test fetching secret with invalid JSON returns None."""
-        mock_sm_client = Mock()
-        mock_sm_client.get_secret_value.return_value = {"SecretString": "invalid json"}
-        mock_boto_client.return_value = mock_sm_client
-
-        client = PostgresClient()
-        result = client.fetch_pg_secret("arn:aws:secret")
-
-        self.assertIsNone(result)
 
     @patch.dict("os.environ", {"PGUSER": "envuser", "PGPASSWORD": "envpass"})
     def test_get_pg_creds_from_env(self):
@@ -79,31 +51,13 @@ class TestPostgresClient(unittest.TestCase):
         self.assertEqual(password, "envpass")
 
     @patch.dict("os.environ", {}, clear=True)
-    @patch.object(PostgresClient, "fetch_pg_secret")
-    def test_get_pg_creds_defaults(self, mock_fetch_secret):
+    def test_get_pg_creds_defaults(self):
         """Test getting PostgreSQL credentials with defaults."""
-        mock_fetch_secret.return_value = None
-
         client = PostgresClient()
         user, password = client.get_pg_creds()
 
         self.assertEqual(user, "postgres")
         self.assertIsNone(password)
-
-    @patch.dict("os.environ", {"PGPASSWORD_SECRET_ARN": "arn:aws:secret"})
-    @patch.object(PostgresClient, "fetch_pg_secret")
-    def test_get_pg_creds_from_secret(self, mock_fetch_secret):
-        """Test getting PostgreSQL credentials from AWS secret."""
-        mock_fetch_secret.return_value = {
-            "username": "secretuser",
-            "password": "secretpass",
-        }
-
-        client = PostgresClient()
-        user, password = client.get_pg_creds()
-
-        self.assertEqual(user, "secretuser")
-        self.assertEqual(password, "secretpass")
 
     def test_generate_lock_id(self):
         """Test generating lock ID from name."""
