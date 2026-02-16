@@ -23,7 +23,6 @@ guardrails
 opentelemetry-lambda-layer
 open-api-spec.json
 open-api-spec.yml
-.python-version
 requirements-lock-old.txt
 opensearch
 build
@@ -31,3 +30,5 @@ build
 config.py
 client-admin-test.py
 client-consumer-test.py
+.claude
+.ruff_cache

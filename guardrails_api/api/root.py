@@ -35,7 +35,7 @@ async def health_check():
         query = text("SELECT count(datid) FROM pg_stat_activity;")
         response = pg_client.SessionLocal().execute(query).all()
 
-        logger.info("response: %s", response)
+        logger.debug("response: %s", response)
 
         return HealthCheck(200, "Ok").to_dict()
     except Exception as e:
