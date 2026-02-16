@@ -15,7 +15,7 @@ install-lock:
 	pip install -r requirements-lock.txt
 
 build:
-	make install
+	make install-dev
 	
 	cp "$$(python -c "import guardrails_api_client as _; print(_.__path__[0])")/openapi-spec.json" ./guardrails_api/open-api-spec.json
 
