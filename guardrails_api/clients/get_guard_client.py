@@ -1,3 +1,4 @@
+import importlib
 from guardrails_api_client import Guard
 from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 from guardrails_api.clients.pg_guard_client import PGGuardClient
@@ -17,7 +18,10 @@ def get_guard_client():
         else:
             guard_client = MemoryGuardClient()
             # Will be defined at runtime
-            from guardrails_api import config
+            try:
+                from guardrails_api import config  # type: ignore
+            except ImportError:
+                config = importlib.import_module("config")
 
             exports = config.__dir__()
             for export_name in exports:

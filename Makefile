@@ -1,4 +1,4 @@
-.PHONY: install install-dev lock install-lock build serve db env refresh format lint qa test test-cov view-test-cov
+.PHONY: install install-dev lock install-lock build serve db env refresh format lint qa test test-cov view-test-cov type
 # Installs production dependencies
 install:
 	pip install .;
