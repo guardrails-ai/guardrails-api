@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from guardrails_api.api.guards import router, guard_history_is_enabled
+from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 
 
 class TestGuardHistoryIsEnabled(unittest.TestCase):
@@ -56,8 +57,9 @@ class TestGuardsAPI(unittest.TestCase):
         self.app.include_router(router)
         self.client = TestClient(self.app)
 
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.get_guard_client")
-    def test_get_guards(self, mock_get_guard_client):
+    def test_get_guards(self, mock_get_guard_client, mock_postgres_is_enabled):
         """Test GET /guards endpoint."""
         mock_guard_client = Mock()
         mock_get_guard_client.return_value = mock_guard_client
@@ -77,8 +79,11 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(data[0]["name"], "guard1")
         self.assertEqual(data[1]["name"], "guard2")
 
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.get_guard_client")
-    def test_get_guards_empty_list(self, mock_get_guard_client):
+    def test_get_guards_empty_list(
+        self, mock_get_guard_client, mock_postgres_is_enabled
+    ):
         """Test GET /guards when no guards exist."""
         mock_guard_client = Mock()
         mock_get_guard_client.return_value = mock_guard_client
@@ -91,9 +96,13 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.json(), [])
 
     @patch("guardrails_api.api.guards.postgres_is_enabled")
-    def test_create_guard_not_implemented_for_memory(self, mock_postgres):
+    @patch("guardrails_api.api.guards.get_guard_client")
+    def test_create_guard_not_implemented_for_memory(
+        self, mock_get_guard_client, mock_postgres
+    ):
         """Test POST /guards fails for in-memory guards."""
         mock_postgres.return_value = False
+        mock_get_guard_client.return_value = MemoryGuardClient()
 
         response = self.client.post(
             "/guards", json={"name": "test_guard", "description": "Test"}
@@ -130,8 +139,9 @@ class TestGuardsAPI(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["name"], "test_guard")
 
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.get_guard_client")
-    def test_get_guard_success(self, mock_get_guard_client):
+    def test_get_guard_success(self, mock_get_guard_client, mock_postgres_is_enabled):
         """Test GET /guards/{guard_name} successfully retrieves a guard."""
         mock_guard_client = Mock()
         mock_get_guard_client.return_value = mock_guard_client
@@ -146,8 +156,9 @@ class TestGuardsAPI(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["name"], "test_guard")
 
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.get_guard_client")
-    def test_get_guard_not_found(self, mock_get_guard_client):
+    def test_get_guard_not_found(self, mock_get_guard_client, mock_postgres_is_enabled):
         """Test GET /guards/{guard_name} returns 404 when guard not found."""
         mock_guard_client = Mock()
         mock_get_guard_client.return_value = mock_guard_client
@@ -159,8 +170,11 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("does not exist", response.json()["detail"])
 
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.get_guard_client")
-    def test_get_guard_url_encoded_name(self, mock_get_guard_client):
+    def test_get_guard_url_encoded_name(
+        self, mock_get_guard_client, mock_postgres_is_enabled
+    ):
         """Test GET /guards/{guard_name} handles URL-encoded names."""
         mock_guard_client = Mock()
         mock_get_guard_client.return_value = mock_guard_client
@@ -176,8 +190,11 @@ class TestGuardsAPI(unittest.TestCase):
         # Verify the decoded name was passed to get_guard
         mock_guard_client.get_guard.assert_called_once_with("test guard", None)
 
+    @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.get_guard_client")
-    def test_get_guard_with_as_of_date(self, mock_get_guard_client):
+    def test_get_guard_with_as_of_date(
+        self, mock_get_guard_client, mock_postgres_is_enabled
+    ):
         """Test GET /guards/{guard_name} with asOf parameter."""
         mock_guard_client = Mock()
         mock_get_guard_client.return_value = mock_guard_client
@@ -192,9 +209,13 @@ class TestGuardsAPI(unittest.TestCase):
         mock_guard_client.get_guard.assert_called_once_with("test_guard", "2024-01-01")
 
     @patch("guardrails_api.api.guards.postgres_is_enabled")
-    def test_update_guard_not_implemented_for_memory(self, mock_postgres):
+    @patch("guardrails_api.api.guards.get_guard_client")
+    def test_update_guard_not_implemented_for_memory(
+        self, mock_get_guard_client, mock_postgres_is_enabled
+    ):
         """Test PUT /guards/{guard_name} fails for in-memory guards."""
-        mock_postgres.return_value = False
+        mock_postgres_is_enabled.return_value = False
+        mock_get_guard_client.return_value = MemoryGuardClient()
 
         response = self.client.put(
             "/guards/test_guard", json={"name": "test_guard", "description": "Updated"}
@@ -234,9 +255,13 @@ class TestGuardsAPI(unittest.TestCase):
         self.assertEqual(data["description"], "Updated")
 
     @patch("guardrails_api.api.guards.postgres_is_enabled")
-    def test_delete_guard_not_implemented_for_memory(self, mock_postgres):
+    @patch("guardrails_api.api.guards.get_guard_client")
+    def test_delete_guard_not_implemented_for_memory(
+        self, mock_get_guard_client, mock_postgres
+    ):
         """Test DELETE /guards/{guard_name} fails for in-memory guards."""
         mock_postgres.return_value = False
+        mock_get_guard_client.return_value = MemoryGuardClient()
 
         response = self.client.delete("/guards/test_guard")
 
