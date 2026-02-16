@@ -355,10 +355,14 @@ class TestGuardsAPI(unittest.TestCase):
                 methods.extend(route.methods)
         self.assertIn("POST", methods)
 
+    @patch("guardrails_api.api.guards.get_guard_client")
     @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.GuardStruct")
-    def test_create_guard_invalid_payload(self, mock_guard_struct, mock_postgres):
+    def test_create_guard_invalid_payload(
+        self, mock_guard_struct, mock_postgres, mock_get_guard_client
+    ):
         """Test POST /guards with invalid payload returns 422."""
+        mock_get_guard_client.return_value = Mock()
         mock_postgres.return_value = True
         mock_guard_struct.from_json.return_value = None
 
@@ -366,10 +370,14 @@ class TestGuardsAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
 
+    @patch("guardrails_api.api.guards.get_guard_client")
     @patch("guardrails_api.api.guards.postgres_is_enabled")
     @patch("guardrails_api.api.guards.GuardStruct")
-    def test_update_guard_invalid_payload(self, mock_guard_struct, mock_postgres):
+    def test_update_guard_invalid_payload(
+        self, mock_guard_struct, mock_postgres, mock_get_guard_client
+    ):
         """Test PUT /guards/{guard_name} with invalid payload returns 422."""
+        mock_get_guard_client.return_value = Mock()
         mock_postgres.return_value = True
         mock_guard_struct.from_json.return_value = None
 
