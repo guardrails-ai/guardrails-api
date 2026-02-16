@@ -1,5 +1,5 @@
-# guardrails-poc
-Docker compose stub of Guardrails as a Service
+# guardrails-api
+FastAPI server for hosting Guardrails AI in your own environment.
 
 ## Setting Up
 We strongly encourage you to use a virtual environment when developing in python.
@@ -47,4 +47,4 @@ or
 to run everything including the guardrails-api
 
 
-The last option is useful when checking that everything will work as planned in a more productionized environment.  When developing, it's generally faster to just run the minimum infrastructure you need via docker and run the api on a bare process with the `make start` command.
+The last option is useful when checking that everything will work as planned in a more productionized environment.  When developing, it's generally faster to just run the minimum infrastructure you need via docker and run the api on a bare process with the `make serve` command.
