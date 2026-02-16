@@ -16,7 +16,7 @@ make install
 
 And start the dev server:
 ```bash
-make start
+make serve
 ```
 
 Once the service has launched, you should be able to navigate to the Swagger documenation for the guardrails-api at http://localhost:8000
