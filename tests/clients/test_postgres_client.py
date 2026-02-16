@@ -40,7 +40,6 @@ class TestPostgresClient(unittest.TestCase):
         client2 = PostgresClient()
         self.assertIs(client1, client2)
 
-
     @patch.dict("os.environ", {"PGUSER": "envuser", "PGPASSWORD": "envpass"})
     def test_get_pg_creds_from_env(self):
         """Test getting PostgreSQL credentials from environment variables."""

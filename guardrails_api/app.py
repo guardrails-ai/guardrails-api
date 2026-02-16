@@ -101,7 +101,7 @@ def create_app(
         return JSONResponse(
             status_code=400,
             content={"message": str(exc)},
-        )   
+        )
 
     console.print(f"\n:rocket: Guardrails API is available at {self_endpoint}")
     console.print(

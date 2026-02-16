@@ -7,7 +7,7 @@ from guardrails_api.cli.cli import cli
 
 def version_callback(value: bool):
     if value:
-        version = importlib.metadata.version('guardrails-api')
+        version = importlib.metadata.version("guardrails-api")
         print(f"guardrails-api CLI Version: {version}")
         raise typer.Exit()
 
