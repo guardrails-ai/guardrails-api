@@ -1,17 +1,15 @@
 import json
 import os
 import inspect
-from typing import Any, Dict, Optional
+from typing import Optional
 from fastapi import HTTPException, Request, APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from urllib.parse import unquote_plus
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
-from opentelemetry.trace import Span
 from guardrails_api_client import Guard as GuardStruct
+from guardrails_api.clients.get_guard_client import get_guard_client
 from guardrails_api.clients.cache_client import CacheClient
-from guardrails_api.clients.memory_guard_client import MemoryGuardClient
-from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
@@ -19,22 +17,6 @@ from guardrails_api.utils.openai import (
     outcome_to_stream_response,
 )
 from guardrails_api.utils.handle_error import handle_error
-from string import Template
-
-# if no pg_host is set, use in memory guards
-if postgres_is_enabled():
-    guard_client = PGGuardClient()
-else:
-    guard_client = MemoryGuardClient()
-    # Will be defined at runtime
-    import config  # noqa
-
-    exports = config.__dir__()
-    for export_name in exports:
-        export = getattr(config, export_name)
-        is_guard = isinstance(export, Guard)
-        if is_guard:
-            guard_client.create_guard(export)
 
 cache_client = CacheClient()
 
@@ -42,31 +24,41 @@ cache_client.initialize()
 
 router = APIRouter()
 
+
 def guard_history_is_enabled():
     return os.environ.get("GUARD_HISTORY_ENABLED", "true").lower() == "true"
+
 
 @router.get("/guards")
 @handle_error
 async def get_guards():
+    guard_client = get_guard_client()
     guards = guard_client.get_guards()
     return [g.to_dict() for g in guards]
 
 
 @router.post("/guards")
 @handle_error
-async def create_guard(guard: GuardStruct):
+async def create_guard(request: Request):
+    guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
             detail="Not Implemented POST /guards is not implemented for in-memory guards.",
         )
-    new_guard = guard_client.create_guard(guard)
+    body = await request.body()
+    guard = GuardStruct.from_json(body.decode("utf-8"))
+    if not guard:
+        raise HTTPException(status_code=422)
+
+    new_guard = guard_client.create_guard(guard)  # type: ignore
     return new_guard.to_dict()
 
 
 @router.get("/guards/{guard_name}")
 @handle_error
 async def get_guard(guard_name: str, asOf: Optional[str] = None):
+    guard_client = get_guard_client()
     decoded_guard_name = unquote_plus(guard_name)
     guard = guard_client.get_guard(decoded_guard_name, asOf)
     if guard is None:
@@ -79,20 +71,27 @@ async def get_guard(guard_name: str, asOf: Optional[str] = None):
 
 @router.put("/guards/{guard_name}")
 @handle_error
-async def update_guard(guard_name: str, guard: GuardStruct):
+async def update_guard(guard_name: str, request: Request):
+    guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
             detail="PUT /<guard_name> is not implemented for in-memory guards.",
         )
+    body = await request.body()
+    guard = GuardStruct.from_json(body.decode("utf-8"))
+    if not guard:
+        raise HTTPException(status_code=422)
+
     decoded_guard_name = unquote_plus(guard_name)
-    updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)
+    updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)  # type: ignore
     return updated_guard.to_dict()
 
 
 @router.delete("/guards/{guard_name}")
 @handle_error
 async def delete_guard(guard_name: str):
+    guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
@@ -106,6 +105,7 @@ async def delete_guard(guard_name: str):
 @router.post("/guards/{guard_name}/openai/v1/chat/completions")
 @handle_error
 async def openai_v1_chat_completions(guard_name: str, request: Request):
+    guard_client = get_guard_client()
     payload = await request.json()
     decoded_guard_name = unquote_plus(guard_name)
     guard_struct = guard_client.get_guard(decoded_guard_name)
@@ -152,7 +152,7 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
                     yield f"data: {chunk}\n\n"
                 yield "\n"
             except Exception as e:
-                yield f"data: {json.dumps({'error': {'message':str(e)}})}\n\n"
+                yield f"data: {json.dumps({'error': {'message': str(e)}})}\n\n"
                 yield "\n"
 
         return StreamingResponse(openai_streamer(), media_type="text/event-stream")
@@ -161,6 +161,7 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
 @router.post("/guards/{guard_name}/validate")
 @handle_error
 async def validate(guard_name: str, request: Request):
+    guard_client = get_guard_client()
     payload = await request.json()
     openai_api_key = request.headers.get(
         "x-openai-api-key", os.environ.get("OPENAI_API_KEY")
@@ -220,15 +221,16 @@ async def validate(guard_name: str, request: Request):
             result: ValidationOutcome = execution
     else:
         if stream:
+
             async def guard_streamer():
                 call = guard(
-                        llm_api=llm_api,
-                        prompt_params=prompt_params,
-                        num_reasks=num_reasks,
-                        stream=stream,
-                        *args,
-                        **payload,
-                    )
+                    llm_api=llm_api,
+                    prompt_params=prompt_params,
+                    num_reasks=num_reasks,
+                    stream=stream,
+                    *args,
+                    **payload,
+                )
                 is_async = inspect.iscoroutine(call)
                 if is_async:
                     guard_stream = await call
@@ -250,7 +252,9 @@ async def validate(guard_name: str, request: Request):
                     async for validation_output, result in guard_iter:
                         fragment_dict = result.to_dict()
                         fragment_dict["error_spans"] = [
-                            json.dumps({"start": x.start, "end": x.end, "reason": x.reason})
+                            json.dumps(
+                                {"start": x.start, "end": x.end, "reason": x.reason}
+                            )
                             for x in guard.error_spans_in_output()
                         ]
                         yield json.dumps(fragment_dict) + "\n"
@@ -304,44 +308,3 @@ async def validate(guard_name: str, request: Request):
 async def guard_history(guard_name: str, call_id: str):
     cache_key = f"{guard_name}-{call_id}"
     return await cache_client.get(cache_key)
-
-
-def collect_telemetry(
-    *,
-    guard: Guard,
-    validate_span: Span,
-    validation_output: ValidationOutcome,
-    prompt_params: Dict[str, Any],
-    result: ValidationOutcome,
-):
-    # Below is all telemetry collection and
-    # should have no impact on what is returned to the user
-    prompt = guard.history.last.inputs.prompt
-    if prompt:
-        prompt = Template(prompt).safe_substitute(**prompt_params)
-        validate_span.set_attribute("prompt", prompt)
-
-    instructions = guard.history.last.inputs.instructions
-    if instructions:
-        instructions = Template(instructions).safe_substitute(**prompt_params)
-        validate_span.set_attribute("instructions", instructions)
-
-    validate_span.set_attribute("validation_status", guard.history.last.status)
-    validate_span.set_attribute("raw_llm_ouput", result.raw_llm_output)
-
-    # Use the serialization from the class instead of re-writing it
-    valid_output: str = (
-        json.dumps(validation_output.validated_output)
-        if isinstance(validation_output.validated_output, dict)
-        else str(validation_output.validated_output)
-    )
-    validate_span.set_attribute("validated_output", valid_output)
-
-    validate_span.set_attribute("tokens_consumed", guard.history.last.tokens_consumed)
-
-    num_of_reasks = (
-        guard.history.last.iterations.length - 1
-        if guard.history.last.iterations.length > 0
-        else 0
-    )
-    validate_span.set_attribute("num_of_reasks", num_of_reasks)
