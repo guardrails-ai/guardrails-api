@@ -3,10 +3,8 @@ import threading
 from fastapi import FastAPI
 from typing import Tuple
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
-Base = declarative_base()
+from guardrails_api.models.base import Base
 
 
 def postgres_is_enabled() -> bool:

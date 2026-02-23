@@ -1,27 +1,27 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, DateTime, text
 from sqlalchemy.dialects.postgresql import JSONB
-from guardrails_api.clients.postgres_client import Base
+from guardrails_api.models.base import Base
 
 
 class GuardItem(Base):
     __tablename__ = "guards"
-    # TODO: Make primary key a composite between guard.name and the guard owner's userId
-    name = Column(String, primary_key=True)
-    railspec = Column(JSONB, nullable=False)
-    num_reasks = Column(Integer, nullable=True)
-    description = Column(String, nullable=True)
-    # owner = Column(String, nullable=False)
+    id = Column(String, primary_key=True, server_default=text("gen_random_uuid()"))
+    name = Column(String, unique=True)
+    guard = Column(JSONB, nullable=False)
+    created_by = Column(String, nullable=False, default="guardrails-api")
+    created_at = Column(
+        DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+    updated_by = Column(String, nullable=False, default="guardrails-api")
+    updated_at = Column(
+        DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
 
-    def __init__(
-        self,
-        name,
-        railspec,
-        num_reasks,
-        description,
-        # owner = None
-    ):
+    def __init__(self, id, name, guard, created_by, created_at, updated_by, updated_at):
+        self.id = id
         self.name = name
-        self.railspec = railspec
-        self.num_reasks = num_reasks
-        self.description = description
-        # self.owner = owner
+        self.guard = guard
+        self.created_by = created_by
+        self.created_at = created_at
+        self.updated_by = updated_by
+        self.updated_at = updated_at
