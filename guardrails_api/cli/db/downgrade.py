@@ -24,9 +24,13 @@ def downgrade(
     if os.path.isfile(env_file_path):
         load_dotenv(env_file_path, override=env_override)
 
+    migrations_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "db", "migrations")
+    )
+
     alembic_cfg = Config()
 
-    alembic_cfg.set_main_option("script_location", "guardrails_api.db.migrations")
+    alembic_cfg.set_main_option("script_location", migrations_dir)
 
     database_url = get_db_url()
     alembic_cfg.set_main_option("sqlalchemy.url", database_url)

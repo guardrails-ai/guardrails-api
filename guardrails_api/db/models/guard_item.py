@@ -8,13 +8,13 @@ class GuardItem(Base):
     id = Column(String, primary_key=True, server_default=text("gen_random_uuid()"))
     name = Column(String, unique=True, nullable=False)
     guard = Column(JSONB, nullable=False)
-    created_by = Column(String, nullable=True, default="guardrails-api")
+    created_by = Column(String, nullable=False, default="guardrails-api")
     created_at = Column(
-        DateTime, nullable=True, server_default=text("CURRENT_TIMESTAMP")
+        DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
-    updated_by = Column(String, nullable=True, default="guardrails-api")
+    updated_by = Column(String, nullable=False, default="guardrails-api")
     updated_at = Column(
-        DateTime, nullable=True, server_default=text("CURRENT_TIMESTAMP")
+        DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
 
     def __init__(self, id, name, guard, created_by, created_at, updated_by, updated_at):
