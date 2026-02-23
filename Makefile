@@ -1,4 +1,4 @@
-.PHONY: install install-dev lock install-lock build serve db env refresh format lint qa test test-cov view-test-cov type
+.PHONY: install install-dev lock install-lock build serve db env refresh format lint qa test test-cov view-test-cov type generate
 # Installs production dependencies
 install:
 	pip install .;
@@ -81,3 +81,7 @@ view-test-cov:
 	coverage run -m unittest discover --start-directory tests --buffer --failfast
 	coverage html
 	open htmlcov/index.html
+
+generate:
+	# Example Usage: make generate M="my message here"
+	GR_DEV="true" alembic -c guardrails_api/db/migrations/alembic.ini revision --autogenerate -m "${M}"

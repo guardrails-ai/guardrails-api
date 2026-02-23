@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from guardrails import configure_logging
 from guardrails_api.clients.cache_client import CacheClient
-from guardrails_api.clients.postgres_client import postgres_is_enabled
+from guardrails_api.db.postgres_client import postgres_is_enabled
 
 from rich.console import Console
 from rich.rule import Rule

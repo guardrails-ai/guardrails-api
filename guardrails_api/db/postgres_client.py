@@ -1,10 +1,10 @@
 import os
 import threading
 from fastapi import FastAPI
-from typing import Tuple
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from guardrails_api.models.base import Base
+from guardrails_api.db.get_db_url import get_db_url
+from guardrails_api.db.models.base import Base
 
 
 def postgres_is_enabled() -> bool:
@@ -26,15 +26,6 @@ class PostgresClient:
                 cls._instance = super(PostgresClient, cls).__new__(cls)
         return cls._instance
 
-    def get_pg_creds(self) -> Tuple[str, str]:
-        pg_user = os.environ.get("PGUSER")
-        if not pg_user:
-            raise RuntimeError("Missing environment variable PGUSER!")
-        pg_password = os.environ.get("PGPASSWORD")
-        if not pg_password:
-            raise RuntimeError("Missing environment variable PGPASSWORD!")
-        return pg_user, pg_password
-
     def get_db(self):
         if postgres_is_enabled():
             db = self.SessionLocal()
@@ -51,24 +42,7 @@ class PostgresClient:
         return int(hashlib.sha256(name.encode()).hexdigest(), 16) % (2**63)
 
     def initialize(self, app: FastAPI):
-        pg_user, pg_password = self.get_pg_creds()
-        pg_host = os.environ.get("PGHOST", "localhost")
-        pg_port = os.environ.get("PGPORT", "5432")
-        pg_database = os.environ.get("PGDATABASE", "postgres")
-
-        pg_endpoint = (
-            pg_host
-            if pg_host.endswith(
-                f":{pg_port}"
-            )  # FIXME: This is a cheap check; maybe use a regex instead?
-            else f"{pg_host}:{pg_port}"
-        )
-
-        conf = f"postgresql://{pg_user}:{pg_password}@{pg_endpoint}/{pg_database}"
-
-        if os.environ.get("NODE_ENV") == "production":
-            conf = f"{conf}?sslmode=verify-ca&sslrootcert=global-bundle.pem"
-
+        conf = get_db_url()
         engine = create_engine(conf)
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -90,7 +64,7 @@ class PostgresClient:
 
     def run_initialization(self, connection):
         # Perform the actual initialization tasks
-        from guardrails_api.models import GuardItem, GuardItemAudit  # noqa
+        from guardrails_api.db.models import GuardItem, GuardItemAudit  # noqa
 
         Base.metadata.create_all(bind=self.engine)
 

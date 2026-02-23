@@ -1,4 +1,4 @@
-from guardrails_api.clients.postgres_client import postgres_is_enabled
+from guardrails_api.db.postgres_client import postgres_is_enabled
 from typing import Optional
 import os
 

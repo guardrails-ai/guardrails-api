@@ -22,7 +22,7 @@ def start(
         help="The port to run the server on.",
     ),
     env_override: bool = typer.Option(
-        default=True,
+        default=False,
         help="Override existing environment variables with values from the env file.",
     ),
 ):
