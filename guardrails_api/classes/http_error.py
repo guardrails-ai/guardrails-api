@@ -19,11 +19,7 @@ class HttpError(Exception):
         self.context = context
 
     def to_dict(self):
-        response = {
-            "status": self.status,
-            "message": self.message,
-            "detail": self.detail,
-        }
+        response = {"status": self.status, "message": self.message}
 
         if self.cause is not None:
             response["cause"] = self.cause
