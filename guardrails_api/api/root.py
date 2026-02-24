@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from guardrails_api.open_api_spec import get_open_api_spec
 from sqlalchemy import text
 from guardrails_api.classes.health_check import HealthCheck
-from guardrails_api.clients.postgres_client import PostgresClient, postgres_is_enabled
+from guardrails_api.db.postgres_client import PostgresClient, postgres_is_enabled
 from guardrails_api.utils.logger import logger
 
 

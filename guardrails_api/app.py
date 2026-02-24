@@ -80,7 +80,7 @@ def create_app(
 
     # if no pg_host is set, don't set up postgres
     if postgres_is_enabled():
-        from guardrails_api.clients.postgres_client import PostgresClient
+        from guardrails_api.db.postgres_client import PostgresClient
 
         pg_client = PostgresClient()
         pg_client.initialize(app)

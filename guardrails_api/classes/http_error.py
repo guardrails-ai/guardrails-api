@@ -1,11 +1,14 @@
+from typing import Optional
+
+
 class HttpError(Exception):
     def __init__(
         self,
         status: int,
         message: str,
-        cause: str = None,
-        fields: dict = None,
-        context: str = None,
+        cause: Optional[str] = None,
+        fields: Optional[dict] = None,
+        context: Optional[str] = None,
     ):
         self.status = status
         self.status_code = status
@@ -16,7 +19,11 @@ class HttpError(Exception):
         self.context = context
 
     def to_dict(self):
-        response = {"status": self.status, "message": self.message}
+        response = {
+            "status": self.status,
+            "message": self.message,
+            "detail": self.detail,
+        }
 
         if self.cause is not None:
             response["cause"] = self.cause

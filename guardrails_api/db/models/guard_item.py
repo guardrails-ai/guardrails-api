@@ -16,12 +16,3 @@ class GuardItem(Base):
     updated_at = Column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
-
-    def __init__(self, id, name, guard, created_by, created_at, updated_by, updated_at):
-        self.id = id
-        self.name = name
-        self.guard = guard
-        self.created_by = created_by
-        self.created_at = created_at
-        self.updated_by = updated_by
-        self.updated_at = updated_at

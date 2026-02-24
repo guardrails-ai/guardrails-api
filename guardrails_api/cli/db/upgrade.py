@@ -1,11 +1,9 @@
 import os
 from typing import Annotated
 import typer
-from alembic.config import Config
-from alembic import command
 from dotenv import load_dotenv
 from guardrails_api.cli.db.db import db_command
-from guardrails_api.db.get_db_url import get_db_url
+from guardrails_api.db.migrations.upgrade import upgrade as upgrade_db
 
 
 @db_command.command(name="upgrade")
@@ -24,17 +22,4 @@ def upgrade(
     if os.path.isfile(env_file_path):
         load_dotenv(env_file_path, override=env_override)
 
-    migrations_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "db", "migrations")
-    )
-
-    alembic_cfg = Config()
-
-    alembic_cfg.set_main_option("script_location", migrations_dir)
-
-    database_url = get_db_url()
-    alembic_cfg.set_main_option("sqlalchemy.url", database_url)
-
-    print(f"Running Alembic upgrade to '{revision}'...")
-    command.upgrade(alembic_cfg, revision)
-    print("Alembic upgrade complete.")
+    upgrade_db(revision)

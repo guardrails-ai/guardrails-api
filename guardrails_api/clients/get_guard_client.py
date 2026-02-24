@@ -2,7 +2,7 @@ import importlib
 from guardrails_api_client import Guard
 from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 from guardrails_api.clients.pg_guard_client import PGGuardClient
-from guardrails_api.clients.postgres_client import postgres_is_enabled
+from guardrails_api.db.postgres_client import postgres_is_enabled
 
 
 guard_client = None

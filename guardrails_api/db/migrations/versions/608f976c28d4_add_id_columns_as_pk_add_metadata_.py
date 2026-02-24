@@ -11,6 +11,12 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from guardrails_api.db.extras.audit import (
+    AUDIT_FUNCTION_REV_608f976c28d4,
+    AUDIT_TRIGGER_REV_608f976c28d4,
+    AUDIT_FUNCTION_REV_NONE,
+    AUDIT_TRIGGER_REV_NONE,
+)
 
 # revision identifiers, used by Alembic.
 revision: str = "608f976c28d4"
@@ -71,6 +77,8 @@ def upgrade() -> None:
     op.create_unique_constraint("guards_name_unique", "guards", ["name"])
     op.drop_column("guards", "description")
     op.drop_column("guards", "num_reasks")
+    op.drop_constraint("guards_pkey", "guards", type_="primary")
+    op.create_primary_key("pk_guards_id", "guards", ["id"])
 
     ## Guards Audit Table
     op.add_column("guards_audit", sa.Column("guard_id", sa.String(), nullable=True))
@@ -91,9 +99,17 @@ def upgrade() -> None:
     op.drop_column("guards_audit", "description")
     op.drop_column("guards_audit", "num_reasks")
 
+    ## Audit Function and Trigger
+    op.execute(AUDIT_FUNCTION_REV_608f976c28d4)
+    op.execute(AUDIT_TRIGGER_REV_608f976c28d4)
+
 
 def downgrade() -> None:
     """Downgrade schema."""
+    ## Audit Function and Trigger
+    op.execute(AUDIT_FUNCTION_REV_NONE)
+    op.execute(AUDIT_TRIGGER_REV_NONE)
+
     ## Guards Audit Table
     op.add_column(
         "guards_audit",
