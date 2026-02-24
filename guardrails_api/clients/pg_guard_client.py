@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from typing import List, Optional
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 from guardrails_api_client import Guard as GuardStruct
@@ -15,7 +16,10 @@ def from_guard_item(
 ) -> GuardStruct | None:
     if not guard_item:
         return guard_item
-    return GuardStruct.from_dict(guard_item.guard)  # type: ignore
+    guard = GuardStruct.from_dict(guard_item.guard)  # type: ignore
+    if guard and guard_item.id:  # type: ignore
+        guard.id = guard_item.id  # type: ignore
+    return guard
 
 
 class PGGuardClient(GuardClient):
@@ -69,6 +73,8 @@ class PGGuardClient(GuardClient):
                     .first()
                 )
             guard_item = audit_item if audit_item is not None else latest_guard_item
+            if audit_item:
+                guard_item = audit_item.guard_id
             if guard_item is None:
                 raise HttpError(
                     status=404,
@@ -99,8 +105,10 @@ class PGGuardClient(GuardClient):
                         guard_name=guard_name
                     ),
                 )
-            guard_item.railspec = guard.to_dict()
-            guard_item.description = guard.description
+            guard_item.guard = guard.to_dict()
+            guard_item.updated_at = db.execute(
+                select(func.current_timestamp())
+            ).scalar()
             db.commit()
             return from_guard_item(guard_item)
 
@@ -109,6 +117,9 @@ class PGGuardClient(GuardClient):
             guard_item = self.util_get_guard_item(guard_name, db)
             if guard_item is not None:
                 guard_item.guard = guard.to_dict()
+                guard_item.updated_at = db.execute(
+                    select(func.current_timestamp())
+                ).scalar()
                 db.commit()
                 return from_guard_item(guard_item)
             else:
