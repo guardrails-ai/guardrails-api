@@ -26,8 +26,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.Inspector.from_engine(bind.engine)
+
     """Upgrade schema."""
     ## Guards Table
+    guard_columns = inspector.get_columns("guards")
+    guard_column_names = [col["name"] for col in guard_columns]
+
     op.add_column(
         "guards",
         sa.Column(
@@ -36,19 +42,22 @@ def upgrade() -> None:
             server_default=sa.text("gen_random_uuid()"),
             nullable=False,
         ),
+        if_not_exists=True,
     )
-    op.alter_column(
-        "guards",
-        "railspec",
-        new_column_name="guard",
-        existing_type=postgresql.JSONB(astext_type=sa.Text()),
-        existing_nullable=False,
-    )
+    if "railspec" in guard_column_names:
+        op.alter_column(
+            "guards",
+            "railspec",
+            new_column_name="guard",
+            existing_type=postgresql.JSONB(astext_type=sa.Text()),
+            existing_nullable=False,
+        )
     op.add_column(
         "guards",
         sa.Column(
             "created_by", sa.String(), nullable=True, server_default="guardrails-api"
         ),
+        if_not_exists=True,
     )
     op.add_column(
         "guards",
@@ -58,12 +67,14 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=True,
         ),
+        if_not_exists=True,
     )
     op.add_column(
         "guards",
         sa.Column(
             "updated_by", sa.String(), nullable=True, server_default="guardrails-api"
         ),
+        if_not_exists=True,
     )
     op.add_column(
         "guards",
@@ -73,31 +84,61 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=True,
         ),
+        if_not_exists=True,
     )
     op.create_unique_constraint("guards_name_unique", "guards", ["name"])
-    op.drop_column("guards", "description")
-    op.drop_column("guards", "num_reasks")
-    op.drop_constraint("guards_pkey", "guards", type_="primary")
+    op.drop_column("guards", "description", if_exists=True)
+    op.drop_column("guards", "num_reasks", if_exists=True)
+    op.drop_constraint("guards_pkey", "guards", type_="primary", if_exists=True)
     op.create_primary_key("pk_guards_id", "guards", ["id"])
 
     ## Guards Audit Table
-    op.add_column("guards_audit", sa.Column("guard_id", sa.String(), nullable=True))
-    op.alter_column(
+    audit_columns = inspector.get_columns("guards_audit")
+    audit_column_names = [col["name"] for col in audit_columns]
+    op.add_column(
         "guards_audit",
-        "railspec",
-        new_column_name="guard",
-        existing_type=postgresql.JSONB(astext_type=sa.Text()),
-        existing_nullable=False,
+        sa.Column("guard_id", sa.String(), nullable=True),
+        if_not_exists=True,
     )
-    op.add_column("guards_audit", sa.Column("created_by", sa.String(), nullable=True))
-    op.add_column("guards_audit", sa.Column("created_at", sa.DateTime(), nullable=True))
-    op.add_column("guards_audit", sa.Column("updated_by", sa.String(), nullable=True))
-    op.add_column("guards_audit", sa.Column("updated_at", sa.DateTime(), nullable=True))
+
+    if "railspec" in audit_column_names:
+        op.alter_column(
+            "guards_audit",
+            "railspec",
+            new_column_name="guard",
+            existing_type=postgresql.JSONB(astext_type=sa.Text()),
+            existing_nullable=False,
+            if_exists=True,
+        )
+    op.add_column(
+        "guards_audit",
+        sa.Column("created_by", sa.String(), nullable=True),
+        if_not_exists=True,
+    )
+    op.add_column(
+        "guards_audit",
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        if_not_exists=True,
+    )
+    op.add_column(
+        "guards_audit",
+        sa.Column("updated_by", sa.String(), nullable=True),
+        if_not_exists=True,
+    )
+    op.add_column(
+        "guards_audit",
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        if_not_exists=True,
+    )
     op.create_index(
-        op.f("ix_guards_audit_guard_id"), "guards_audit", ["guard_id"], unique=False
+        op.f("ix_guards_audit_guard_id"),
+        "guards_audit",
+        ["guard_id"],
+        unique=False,
+        if_not_exists=True,
     )
-    op.drop_column("guards_audit", "description")
-    op.drop_column("guards_audit", "num_reasks")
+    op.drop_column("guards_audit", "description", if_exists=True)
+    op.drop_column("guards_audit", "num_reasks", if_exists=True)
 
     ## Audit Function and Trigger
     op.execute(AUDIT_FUNCTION_REV_608f976c28d4)
@@ -114,6 +155,7 @@ def downgrade() -> None:
     op.add_column(
         "guards_audit",
         sa.Column("num_reasks", sa.INTEGER(), autoincrement=False, nullable=True),
+        if_not_exists=True,
     )
     op.alter_column(
         "guards_audit",
@@ -121,22 +163,27 @@ def downgrade() -> None:
         new_column_name="railspec",
         existing_type=postgresql.JSONB(astext_type=sa.Text()),
         existing_nullable=False,
+        if_exists=True,
     )
     op.add_column(
         "guards_audit",
         sa.Column("description", sa.VARCHAR(), autoincrement=False, nullable=True),
+        if_not_exists=True,
     )
-    op.drop_index(op.f("ix_guards_audit_guard_id"), table_name="guards_audit")
-    op.drop_column("guards_audit", "updated_at")
-    op.drop_column("guards_audit", "updated_by")
-    op.drop_column("guards_audit", "created_at")
-    op.drop_column("guards_audit", "created_by")
-    op.drop_column("guards_audit", "guard_id")
+    op.drop_index(
+        op.f("ix_guards_audit_guard_id"), table_name="guards_audit", if_exists=True
+    )
+    op.drop_column("guards_audit", "updated_at", if_exists=True)
+    op.drop_column("guards_audit", "updated_by", if_exists=True)
+    op.drop_column("guards_audit", "created_at", if_exists=True)
+    op.drop_column("guards_audit", "created_by", if_exists=True)
+    op.drop_column("guards_audit", "guard_id", if_exists=True)
 
     ## Guards Table
     op.add_column(
         "guards",
         sa.Column("num_reasks", sa.INTEGER(), autoincrement=False, nullable=True),
+        if_not_exists=True,
     )
     op.alter_column(
         "guards",
@@ -144,14 +191,16 @@ def downgrade() -> None:
         new_column_name="railspec",
         existing_type=postgresql.JSONB(astext_type=sa.Text()),
         existing_nullable=False,
+        if_exists=True,
     )
     op.add_column(
         "guards",
         sa.Column("description", sa.VARCHAR(), autoincrement=False, nullable=True),
+        if_not_exists=True,
     )
-    op.drop_constraint("guards_name_unique", "guards", type_="unique")
-    op.drop_column("guards", "updated_at")
-    op.drop_column("guards", "updated_by")
-    op.drop_column("guards", "created_at")
-    op.drop_column("guards", "created_by")
-    op.drop_column("guards", "id")
+    op.drop_constraint("guards_name_unique", "guards", type_="unique", if_exists=True)
+    op.drop_column("guards", "updated_at", if_exists=True)
+    op.drop_column("guards", "updated_by", if_exists=True)
+    op.drop_column("guards", "created_at", if_exists=True)
+    op.drop_column("guards", "created_by", if_exists=True)
+    op.drop_column("guards", "id", if_exists=True)

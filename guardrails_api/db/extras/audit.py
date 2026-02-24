@@ -29,15 +29,15 @@ BEGIN
     IF (TG_OP = 'DELETE') THEN
     INSERT INTO guards_audit
     (id, name, guard, guard_id, created_by, created_at, updated_by, updated_at, replaced_on, operation)
-    SELECT gen_random_uuid(), OLD.*, now(), 'D';
+    SELECT gen_random_uuid(), OLD.name, OLD.guard, OLD.id, OLD.created_by, OLD.created_at, OLD.updated_by, OLD.updated_at, now(), 'D';
     ELSIF (TG_OP = 'UPDATE') THEN
     INSERT INTO guards_audit
     (id, name, guard, guard_id, created_by, created_at, updated_by, updated_at, replaced_on, operation)
-    SELECT gen_random_uuid(), OLD.*, now(), 'U';
+    SELECT gen_random_uuid(), OLD.name, OLD.guard, OLD.id, OLD.created_by, OLD.created_at, OLD.updated_by, OLD.updated_at, now(), 'U';
     ELSIF (TG_OP = 'INSERT') THEN
     INSERT INTO guards_audit
     (id, name, guard, guard_id, created_by, created_at, updated_by, updated_at, replaced_on, operation)
-    SELECT gen_random_uuid(), NEW.*, now(), 'I';
+    SELECT gen_random_uuid(), NEW.name, NEW.guard, NEW.id, NEW.created_by, NEW.created_at, NEW.updated_by, NEW.updated_at, now(), 'I';
     END IF;
     RETURN null;
 END;
