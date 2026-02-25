@@ -1,4 +1,4 @@
-.PHONY: install install-dev lock install-lock build serve db env refresh format lint qa test test-cov view-test-cov type
+.PHONY: install install-dev lock install-lock build bootstrap serve db env refresh format lint qa test test-cov view-test-cov type
 # Installs production dependencies
 install:
 	pip install .;
@@ -19,6 +19,11 @@ build:
 	
 	cp "$$(python -c "import guardrails_api_client as _; print(_.__path__[0])")/openapi-spec.json" ./guardrails_api/open-api-spec.json
 
+	curl https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml -o ./openai-api-spec.yml
+
+	python ./scripts/pluck_openai_api_spec.py
+
+bootstrap:
 	opentelemetry-bootstrap -a install
 	
 
