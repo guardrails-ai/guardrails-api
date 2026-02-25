@@ -8,14 +8,14 @@ from urllib.parse import unquote_plus
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
 from guardrails_api_client import Guard as GuardStruct
-import litellm
+from guardrails_api.classes.http_error import HttpError
 from guardrails_api.clients.get_guard_client import get_guard_client
 from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
+    guarded_chat_completion,
     outcome_to_stream_response,
-    validate_chat_completion,
 )
 from guardrails_api.utils.handle_error import handle_error
 
@@ -121,13 +121,14 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
         if not isinstance(guard_struct, Guard)
         else guard_struct
     )
+    if not guard:
+        raise HttpError(
+            status=404, message=f"Guard with name {decoded_guard_name} not found!"
+        )
     stream = payload.get("stream", False)
 
     if not stream:
-        chat_completion = litellm.completion(**payload)
-        guarded_completion = await validate_chat_completion(
-            chat_completion, guard, payload
-        )  # type: ignore
+        guarded_completion = await guarded_chat_completion(guard, payload)
         return JSONResponse(content=guarded_completion)
     else:
 
