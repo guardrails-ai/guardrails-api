@@ -1,4 +1,9 @@
+import inspect
+from typing import Any
+
+from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
+from litellm import Choices, ModelResponse
 
 
 def outcome_to_stream_response(validation_outcome: ValidationOutcome):
@@ -62,5 +67,55 @@ def outcome_to_chat_completion(
         )
     except KeyError:
         pass
+
+    return completion
+
+
+def get_chat_completion_output(choice: Choices) -> str | None:
+    output = None
+    if choice.message.content is not None:  # type: ignore
+        output = choice.message.content  # type: ignore
+    else:
+        try:
+            output = choice.message.function_call.arguments  # type: ignore
+        except AttributeError:
+            try:
+                output = choice.message.tool_calls[-1].function.arguments  # type: ignore
+            except AttributeError:
+                pass
+    return output
+
+
+async def validate_chat_completion(
+    chat_completion: ModelResponse, guard: Guard | AsyncGuard, payload: Any
+) -> dict[str, Any]:
+    validations = []
+    for choice in chat_completion.choices:
+        output = get_chat_completion_output(choice)  # type: ignore
+
+        if not output:
+            validations.append(
+                {
+                    "reask": None,
+                    "validation_passed": False,
+                    "error": "The model did not return any message content, function call arguments, or tool call arguments.",
+                    "validation_summaries": [],
+                }
+            )
+            continue
+
+        execution = guard.validate(output)
+        if inspect.iscoroutine(execution):
+            validation_outcome: ValidationOutcome = await execution  # type: ignore
+        else:
+            validation_outcome: ValidationOutcome = execution
+
+        validations.append(validation_outcome.model_dump())
+
+    completion = chat_completion.model_dump()
+    if len(validations) > 1:
+        completion["guardrails"] = validations
+    else:
+        completion["guardrails"] = validations[0]
 
     return completion

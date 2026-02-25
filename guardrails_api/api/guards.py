@@ -8,13 +8,14 @@ from urllib.parse import unquote_plus
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
 from guardrails_api_client import Guard as GuardStruct
+import litellm
 from guardrails_api.clients.get_guard_client import get_guard_client
 from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.clients.postgres_client import postgres_is_enabled
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
-    outcome_to_chat_completion,
     outcome_to_stream_response,
+    validate_chat_completion,
 )
 from guardrails_api.utils.handle_error import handle_error
 
@@ -121,25 +122,13 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
         else guard_struct
     )
     stream = payload.get("stream", False)
-    has_tool_gd_tool_call = any(
-        tool.get("function", {}).get("name") == "gd_response_tool"
-        for tool in payload.get("tools", [])
-    )
 
     if not stream:
-        execution = guard(num_reasks=0, **payload)
-        if inspect.iscoroutine(execution):
-            validation_outcome: ValidationOutcome = await execution
-        else:
-            validation_outcome: ValidationOutcome = execution
-
-        llm_response = guard.history.last.iterations.last.outputs.llm_response_info
-        result = outcome_to_chat_completion(
-            validation_outcome=validation_outcome,
-            llm_response=llm_response,
-            has_tool_gd_tool_call=has_tool_gd_tool_call,
-        )
-        return JSONResponse(content=result)
+        chat_completion = litellm.completion(**payload)
+        guarded_completion = await validate_chat_completion(
+            chat_completion, guard, payload
+        )  # type: ignore
+        return JSONResponse(content=guarded_completion)
     else:
 
         async def openai_streamer():
