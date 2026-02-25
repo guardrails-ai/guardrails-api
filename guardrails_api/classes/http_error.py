@@ -1,11 +1,14 @@
+from typing import Optional
+
+
 class HttpError(Exception):
     def __init__(
         self,
         status: int,
         message: str,
-        cause: str = None,
-        fields: dict = None,
-        context: str = None,
+        cause: Optional[str] = None,
+        fields: Optional[dict] = None,
+        context: Optional[str] = None,
     ):
         self.status = status
         self.status_code = status

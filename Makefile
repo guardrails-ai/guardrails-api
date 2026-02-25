@@ -1,4 +1,4 @@
-.PHONY: install install-dev lock install-lock build bootstrap serve db env refresh format lint qa test test-cov view-test-cov type
+.PHONY: install install-dev lock install-lock build bootstrap serve db env refresh format lint qa test test-cov view-test-cov type generate custom-gen
 # Installs production dependencies
 install:
 	pip install .;
@@ -28,7 +28,7 @@ bootstrap:
 	
 
 serve:
-	python ./guardrails_api/app.py
+	guardrails-api start --env ./.env
 
 serve-w-otel:
 	source ./.env.sh && opentelemetry-instrument guardrails-api start
@@ -86,3 +86,11 @@ view-test-cov:
 	coverage run -m unittest discover --start-directory tests --buffer --failfast
 	coverage html
 	open htmlcov/index.html
+
+generate:
+	# Example Usage: make generate M="my message here"
+	GR_DEV="true" alembic -c guardrails_api/db/migrations/alembic.ini revision --autogenerate -m "${M}"
+
+custom-gen:
+	# Example Usage: make generate M="my message here"
+	GR_DEV="true" alembic -c guardrails_api/db/migrations/alembic.ini revision -m "${M}"

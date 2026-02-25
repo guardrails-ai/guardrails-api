@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from guardrails import configure_logging
 from guardrails_api.clients.cache_client import CacheClient
-from guardrails_api.clients.postgres_client import postgres_is_enabled
+from guardrails_api.db.postgres_client import postgres_is_enabled
 
 from rich.console import Console
 from rich.rule import Rule
@@ -80,7 +80,7 @@ def create_app(
 
     # if no pg_host is set, don't set up postgres
     if postgres_is_enabled():
-        from guardrails_api.clients.postgres_client import PostgresClient
+        from guardrails_api.db.postgres_client import PostgresClient
 
         pg_client = PostgresClient()
         pg_client.initialize(app)

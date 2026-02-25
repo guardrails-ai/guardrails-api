@@ -1,8 +1,8 @@
-"""Unit tests for guardrails_api.clients.postgres_client module."""
+"""Unit tests for guardrails_api.db.postgres_client module."""
 
 import unittest
 from unittest.mock import patch, Mock
-from guardrails_api.clients.postgres_client import postgres_is_enabled, PostgresClient
+from guardrails_api.db.postgres_client import postgres_is_enabled, PostgresClient
 
 
 class TestPostgresIsEnabled(unittest.TestCase):
@@ -40,25 +40,6 @@ class TestPostgresClient(unittest.TestCase):
         client2 = PostgresClient()
         self.assertIs(client1, client2)
 
-    @patch.dict("os.environ", {"PGUSER": "envuser", "PGPASSWORD": "envpass"})
-    def test_get_pg_creds_from_env(self):
-        """Test getting PostgreSQL credentials from environment variables."""
-        client = PostgresClient()
-        user, password = client.get_pg_creds()
-
-        self.assertEqual(user, "envuser")
-        self.assertEqual(password, "envpass")
-
-    @patch.dict("os.environ", {}, clear=True)
-    def test_get_pg_creds_missing_raises_error(self):
-        """Test that missing credentials raise RuntimeError."""
-        client = PostgresClient()
-
-        with self.assertRaises(RuntimeError) as context:
-            client.get_pg_creds()
-
-        self.assertIn("PGUSER", str(context.exception))
-
     def test_generate_lock_id(self):
         """Test generating lock ID from name."""
         client = PostgresClient()
@@ -84,7 +65,7 @@ class TestPostgresClient(unittest.TestCase):
 
         self.assertNotEqual(lock_id1, lock_id2)
 
-    @patch("guardrails_api.clients.postgres_client.postgres_is_enabled")
+    @patch("guardrails_api.db.postgres_client.postgres_is_enabled")
     def test_get_db_when_disabled(self, mock_enabled):
         """Test get_db when postgres is disabled."""
         mock_enabled.return_value = False
@@ -95,7 +76,7 @@ class TestPostgresClient(unittest.TestCase):
 
         self.assertIsNone(result)
 
-    @patch("guardrails_api.clients.postgres_client.postgres_is_enabled")
+    @patch("guardrails_api.db.postgres_client.postgres_is_enabled")
     def test_get_db_when_enabled(self, mock_enabled):
         """Test get_db when postgres is enabled."""
         mock_enabled.return_value = True
