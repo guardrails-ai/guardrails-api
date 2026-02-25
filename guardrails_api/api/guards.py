@@ -8,15 +8,17 @@ from urllib.parse import unquote_plus
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
 from guardrails_api_client import Guard as GuardStruct
+from pydantic import ValidationError
 from guardrails_api.clients.get_guard_client import get_guard_client
 from guardrails_api.clients.cache_client import CacheClient
-from guardrails_api.clients.postgres_client import postgres_is_enabled
+from guardrails_api.db.postgres_client import postgres_is_enabled
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
     outcome_to_chat_completion,
     outcome_to_stream_response,
 )
 from guardrails_api.utils.handle_error import handle_error
+from guardrails_api.classes.http_error import HttpError
 
 cache_client = CacheClient()
 
@@ -27,6 +29,23 @@ router = APIRouter()
 
 def guard_history_is_enabled():
     return os.environ.get("GUARD_HISTORY_ENABLED", "true").lower() == "true"
+
+
+async def get_guard_body(request: Request) -> GuardStruct | None:
+    try:
+        body = await request.body()
+        guard = GuardStruct.from_json(body.decode("utf-8"))
+        return guard
+    except ValidationError as ve:
+        fields = {}
+        errors = ve.errors()
+        for e in errors:
+            path = ".".join([str(loc) for loc in e["loc"]])
+            if not path:
+                path = "$"
+            fields[path] = e["msg"]
+
+        raise HttpError(status=400, message="BadRequest", fields=fields)
 
 
 @router.get("/guards")
@@ -46,8 +65,7 @@ async def create_guard(request: Request):
             status_code=501,
             detail="Not Implemented POST /guards is not implemented for in-memory guards.",
         )
-    body = await request.body()
-    guard = GuardStruct.from_json(body.decode("utf-8"))
+    guard = await get_guard_body(request)
     if not guard:
         raise HTTPException(status_code=422)
 
@@ -78,8 +96,7 @@ async def update_guard(guard_name: str, request: Request):
             status_code=501,
             detail="PUT /<guard_name> is not implemented for in-memory guards.",
         )
-    body = await request.body()
-    guard = GuardStruct.from_json(body.decode("utf-8"))
+    guard = await get_guard_body(request)
     if not guard:
         raise HTTPException(status_code=422)
 

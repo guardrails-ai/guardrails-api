@@ -41,7 +41,10 @@ class TestHandleError(unittest.TestCase):
 
         exception = context.exception
         self.assertEqual(exception.status_code, 404)
-        self.assertEqual(exception.detail, "Not Found :: Resource missing")
+        self.assertEqual(
+            exception.detail,
+            {"status": 404, "message": "Not Found", "cause": "Resource missing"},
+        )
         mock_logger.error.assert_called_once()
 
     @patch("guardrails_api.utils.handle_error.logger")

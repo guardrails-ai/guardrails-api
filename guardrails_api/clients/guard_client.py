@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from guardrails import Guard
 from guardrails_api_client import Guard as GuardStruct
@@ -9,7 +9,7 @@ class GuardClient:
         self.initialized = True
 
     def get_guard(
-        self, guard_name: str, as_of_date: str = None
+        self, guard_name: str, as_of_date: Optional[str] = None
     ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 

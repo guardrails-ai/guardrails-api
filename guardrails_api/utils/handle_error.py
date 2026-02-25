@@ -28,7 +28,7 @@ def handle_error(func=None):
                     type(http_error), http_error, http_error.__traceback__
                 )
                 raise HTTPException(
-                    status_code=http_error.status_code, detail=http_error.detail
+                    status_code=http_error.status_code, detail=http_error.to_dict()
                 )
             except HTTPException as http_exception:
                 logger.error(http_exception)

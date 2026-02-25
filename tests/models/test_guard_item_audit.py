@@ -2,7 +2,7 @@
 
 import unittest
 from datetime import datetime
-from guardrails_api.models.guard_item_audit import GuardItemAudit
+from guardrails_api.db.models.guard_item_audit import GuardItemAudit
 
 
 class TestGuardItemAudit(unittest.TestCase):
@@ -10,24 +10,20 @@ class TestGuardItemAudit(unittest.TestCase):
 
     def test_guard_item_audit_initialization(self):
         """Test GuardItemAudit initialization with all parameters."""
-        railspec = {"validators": ["test_validator"]}
+        guard = {"validators": ["test_validator"]}
         timestamp = datetime.now()
 
         audit = GuardItemAudit(
             id="audit-123",
             name="test_guard",
-            railspec=railspec,
-            num_reasks=3,
-            description="Test guard audit",
+            guard=guard,
             replaced_on=timestamp,
             operation="U",
         )
 
         self.assertEqual(audit.id, "audit-123")
         self.assertEqual(audit.name, "test_guard")
-        self.assertEqual(audit.railspec, railspec)
-        self.assertEqual(audit.num_reasks, 3)
-        self.assertEqual(audit.description, "Test guard audit")
+        self.assertEqual(audit.guard, guard)
         self.assertEqual(audit.replaced_on, timestamp)
         self.assertEqual(audit.operation, "U")
 
@@ -38,17 +34,13 @@ class TestGuardItemAudit(unittest.TestCase):
         audit = GuardItemAudit(
             id="audit-456",
             name="minimal_guard",
-            railspec={},
-            num_reasks=None,
-            description=None,
+            guard={},
             replaced_on=timestamp,
             operation="D",
         )
 
         self.assertEqual(audit.id, "audit-456")
         self.assertEqual(audit.name, "minimal_guard")
-        self.assertIsNone(audit.num_reasks)
-        self.assertIsNone(audit.description)
         self.assertEqual(audit.operation, "D")
 
     def test_guard_item_audit_tablename(self):
@@ -62,9 +54,7 @@ class TestGuardItemAudit(unittest.TestCase):
         audit = GuardItemAudit(
             id="audit-789",
             name="new_guard",
-            railspec={"validators": []},
-            num_reasks=0,
-            description="New guard created",
+            guard={"validators": []},
             replaced_on=timestamp,
             operation="I",
         )
@@ -78,9 +68,7 @@ class TestGuardItemAudit(unittest.TestCase):
         audit = GuardItemAudit(
             id="audit-abc",
             name="updated_guard",
-            railspec={"validators": []},
-            num_reasks=1,
-            description="Guard updated",
+            guard={"validators": []},
             replaced_on=timestamp,
             operation="U",
         )
@@ -94,9 +82,7 @@ class TestGuardItemAudit(unittest.TestCase):
         audit = GuardItemAudit(
             id="audit-def",
             name="deleted_guard",
-            railspec={"validators": []},
-            num_reasks=2,
-            description="Guard deleted",
+            guard={"validators": []},
             replaced_on=timestamp,
             operation="D",
         )
@@ -117,15 +103,13 @@ class TestGuardItemAudit(unittest.TestCase):
         audit = GuardItemAudit(
             id="audit-complex",
             name="complex_guard",
-            railspec=railspec,
-            num_reasks=5,
-            description="Complex guard",
+            guard=railspec,
             replaced_on=timestamp,
             operation="U",
         )
 
-        self.assertEqual(audit.railspec, railspec)
-        self.assertEqual(len(audit.railspec["validators"]), 2)
+        self.assertEqual(audit.guard, railspec)
+        self.assertEqual(len(audit.guard["validators"]), 2)
 
     def test_guard_item_audit_id_is_primary_key(self):
         """Test that id field is used as primary key."""
@@ -134,9 +118,7 @@ class TestGuardItemAudit(unittest.TestCase):
         audit = GuardItemAudit(
             id="primary-key-test",
             name="test",
-            railspec={},
-            num_reasks=0,
-            description="",
+            guard={},
             replaced_on=timestamp,
             operation="I",
         )

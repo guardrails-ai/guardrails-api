@@ -32,3 +32,5 @@ client-admin-test.py
 client-consumer-test.py
 .claude
 .ruff_cache
+.vscode
+.DS_Store

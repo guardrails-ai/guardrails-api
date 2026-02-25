@@ -1,7 +1,7 @@
 """Unit tests for guardrails_api.models.guard_item module."""
 
 import unittest
-from guardrails_api.models.guard_item import GuardItem
+from guardrails_api.db.models.guard_item import GuardItem
 
 
 class TestGuardItem(unittest.TestCase):
@@ -9,90 +9,40 @@ class TestGuardItem(unittest.TestCase):
 
     def test_guard_item_initialization(self):
         """Test GuardItem initialization with all parameters."""
-        railspec = {"validators": ["test_validator"]}
-        guard = GuardItem(
-            name="test_guard",
-            railspec=railspec,
-            num_reasks=3,
-            description="Test guard description",
-        )
+        guard_dict = {"validators": ["test_validator"]}
+        guard = GuardItem(name="test_guard", guard=guard_dict)
 
         self.assertEqual(guard.name, "test_guard")
-        self.assertEqual(guard.railspec, railspec)
-        self.assertEqual(guard.num_reasks, 3)
-        self.assertEqual(guard.description, "Test guard description")
+        self.assertEqual(guard.guard, guard_dict)
 
     def test_guard_item_initialization_minimal(self):
         """Test GuardItem initialization with minimal parameters."""
-        railspec = {"validators": []}
-        guard = GuardItem(
-            name="minimal_guard", railspec=railspec, num_reasks=None, description=None
-        )
+        guard_dict = {"validators": []}
+        guard = GuardItem(name="minimal_guard", guard=guard_dict)
 
         self.assertEqual(guard.name, "minimal_guard")
-        self.assertEqual(guard.railspec, railspec)
-        self.assertIsNone(guard.num_reasks)
-        self.assertIsNone(guard.description)
+        self.assertEqual(guard.guard, guard_dict)
 
     def test_guard_item_name_as_primary_key(self):
         """Test that name is set correctly as primary key."""
-        railspec = {}
-        guard = GuardItem(
-            name="pk_test", railspec=railspec, num_reasks=0, description=""
-        )
+        guard_dict = {}
+        guard = GuardItem(name="pk_test", guard=guard_dict)
 
         self.assertEqual(guard.name, "pk_test")
 
-    def test_guard_item_with_complex_railspec(self):
-        """Test GuardItem with complex railspec structure."""
-        railspec = {
+    def test_guard_item_with_complex_guard(self):
+        """Test GuardItem with complex guard structure."""
+        guard_dict = {
             "validators": [
                 {"name": "validator1", "params": {"key": "value"}},
                 {"name": "validator2", "params": {"key2": "value2"}},
             ],
             "output_schema": {"type": "object", "properties": {}},
         }
-        guard = GuardItem(
-            name="complex_guard",
-            railspec=railspec,
-            num_reasks=5,
-            description="Complex guard",
-        )
+        guard = GuardItem(name="complex_guard", guard=guard_dict)
 
-        self.assertEqual(guard.railspec, railspec)
-        self.assertEqual(len(guard.railspec["validators"]), 2)
-
-    def test_guard_item_with_zero_reasks(self):
-        """Test GuardItem with zero reasks."""
-        guard = GuardItem(
-            name="zero_reask", railspec={}, num_reasks=0, description="No reasks"
-        )
-
-        self.assertEqual(guard.num_reasks, 0)
-
-    def test_guard_item_with_large_num_reasks(self):
-        """Test GuardItem with large number of reasks."""
-        guard = GuardItem(
-            name="many_reasks", railspec={}, num_reasks=100, description="Many reasks"
-        )
-
-        self.assertEqual(guard.num_reasks, 100)
-
-    def test_guard_item_with_empty_description(self):
-        """Test GuardItem with empty description."""
-        guard = GuardItem(name="empty_desc", railspec={}, num_reasks=1, description="")
-
-        self.assertEqual(guard.description, "")
-
-    def test_guard_item_with_long_description(self):
-        """Test GuardItem with long description."""
-        long_desc = "A" * 1000
-        guard = GuardItem(
-            name="long_desc", railspec={}, num_reasks=1, description=long_desc
-        )
-
-        self.assertEqual(guard.description, long_desc)
-        self.assertEqual(len(guard.description), 1000)
+        self.assertEqual(guard.guard, guard_dict)
+        self.assertEqual(len(guard.guard["validators"]), 2)
 
     def test_guard_item_tablename(self):
         """Test that GuardItem has correct table name."""
