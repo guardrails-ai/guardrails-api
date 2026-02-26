@@ -15,7 +15,7 @@ from guardrails_api.db.postgres_client import postgres_is_enabled
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
     guarded_chat_completion,
-    outcome_to_stream_response,
+    guarded_chat_completion_stream,
 )
 from guardrails_api.utils.handle_error import handle_error
 from guardrails_api.classes.http_error import HttpError
@@ -147,21 +147,10 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
         guarded_completion = await guarded_chat_completion(guard, payload)
         return JSONResponse(content=guarded_completion)
     else:
-
-        async def openai_streamer():
-            try:
-                guard_stream = await guard(num_reasks=0, **payload)
-                async for result in guard_stream:
-                    chunk = json.dumps(
-                        outcome_to_stream_response(validation_outcome=result)
-                    )
-                    yield f"data: {chunk}\n\n"
-                yield "\n"
-            except Exception as e:
-                yield f"data: {json.dumps({'error': {'message': str(e)}})}\n\n"
-                yield "\n"
-
-        return StreamingResponse(openai_streamer(), media_type="text/event-stream")
+        guarded_completion_stream = await guarded_chat_completion_stream(guard, payload)
+        return StreamingResponse(
+            guarded_completion_stream, media_type="text/event-stream"
+        )
 
 
 @router.post("/guards/{guard_name}/validate")
