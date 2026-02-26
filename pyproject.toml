@@ -34,7 +34,9 @@ dev = [
     "coverage",
     "gunicorn>=22.0.0,<23",
     "pre-commit",
-    "opentelemetry-distro"
+    "opentelemetry-distro",
+    "jsonref",
+    "PyYaml"
 ]
 
 [build-system]

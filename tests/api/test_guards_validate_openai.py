@@ -6,7 +6,6 @@ from unittest.mock import patch, Mock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from guardrails import Guard
-from guardrails.classes.history import Call, Iteration
 from guardrails.errors import ValidationError
 from guardrails_api.api.guards import router
 
@@ -434,12 +433,10 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
     @patch("guardrails_api.api.guards.get_guard_client")
     @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
-    @patch("guardrails_api.api.guards.outcome_to_chat_completion")
-    @patch("guardrails_api.api.guards.inspect.iscoroutine")
+    @patch("guardrails_api.api.guards.guarded_chat_completion")
     def test_openai_v1_chat_completions_call(
         self,
-        mock_iscoroutine,
-        mock_outcome_to_chat,
+        mock_guarded_chat_completion,
         mock_async_from_dict,
         mock_get_guard_client,
     ):
@@ -452,30 +449,7 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         mock_guard = Mock()
         mock_guard.name = self.guard_name
 
-        # Create mock validation outcome
-        mock_outcome = Mock()
-
-        # Setup return_value for guard() call
-        mock_guard.return_value = mock_outcome
-
-        # Setup history with iterations
-        mock_outputs = Mock()
-        mock_outputs.llm_response_info = {"model": "gpt-4"}
-
-        mock_iteration = Mock(spec=Iteration)
-        mock_iteration.outputs = mock_outputs
-
-        mock_iterations = Mock()
-        mock_iterations.last = mock_iteration
-
-        mock_call = Mock(spec=Call)
-        mock_call.iterations = mock_iterations
-
-        mock_history = Mock()
-        mock_history.last = mock_call
-        mock_guard.history = mock_history
-
-        # Setup the outcome_to_chat_completion mock
+        # Setup the guarded_chat_completion mock
         expected_response = {
             "choices": [
                 {
@@ -490,14 +464,13 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
                 "error": None,
             },
         }
-        mock_outcome_to_chat.return_value = expected_response
+        mock_guarded_chat_completion.return_value = expected_response
 
         # Setup mocks - return a guard struct (not a Guard instance)
         mock_guard_struct = Mock()
         mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
         mock_async_from_dict.return_value = mock_guard
         mock_guard_client.get_guard.return_value = mock_guard_struct
-        mock_iscoroutine.return_value = False
 
         # Make request
         response = self.client.post(
@@ -510,9 +483,9 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
 
         # Assertions
         mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
-        mock_guard.assert_called_once_with(
-            num_reasks=0,
-            messages=[{"role": "user", "content": "Hello world!"}],
+        mock_guarded_chat_completion.assert_called_once_with(
+            mock_guard,
+            {"messages": [{"role": "user", "content": "Hello world!"}]},
         )
 
         self.assertEqual(response.status_code, 200)
@@ -527,12 +500,10 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
     @patch("guardrails_api.api.guards.get_guard_client")
     @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
-    @patch("guardrails_api.api.guards.outcome_to_chat_completion")
-    @patch("guardrails_api.api.guards.inspect.iscoroutine")
+    @patch("guardrails_api.api.guards.guarded_chat_completion")
     def test_openai_v1_chat_completions_with_tools(
         self,
-        mock_iscoroutine,
-        mock_outcome_to_chat,
+        mock_guarded_chat_completion,
         mock_async_from_dict,
         mock_get_guard_client,
     ):
@@ -545,30 +516,7 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         mock_guard = Mock()
         mock_guard.name = self.guard_name
 
-        # Create mock validation outcome
-        mock_outcome = Mock()
-
-        # Setup return_value for guard() call
-        mock_guard.return_value = mock_outcome
-
-        # Setup history
-        mock_outputs = Mock()
-        mock_outputs.llm_response_info = {"model": "gpt-4"}
-
-        mock_iteration = Mock(spec=Iteration)
-        mock_iteration.outputs = mock_outputs
-
-        mock_iterations = Mock()
-        mock_iterations.last = mock_iteration
-
-        mock_call = Mock(spec=Call)
-        mock_call.iterations = mock_iterations
-
-        mock_history = Mock()
-        mock_history.last = mock_call
-        mock_guard.history = mock_history
-
-        # Setup outcome_to_chat_completion
+        # Setup guarded_chat_completion
         expected_response = {
             "choices": [
                 {
@@ -591,38 +539,41 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
                 "error": None,
             },
         }
-        mock_outcome_to_chat.return_value = expected_response
+        mock_guarded_chat_completion.return_value = expected_response
 
         # Setup mocks
         mock_guard_struct = Mock()
         mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
         mock_async_from_dict.return_value = mock_guard
         mock_guard_client.get_guard.return_value = mock_guard_struct
-        mock_iscoroutine.return_value = False
+
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "gd_response_tool",
+                    "description": "Guardrails response tool",
+                },
+            }
+        ]
 
         # Make request with gd_response_tool
         response = self.client.post(
             f"/guards/{self.encoded_guard_name}/openai/v1/chat/completions",
             json={
                 "messages": [{"role": "user", "content": "Hello!"}],
-                "tools": [
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": "gd_response_tool",
-                            "description": "Guardrails response tool",
-                        },
-                    }
-                ],
+                "tools": tools,
             },
         )
 
         # Assertions
         self.assertEqual(response.status_code, 200)
 
-        # Verify outcome_to_chat_completion was called with has_tool_gd_tool_call=True
-        call_args = mock_outcome_to_chat.call_args
-        self.assertTrue(call_args[1]["has_tool_gd_tool_call"])
+        # Verify guarded_chat_completion was called with the correct guard and payload (including tools)
+        call_args = mock_guarded_chat_completion.call_args
+        self.assertEqual(call_args[0][0], mock_guard)
+        self.assertIn("tools", call_args[0][1])
+        self.assertEqual(call_args[0][1]["tools"], tools)
 
 
 if __name__ == "__main__":
