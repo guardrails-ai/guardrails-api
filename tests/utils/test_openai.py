@@ -1,180 +1,335 @@
 """Unit tests for guardrails_api.utils.openai module."""
 
+import asyncio
+import json
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+
 from guardrails_api.utils.openai import (
-    outcome_to_stream_response,
-    outcome_to_chat_completion,
+    guarded_chat_completion,
+    guarded_chat_completion_stream,
 )
 
 
-class TestOutcomeToStreamResponse(unittest.TestCase):
-    """Test cases for the outcome_to_stream_response function."""
+class TestGuardedChatCompletion(unittest.TestCase):
+    """Test cases for guarded_chat_completion function."""
 
-    def test_outcome_to_stream_response_basic(self):
-        """Test basic stream response conversion."""
-        mock_outcome = Mock()
-        mock_outcome.validated_output = "Test output"
-        mock_outcome.reask = None
-        mock_outcome.validation_passed = True
-        mock_outcome.error = None
-
-        result = outcome_to_stream_response(mock_outcome)
-
-        self.assertIn("choices", result)
-        self.assertIn("guardrails", result)
-        self.assertEqual(result["choices"][0]["delta"]["content"], "Test output")
-        self.assertTrue(result["guardrails"]["validation_passed"])
-        self.assertIsNone(result["guardrails"]["reask"])
-        self.assertIsNone(result["guardrails"]["error"])
-
-    def test_outcome_to_stream_response_with_reask(self):
-        """Test stream response with reask."""
-        mock_outcome = Mock()
-        mock_outcome.validated_output = "Output"
-        mock_outcome.reask = "Please provide more details"
-        mock_outcome.validation_passed = False
-        mock_outcome.error = None
-
-        result = outcome_to_stream_response(mock_outcome)
-
-        self.assertEqual(result["guardrails"]["reask"], "Please provide more details")
-        self.assertFalse(result["guardrails"]["validation_passed"])
-
-    def test_outcome_to_stream_response_with_error(self):
-        """Test stream response with error."""
-        mock_outcome = Mock()
-        mock_outcome.validated_output = ""
-        mock_outcome.reask = None
-        mock_outcome.validation_passed = False
-        mock_outcome.error = "Validation error occurred"
-
-        result = outcome_to_stream_response(mock_outcome)
-
-        self.assertEqual(result["guardrails"]["error"], "Validation error occurred")
-        self.assertFalse(result["guardrails"]["validation_passed"])
-
-
-class TestOutcomeToChatCompletion(unittest.TestCase):
-    """Test cases for the outcome_to_chat_completion function."""
-
-    def test_outcome_to_chat_completion_basic(self):
-        """Test basic chat completion conversion."""
-        mock_outcome = Mock()
-        mock_outcome.validated_output = "Test response"
-        mock_outcome.reask = None
-        mock_outcome.validation_passed = True
-        mock_outcome.error = None
-        mock_outcome.validation_summaries = []
-
-        mock_llm_response = Mock()
-        mock_llm_response.full_raw_llm_output = {
-            "choices": [{"message": {"content": "original"}}]
+    def _make_mock_model_response(self, content="Hello!"):
+        """Create a mock litellm ModelResponse."""
+        mock_response = Mock()
+        mock_response.model_dump.return_value = {
+            "choices": [{"message": {"content": content}}],
+            "model": "gpt-4",
         }
+        mock_choice = Mock()
+        mock_choice.message.content = content
+        mock_choice.message.function_call = None
+        mock_choice.message.tool_calls = None
+        mock_response.choices = [mock_choice]
+        return mock_response
 
-        result = outcome_to_chat_completion(
-            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
-        )
+    def _make_fake_guard(self, mock_outcome):
+        """Create a mock guard that calls llm_api and returns mock_outcome."""
+        mock_guard = Mock()
 
-        self.assertIn("choices", result)
+        def fake_guard_call(*args, **kwargs):
+            llm_api = kwargs.get("llm_api")
+            if llm_api:
+                llm_api(messages=kwargs.get("messages", []))
+            return mock_outcome
+
+        mock_guard.side_effect = fake_guard_call
+        return mock_guard
+
+    def test_returns_dict_with_guardrails_key(self):
+        """Test guarded_chat_completion returns dict containing guardrails key."""
+        mock_model_response = self._make_mock_model_response(content="Hello!")
+        mock_outcome = Mock()
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "validated_output": "Hello!",
+        }
+        mock_guard = self._make_fake_guard(mock_outcome)
+
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            return_value=mock_model_response,
+        ):
+            result = asyncio.run(
+                guarded_chat_completion(
+                    mock_guard,
+                    {"messages": [{"role": "user", "content": "Hello"}]},
+                )
+            )
+
         self.assertIn("guardrails", result)
-        self.assertEqual(result["choices"][0]["message"]["content"], "Test response")
+        self.assertIn("choices", result)
         self.assertTrue(result["guardrails"]["validation_passed"])
 
-    def test_outcome_to_chat_completion_with_tool_call(self):
-        """Test chat completion with tool call."""
+    def test_guard_called_with_num_reasks_zero(self):
+        """Test guard is always called with num_reasks=0."""
+        mock_model_response = self._make_mock_model_response()
         mock_outcome = Mock()
-        mock_outcome.validated_output = '{"key": "value"}'
-        mock_outcome.reask = None
-        mock_outcome.validation_passed = True
-        mock_outcome.error = None
-        mock_outcome.validation_summaries = []
+        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_guard = self._make_fake_guard(mock_outcome)
 
-        mock_llm_response = Mock()
-        mock_llm_response.full_raw_llm_output = {
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            return_value=mock_model_response,
+        ):
+            asyncio.run(
+                guarded_chat_completion(
+                    mock_guard,
+                    {"messages": [{"role": "user", "content": "Test"}]},
+                )
+            )
+
+        call_kwargs = mock_guard.call_args[1]
+        self.assertEqual(call_kwargs["num_reasks"], 0)
+
+    def test_llm_wrapper_extracts_content_from_message(self):
+        """Test llm_wrapper extracts content from message.content."""
+        mock_model_response = self._make_mock_model_response(
+            content="Extracted content"
+        )
+        mock_outcome = Mock()
+        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        captured_output = []
+
+        mock_guard = Mock()
+
+        def fake_guard_call(*args, **kwargs):
+            llm_api = kwargs.get("llm_api")
+            if llm_api:
+                output = llm_api(messages=kwargs.get("messages", []))
+                captured_output.append(output)
+            return mock_outcome
+
+        mock_guard.side_effect = fake_guard_call
+
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            return_value=mock_model_response,
+        ):
+            asyncio.run(
+                guarded_chat_completion(
+                    mock_guard,
+                    {"messages": [{"role": "user", "content": "Hello"}]},
+                )
+            )
+
+        self.assertEqual(len(captured_output), 1)
+        self.assertEqual(captured_output[0], "Extracted content")
+
+    def test_llm_wrapper_extracts_function_call_arguments(self):
+        """Test llm_wrapper extracts function_call.arguments when content is None."""
+        mock_model_response = Mock()
+        mock_model_response.model_dump.return_value = {
             "choices": [
-                {"message": {"tool_calls": [{"function": {"arguments": "original"}}]}}
-            ]
+                {"message": {"function_call": {"arguments": '{"key": "val"}'}}}
+            ],
+            "model": "gpt-4",
         }
-
-        result = outcome_to_chat_completion(
-            mock_outcome, mock_llm_response, has_tool_gd_tool_call=True
-        )
-
-        self.assertEqual(
-            result["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"],
-            '{"key": "value"}',
-        )
-
-    def test_outcome_to_chat_completion_with_validation_summaries(self):
-        """Test chat completion with validation summaries."""
-        mock_summary = Mock()
-        mock_summary.model_dump.return_value = {
-            "validator": "test_validator",
-            "result": "passed",
-        }
+        mock_choice = Mock()
+        mock_choice.message.content = None
+        mock_choice.message.function_call = Mock()
+        mock_choice.message.function_call.arguments = '{"key": "val"}'
+        mock_choice.message.tool_calls = None
+        mock_model_response.choices = [mock_choice]
 
         mock_outcome = Mock()
-        mock_outcome.validated_output = "Output"
-        mock_outcome.reask = None
-        mock_outcome.validation_passed = True
-        mock_outcome.error = None
-        mock_outcome.validation_summaries = [mock_summary]
+        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        captured_output = []
 
-        mock_llm_response = Mock()
-        mock_llm_response.full_raw_llm_output = {
-            "choices": [{"message": {"content": ""}}]
+        mock_guard = Mock()
+
+        def fake_guard_call(*args, **kwargs):
+            llm_api = kwargs.get("llm_api")
+            if llm_api:
+                output = llm_api(messages=[])
+                captured_output.append(output)
+            return mock_outcome
+
+        mock_guard.side_effect = fake_guard_call
+
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            return_value=mock_model_response,
+        ):
+            asyncio.run(guarded_chat_completion(mock_guard, {"messages": []}))
+
+        self.assertEqual(captured_output[0], '{"key": "val"}')
+
+    def test_llm_wrapper_extracts_tool_call_arguments(self):
+        """Test llm_wrapper extracts tool_calls arguments when content and function_call are None."""
+        mock_tool_call = Mock()
+        mock_tool_call.function.arguments = '{"tool": "args"}'
+
+        mock_model_response = Mock()
+        mock_model_response.model_dump.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "tool_calls": [{"function": {"arguments": '{"tool": "args"}'}}]
+                    }
+                }
+            ],
+            "model": "gpt-4",
         }
+        mock_choice = Mock()
+        mock_choice.message.content = None
+        mock_choice.message.function_call = None
+        mock_choice.message.tool_calls = [mock_tool_call]
+        mock_model_response.choices = [mock_choice]
 
-        result = outcome_to_chat_completion(
-            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
-        )
-
-        self.assertEqual(len(result["guardrails"]["validation_summaries"]), 1)
-        self.assertEqual(
-            result["guardrails"]["validation_summaries"][0]["validator"],
-            "test_validator",
-        )
-
-    def test_outcome_to_chat_completion_without_full_raw_llm_output(self):
-        """Test chat completion when llm_response lacks full_raw_llm_output."""
         mock_outcome = Mock()
-        mock_outcome.validated_output = "Test"
-        mock_outcome.reask = None
-        mock_outcome.validation_passed = True
-        mock_outcome.error = None
-        mock_outcome.validation_summaries = []
+        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        captured_output = []
 
-        mock_llm_response = Mock(spec=[])  # No attributes
+        mock_guard = Mock()
 
-        result = outcome_to_chat_completion(
-            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
-        )
+        def fake_guard_call(*args, **kwargs):
+            llm_api = kwargs.get("llm_api")
+            if llm_api:
+                output = llm_api(messages=[])
+                captured_output.append(output)
+            return mock_outcome
 
-        self.assertIn("guardrails", result)
-        self.assertEqual(result["choices"][0]["message"]["content"], "Test")
+        mock_guard.side_effect = fake_guard_call
 
-    def test_outcome_to_chat_completion_with_reask_and_error(self):
-        """Test chat completion with reask and error."""
-        mock_outcome = Mock()
-        mock_outcome.validated_output = "Partial output"
-        mock_outcome.reask = "More info needed"
-        mock_outcome.validation_passed = False
-        mock_outcome.error = "Validation failed"
-        mock_outcome.validation_summaries = []
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            return_value=mock_model_response,
+        ):
+            asyncio.run(guarded_chat_completion(mock_guard, {"messages": []}))
 
-        mock_llm_response = Mock()
-        mock_llm_response.full_raw_llm_output = {
-            "choices": [{"message": {"content": ""}}]
+        self.assertEqual(captured_output[0], '{"tool": "args"}')
+
+
+class TestGuardedChatCompletionStream(unittest.TestCase):
+    """Test cases for guarded_chat_completion_stream function."""
+
+    def _make_mock_stream_chunk(self, content="Hello"):
+        """Create a mock streaming chunk."""
+        mock_chunk = Mock()
+        mock_chunk.model_dump.return_value = {
+            "choices": [{"delta": {"content": content}}],
         }
+        mock_delta = Mock()
+        mock_delta.content = content
+        mock_delta.function_call = None
+        mock_delta.tool_calls = None
+        mock_choice = Mock()
+        mock_choice.delta = mock_delta
+        mock_chunk.choices = [mock_choice]
+        return mock_chunk
 
-        result = outcome_to_chat_completion(
-            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
-        )
+    def _make_fake_stream_guard(self, mock_outcome):
+        """Create a mock guard that calls llm_api (consuming one chunk) and yields mock_outcome."""
+        mock_guard = Mock()
+        mock_guard.history = Mock()
+        mock_guard.history.last = Mock()
+        mock_guard.history.last.validator_logs = []
 
-        self.assertEqual(result["guardrails"]["reask"], "More info needed")
-        self.assertEqual(result["guardrails"]["error"], "Validation failed")
-        self.assertFalse(result["guardrails"]["validation_passed"])
+        def fake_stream_call(*args, **kwargs):
+            llm_api = kwargs.get("llm_api")
+            if llm_api:
+                gen = llm_api(messages=kwargs.get("messages", []))
+                try:
+                    next(gen)
+                except StopIteration:
+                    pass
+            yield mock_outcome
+
+        mock_guard.side_effect = fake_stream_call
+        return mock_guard
+
+    def test_returns_iterable_of_sse_strings(self):
+        """Test guarded_chat_completion_stream returns iterable SSE strings."""
+        mock_chunk = self._make_mock_stream_chunk(content="Hello")
+        mock_outcome = Mock()
+        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.validation_summaries = [Mock()]
+
+        mock_guard = self._make_fake_stream_guard(mock_outcome)
+
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            side_effect=lambda *args, **kwargs: iter([mock_chunk]),
+        ):
+            result = asyncio.run(
+                guarded_chat_completion_stream(
+                    mock_guard,
+                    {"messages": [{"role": "user", "content": "Hello"}]},
+                )
+            )
+            # Must consume generator inside patch context since it's lazy
+            chunks = list(result)
+
+        self.assertIsNotNone(result)
+        self.assertGreater(len(chunks), 0)
+        for chunk in chunks:
+            self.assertIsInstance(chunk, str)
+            if chunk != "\n":
+                self.assertTrue(
+                    chunk.startswith("data: "),
+                    f"Expected SSE data format, got: {chunk!r}",
+                )
+
+    def test_stream_chunks_contain_guardrails_key(self):
+        """Test that stream chunks include guardrails data."""
+        mock_chunk = self._make_mock_stream_chunk(content="Test")
+        mock_outcome = Mock()
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "validated_output": "Test",
+        }
+        mock_outcome.validation_summaries = [Mock()]
+
+        mock_guard = self._make_fake_stream_guard(mock_outcome)
+
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            side_effect=lambda *args, **kwargs: iter([mock_chunk]),
+        ):
+            result = asyncio.run(
+                guarded_chat_completion_stream(
+                    mock_guard,
+                    {"messages": [{"role": "user", "content": "Test"}]},
+                )
+            )
+            # Must consume generator inside patch context since it's lazy
+            chunks = list(result)
+
+        data_chunks = [c for c in chunks if c.startswith("data: ")]
+        self.assertGreater(len(data_chunks), 0)
+
+        first_chunk_data = json.loads(data_chunks[0][6:].strip())
+        self.assertIn("guardrails", first_chunk_data)
+
+    def test_stream_ends_with_final_newline(self):
+        """Test that the stream ends with a final newline sentinel."""
+        mock_chunk = self._make_mock_stream_chunk(content="End")
+        mock_outcome = Mock()
+        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.validation_summaries = [Mock()]
+
+        mock_guard = self._make_fake_stream_guard(mock_outcome)
+
+        with patch(
+            "guardrails_api.utils.openai.litellm.completion",
+            side_effect=lambda *args, **kwargs: iter([mock_chunk]),
+        ):
+            result = asyncio.run(
+                guarded_chat_completion_stream(
+                    mock_guard,
+                    {"messages": [{"role": "user", "content": "End"}]},
+                )
+            )
+            # Must consume generator inside patch context since it's lazy
+            chunks = list(result)
+
+        self.assertEqual(chunks[-1], "\n")
 
 
 if __name__ == "__main__":
