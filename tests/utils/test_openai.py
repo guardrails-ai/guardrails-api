@@ -28,6 +28,23 @@ class TestOutcomeToStreamResponse(unittest.TestCase):
         self.assertIsNone(result["guardrails"]["reask"])
         self.assertIsNone(result["guardrails"]["error"])
 
+    def test_outcome_to_stream_response_has_openai_fields(self):
+        """Test that stream response includes required OpenAI-compatible fields."""
+        mock_outcome = Mock()
+        mock_outcome.validated_output = "Test output"
+        mock_outcome.reask = None
+        mock_outcome.validation_passed = True
+        mock_outcome.error = None
+
+        result = outcome_to_stream_response(mock_outcome)
+
+        self.assertIn("id", result)
+        self.assertTrue(result["id"].startswith("chatcmpl-"))
+        self.assertEqual(result["object"], "chat.completion.chunk")
+        self.assertIn("created", result)
+        self.assertIsInstance(result["created"], int)
+        self.assertIn("model", result)
+
     def test_outcome_to_stream_response_with_reask(self):
         """Test stream response with reask."""
         mock_outcome = Mock()
@@ -153,6 +170,54 @@ class TestOutcomeToChatCompletion(unittest.TestCase):
 
         self.assertIn("guardrails", result)
         self.assertEqual(result["choices"][0]["message"]["content"], "Test")
+
+    def test_outcome_to_chat_completion_has_openai_fields_from_fallback(self):
+        """Test that id/object/created/model are injected when missing."""
+        mock_outcome = Mock()
+        mock_outcome.validated_output = "Test"
+        mock_outcome.reask = None
+        mock_outcome.validation_passed = True
+        mock_outcome.error = None
+        mock_outcome.validation_summaries = []
+
+        mock_llm_response = Mock(spec=[])  # No full_raw_llm_output
+
+        result = outcome_to_chat_completion(
+            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
+        )
+
+        self.assertIn("id", result)
+        self.assertTrue(result["id"].startswith("chatcmpl-"))
+        self.assertEqual(result["object"], "chat.completion")
+        self.assertIn("created", result)
+        self.assertIsInstance(result["created"], int)
+        self.assertIn("model", result)
+
+    def test_outcome_to_chat_completion_preserves_existing_openai_fields(self):
+        """Test that existing id/object/created/model from LLM are preserved."""
+        mock_outcome = Mock()
+        mock_outcome.validated_output = "Test"
+        mock_outcome.reask = None
+        mock_outcome.validation_passed = True
+        mock_outcome.error = None
+        mock_outcome.validation_summaries = []
+
+        mock_llm_response = Mock()
+        mock_llm_response.full_raw_llm_output = {
+            "id": "chatcmpl-original-id",
+            "object": "chat.completion",
+            "created": 1700000000,
+            "model": "gpt-4o-mini",
+            "choices": [{"message": {"content": "original"}}],
+        }
+
+        result = outcome_to_chat_completion(
+            mock_outcome, mock_llm_response, has_tool_gd_tool_call=False
+        )
+
+        self.assertEqual(result["id"], "chatcmpl-original-id")
+        self.assertEqual(result["model"], "gpt-4o-mini")
+        self.assertEqual(result["created"], 1700000000)
 
     def test_outcome_to_chat_completion_with_reask_and_error(self):
         """Test chat completion with reask and error."""
