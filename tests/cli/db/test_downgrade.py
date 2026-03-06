@@ -1,169 +1,110 @@
-from importlib.metadata import PackageNotFoundError
-from unittest.mock import MagicMock
-
 from typer.testing import CliRunner
 
 from guardrails_api.cli.db.db import db_command
 
 
 class TestDowngrade:
-    def test_logs_error_when_guardrails_api_not_installed(self, mocker):
+    def test_default_revision_is_minus_one(self, mocker):
+        mock_downgrade_db = mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
         mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            side_effect=PackageNotFoundError("guardrails_api"),
-        )
-        mock_logger_error = mocker.patch("guardrails.cli.db.downgrade.logger.error")
-
-        runner = CliRunner()
-        result = runner.invoke(db_command, ["downgrade"])
-
-        assert result.exit_code == 0
-        mock_logger_error.assert_called_once_with(
-            "[ERROR]: 'db downgrade' requires guardrails-api to be installed."
-        )
-
-    def test_logs_error_when_guardrails_api_version_too_old(self, mocker):
-        mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="0.2.5",
-        )
-        mock_logger_error = mocker.patch("guardrails.cli.db.downgrade.logger.error")
-
-        runner = CliRunner()
-        result = runner.invoke(db_command, ["downgrade"])
-
-        assert result.exit_code == 0
-        mock_logger_error.assert_called_once_with(
-            "[ERROR]: 'db downgrade' is only supported for guardrails-api>=0.3.0."
-            "  You have guardrails-api==0.2.5."
-        )
-
-    def test_logs_error_when_minor_version_is_exactly_below_threshold(self, mocker):
-        mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="0.2.99",
-        )
-        mock_logger_error = mocker.patch("guardrails.cli.db.downgrade.logger.error")
-
-        runner = CliRunner()
-        result = runner.invoke(db_command, ["downgrade"])
-
-        assert result.exit_code == 0
-        mock_logger_error.assert_called_once()
-
-    def test_delegates_to_guardrails_api_with_defaults(self, mocker):
-        mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="0.3.0",
-        )
-        mock_api_downgrade = MagicMock()
-        mocker.patch.dict(
-            "sys.modules",
-            {
-                "guardrails_api": MagicMock(),
-                "guardrails_api.cli": MagicMock(),
-                "guardrails_api.cli.db": MagicMock(),
-                "guardrails_api.cli.db.downgrade": MagicMock(
-                    downgrade=mock_api_downgrade
-                ),
-            },
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=False
         )
 
         runner = CliRunner()
         result = runner.invoke(db_command, ["downgrade"])
 
         assert result.exit_code == 0
-        mock_api_downgrade.assert_called_once_with("-1", ".env", False)
+        mock_downgrade_db.assert_called_once_with("-1")
 
-    def test_delegates_to_guardrails_api_with_custom_revision(self, mocker):
+    def test_custom_revision(self, mocker):
+        mock_downgrade_db = mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
         mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="0.3.0",
-        )
-        mock_api_downgrade = MagicMock()
-        mocker.patch.dict(
-            "sys.modules",
-            {
-                "guardrails_api": MagicMock(),
-                "guardrails_api.cli": MagicMock(),
-                "guardrails_api.cli.db": MagicMock(),
-                "guardrails_api.cli.db.downgrade": MagicMock(
-                    downgrade=mock_api_downgrade
-                ),
-            },
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=False
         )
 
         runner = CliRunner()
         result = runner.invoke(db_command, ["downgrade", "abc123"])
 
         assert result.exit_code == 0
-        mock_api_downgrade.assert_called_once_with("abc123", ".env", False)
+        mock_downgrade_db.assert_called_once_with("abc123")
 
-    def test_delegates_to_guardrails_api_with_custom_env_file(self, mocker):
+    def test_loads_env_file_when_it_exists(self, mocker):
+        mock_downgrade_db = mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
         mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="0.3.0",
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=True
         )
-        mock_api_downgrade = MagicMock()
-        mocker.patch.dict(
-            "sys.modules",
-            {
-                "guardrails_api": MagicMock(),
-                "guardrails_api.cli": MagicMock(),
-                "guardrails_api.cli.db": MagicMock(),
-                "guardrails_api.cli.db.downgrade": MagicMock(
-                    downgrade=mock_api_downgrade
-                ),
-            },
+        mock_load_dotenv = mocker.patch("guardrails_api.cli.db.downgrade.load_dotenv")
+
+        runner = CliRunner()
+        result = runner.invoke(db_command, ["downgrade"])
+
+        assert result.exit_code == 0
+        mock_load_dotenv.assert_called_once()
+        mock_downgrade_db.assert_called_once_with("-1")
+
+    def test_does_not_load_env_file_when_it_does_not_exist(self, mocker):
+        mock_downgrade_db = mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
+        mocker.patch(
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=False
         )
+        mock_load_dotenv = mocker.patch("guardrails_api.cli.db.downgrade.load_dotenv")
+
+        runner = CliRunner()
+        result = runner.invoke(db_command, ["downgrade"])
+
+        assert result.exit_code == 0
+        mock_load_dotenv.assert_not_called()
+        mock_downgrade_db.assert_called_once_with("-1")
+
+    def test_custom_env_file(self, mocker):
+        mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
+        mocker.patch(
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=True
+        )
+        mock_load_dotenv = mocker.patch("guardrails_api.cli.db.downgrade.load_dotenv")
 
         runner = CliRunner()
         result = runner.invoke(db_command, ["downgrade", "--env", "/custom/.env"])
 
         assert result.exit_code == 0
-        mock_api_downgrade.assert_called_once_with("-1", "/custom/.env", False)
+        args, _ = mock_load_dotenv.call_args
+        assert args[0] == "/custom/.env"
 
-    def test_delegates_to_guardrails_api_with_env_override(self, mocker):
+    def test_env_override_passed_to_load_dotenv(self, mocker):
+        mock_downgrade_db = mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
         mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="0.3.0",
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=True
         )
-        mock_api_downgrade = MagicMock()
-        mocker.patch.dict(
-            "sys.modules",
-            {
-                "guardrails_api": MagicMock(),
-                "guardrails_api.cli": MagicMock(),
-                "guardrails_api.cli.db": MagicMock(),
-                "guardrails_api.cli.db.downgrade": MagicMock(
-                    downgrade=mock_api_downgrade
-                ),
-            },
-        )
+        mock_load_dotenv = mocker.patch("guardrails_api.cli.db.downgrade.load_dotenv")
 
         runner = CliRunner()
         result = runner.invoke(db_command, ["downgrade", "--env-override"])
 
         assert result.exit_code == 0
-        mock_api_downgrade.assert_called_once_with("-1", ".env", True)
+        _, kwargs = mock_load_dotenv.call_args
+        assert kwargs.get("override") is True
+        mock_downgrade_db.assert_called_once_with("-1")
 
-    def test_delegates_to_guardrails_api_with_all_options(self, mocker):
+    def test_env_override_defaults_to_false(self, mocker):
+        mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
         mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="1.0.0",
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=True
         )
-        mock_api_downgrade = MagicMock()
-        mocker.patch.dict(
-            "sys.modules",
-            {
-                "guardrails_api": MagicMock(),
-                "guardrails_api.cli": MagicMock(),
-                "guardrails_api.cli.db": MagicMock(),
-                "guardrails_api.cli.db.downgrade": MagicMock(
-                    downgrade=mock_api_downgrade
-                ),
-            },
+        mock_load_dotenv = mocker.patch("guardrails_api.cli.db.downgrade.load_dotenv")
+
+        runner = CliRunner()
+        result = runner.invoke(db_command, ["downgrade"])
+
+        assert result.exit_code == 0
+        _, kwargs = mock_load_dotenv.call_args
+        assert kwargs.get("override") is False
+
+    def test_all_options(self, mocker):
+        mock_downgrade_db = mocker.patch("guardrails_api.cli.db.downgrade.downgrade_db")
+        mocker.patch(
+            "guardrails_api.cli.db.downgrade.os.path.isfile", return_value=True
         )
+        mock_load_dotenv = mocker.patch("guardrails_api.cli.db.downgrade.load_dotenv")
 
         runner = CliRunner()
         result = runner.invoke(
@@ -172,54 +113,7 @@ class TestDowngrade:
         )
 
         assert result.exit_code == 0
-        mock_api_downgrade.assert_called_once_with("base", "prod.env", True)
-
-    def test_does_not_delegate_when_major_version_is_non_zero(self, mocker):
-        """Major version != '0' should pass the version check and delegate."""
-        mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="1.0.0",
-        )
-        mock_api_downgrade = MagicMock()
-        mocker.patch.dict(
-            "sys.modules",
-            {
-                "guardrails_api": MagicMock(),
-                "guardrails_api.cli": MagicMock(),
-                "guardrails_api.cli.db": MagicMock(),
-                "guardrails_api.cli.db.downgrade": MagicMock(
-                    downgrade=mock_api_downgrade
-                ),
-            },
-        )
-        mock_logger_error = mocker.patch("guardrails.cli.db.downgrade.logger.error")
-
-        runner = CliRunner()
-        runner.invoke(db_command, ["downgrade"])
-
-        mock_logger_error.assert_not_called()
-        mock_api_downgrade.assert_called_once()
-
-    def test_default_revision_is_minus_one(self, mocker):
-        mocker.patch(
-            "guardrails.cli.db.downgrade.version",
-            return_value="0.3.0",
-        )
-        mock_api_downgrade = MagicMock()
-        mocker.patch.dict(
-            "sys.modules",
-            {
-                "guardrails_api": MagicMock(),
-                "guardrails_api.cli": MagicMock(),
-                "guardrails_api.cli.db": MagicMock(),
-                "guardrails_api.cli.db.downgrade": MagicMock(
-                    downgrade=mock_api_downgrade
-                ),
-            },
-        )
-
-        runner = CliRunner()
-        runner.invoke(db_command, ["downgrade"])
-
-        args, _ = mock_api_downgrade.call_args
-        assert args[0] == "-1"
+        args, kwargs = mock_load_dotenv.call_args
+        assert args[0] == "prod.env"
+        assert kwargs.get("override") is True
+        mock_downgrade_db.assert_called_once_with("base")
