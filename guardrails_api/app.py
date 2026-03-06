@@ -77,19 +77,21 @@ def create_app(
     port: Optional[int] = PORT,
     *,
     middleware: Optional[str] = GR_MIDDLEWARE_FILE_PATH,
+    env_override: bool = False,
 ):
     # used to print user-facing messages during server startup
     console = Console()
 
-    if env:
+    # Load specified env file or default .env file if it exists
+    env_file_path = os.path.abspath(env or os.path.join(os.getcwd(), "./.env"))
+    if os.path.isfile(env_file_path):
         from dotenv import load_dotenv
 
-        env_file_path = os.path.abspath(env)
-        load_dotenv(env_file_path, override=True)
+        load_dotenv(env_file_path, override=env_override)
 
     set_port = port or PORT
     host = os.environ.get("HOST", "http://localhost")
-    self_endpoint = os.environ.get("SELF_ENDPOINT", f"{host}:{set_port}")
+    self_endpoint = os.environ.get("SELF_ENDPOINT") or f"{host}:{set_port}"
     os.environ["SELF_ENDPOINT"] = self_endpoint
 
     resolved_config_file_path = register_config(config)

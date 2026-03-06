@@ -38,5 +38,7 @@ def start(
 
     port = port or 8000
 
-    app = create_app(env, config, port, middleware=middleware)
+    app = create_app(
+        env, config, port, middleware=middleware, env_override=env_override
+    )
     uvicorn.run(app, port=port, env_file=env_file_path)
