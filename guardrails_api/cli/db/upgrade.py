@@ -18,6 +18,13 @@ def upgrade(
         help="Override existing environment variables with values from the env file.",
     ),
 ):
+    """Upgrades the database schema to the specified
+    revision.
+
+    Upgrades are applied automatically on server startup so you should
+    normally never need to use this command.  However it is offered as
+    an extra lever for custom use cases.
+    """
     env_file_path = os.path.abspath(env)
     if os.path.isfile(env_file_path):
         load_dotenv(env_file_path, override=env_override)
