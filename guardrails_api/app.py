@@ -49,23 +49,28 @@ def register_middleware(*, middleware: Optional[str] = None, app: FastAPI):
     middleware_file = middleware or default_middleware_file
     middleware_file_path = os.path.abspath(middleware_file)
     if os.path.isfile(middleware_file_path):
-        spec = importlib.util.spec_from_file_location(
-            "middleware", middleware_file_path
-        )
-        if spec and spec.loader:
-            middleware_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(middleware_module)
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "middleware", middleware_file_path
+            )
+            if spec and spec.loader:
+                middleware_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(middleware_module)
 
-            exports = middleware_module.__dir__()
-            for export_name in exports:
-                export = getattr(middleware_module, export_name)
-                is_middleware = (
-                    inspect.isclass(export)
-                    and issubclass(export, BaseHTTPMiddleware)
-                    and export != BaseHTTPMiddleware
-                )
-                if is_middleware:
-                    app.add_middleware(export)
+                exports = middleware_module.__dir__()
+                for export_name in exports:
+                    export = getattr(middleware_module, export_name)
+                    is_middleware = (
+                        inspect.isclass(export)
+                        and issubclass(export, BaseHTTPMiddleware)
+                        and export != BaseHTTPMiddleware
+                    )
+                    if is_middleware:
+                        app.add_middleware(export)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to register middleware from {middleware_file_path}", e
+            )
 
 
 # Support for providing env vars as uvicorn does not support supplying args to create_app
