@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from guardrails import configure_logging
 from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.db.postgres_client import postgres_is_enabled
@@ -11,10 +12,12 @@ from typing import Optional
 import importlib.util
 import json
 import os
+import inspect
 
 
 GR_ENV_FILE = os.environ.get("GR_ENV_FILE", None)
 GR_CONFIG_FILE_PATH = os.environ.get("GR_CONFIG_FILE_PATH", None)
+GR_MIDDLEWARE_FILE_PATH = os.environ.get("GR_MIDDLEWARE_FILE_PATH", None)
 PORT = int(os.environ.get("PORT", 8000))
 
 
@@ -34,10 +37,40 @@ def register_config(config: Optional[str] = None):
     config_file_path = os.path.abspath(config_file)
     if os.path.isfile(config_file_path):
         spec = importlib.util.spec_from_file_location("config", config_file_path)
-        config_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(config_module)
+        if spec and spec.loader:
+            config_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(config_module)
 
     return config_file_path
+
+
+def register_middleware(*, middleware: Optional[str] = None, app: FastAPI):
+    default_middleware_file = os.path.join(os.getcwd(), "./middleware.py")
+    middleware_file = middleware or default_middleware_file
+    middleware_file_path = os.path.abspath(middleware_file)
+    if os.path.isfile(middleware_file_path):
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "middleware", middleware_file_path
+            )
+            if spec and spec.loader:
+                middleware_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(middleware_module)
+
+                exports = middleware_module.__dir__()
+                for export_name in exports:
+                    export = getattr(middleware_module, export_name)
+                    is_middleware = (
+                        inspect.isclass(export)
+                        and issubclass(export, BaseHTTPMiddleware)
+                        and export != BaseHTTPMiddleware
+                    )
+                    if is_middleware:
+                        app.add_middleware(export)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to register middleware from {middleware_file_path}", e
+            )
 
 
 # Support for providing env vars as uvicorn does not support supplying args to create_app
@@ -47,19 +80,23 @@ def create_app(
     env: Optional[str] = GR_ENV_FILE,
     config: Optional[str] = GR_CONFIG_FILE_PATH,
     port: Optional[int] = PORT,
+    *,
+    middleware: Optional[str] = GR_MIDDLEWARE_FILE_PATH,
+    env_override: bool = False,
 ):
     # used to print user-facing messages during server startup
     console = Console()
 
-    if env:
+    # Load specified env file or default .env file if it exists
+    env_file_path = os.path.abspath(env or os.path.join(os.getcwd(), "./.env"))
+    if os.path.isfile(env_file_path):
         from dotenv import load_dotenv
 
-        env_file_path = os.path.abspath(env)
-        load_dotenv(env_file_path, override=True)
+        load_dotenv(env_file_path, override=env_override)
 
     set_port = port or PORT
     host = os.environ.get("HOST", "http://localhost")
-    self_endpoint = os.environ.get("SELF_ENDPOINT", f"{host}:{set_port}")
+    self_endpoint = os.environ.get("SELF_ENDPOINT") or f"{host}:{set_port}"
     os.environ["SELF_ENDPOINT"] = self_endpoint
 
     resolved_config_file_path = register_config(config)
@@ -74,6 +111,8 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    register_middleware(middleware=middleware, app=app)
 
     guardrails_log_level = os.environ.get("GUARDRAILS_LOG_LEVEL", "INFO")
     configure_logging(log_level=guardrails_log_level)

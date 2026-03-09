@@ -25,6 +25,10 @@ def start(
         default=False,
         help="Override existing environment variables with values from the env file.",
     ),
+    middleware: str = typer.Option(
+        default="",
+        help="A middleware file to apply.",
+    ),
 ):
     env_file_path = os.path.abspath(env)
     if os.path.isfile(env_file_path):
@@ -34,5 +38,7 @@ def start(
 
     port = port or 8000
 
-    app = create_app(env, config, port)
+    app = create_app(
+        env, config, port, middleware=middleware, env_override=env_override
+    )
     uvicorn.run(app, port=port, env_file=env_file_path)
