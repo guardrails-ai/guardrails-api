@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from guardrails_api.clients.get_guard_client import get_guard_client
 from guardrails_api.clients.cache_client import CacheClient
 from guardrails_api.db.postgres_client import postgres_is_enabled
+from guardrails_api.utils.attach_validation_summaries import attach_validation_summaries
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
     guarded_chat_completion,
@@ -295,6 +296,7 @@ async def validate(guard_name: str, request: Request):
         serialized_history = [call.to_dict() for call in guard.history]
         cache_key = f"{guard.name}-{result.call_id}"
         await cache_client.set(cache_key, serialized_history, 300)
+    result = attach_validation_summaries(result, guard)
     return result.to_dict()
 
 

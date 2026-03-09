@@ -5,11 +5,12 @@ from typing import Any, Iterator
 
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
-from guardrails.classes.validation.validation_summary import ValidationSummary
+
 from litellm import Choices, CustomStreamWrapper, ModelResponse, StreamingChoices
 import litellm
 
 from guardrails_api.classes.http_error import HttpError
+from guardrails_api.utils.attach_validation_summaries import attach_validation_summaries
 
 ctx_chat_completion = contextvars.ContextVar("x_guardrails_api_ctx_chat_completion")
 ctx_chat_completion_stream = contextvars.ContextVar(
@@ -119,10 +120,7 @@ async def guarded_chat_completion_stream(
             v_logs = _guard.history.last.validator_logs if _guard.history.last else []
             new_v_logs = [log for log in v_logs if log not in validator_logs]
             validator_logs.extend(new_v_logs)
-            if not result.validation_summaries:
-                result.validation_summaries = (
-                    ValidationSummary.from_validator_logs_only_fails(new_v_logs)
-                )
+            result = attach_validation_summaries(result, _guard, new_v_logs)
             ser_chunk["guardrails"] = result.model_dump()
             yield f"data: {json.dumps(ser_chunk)}\n\n"
         yield "\n"

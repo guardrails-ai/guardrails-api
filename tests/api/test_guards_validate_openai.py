@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from guardrails import Guard
 from guardrails.errors import ValidationError
+from guardrails.classes.generic import Stack
 from guardrails_api.api.guards import router
 
 
@@ -37,6 +38,7 @@ class TestValidateEndpoint(unittest.TestCase):
         # Create mock guard
         mock_guard = Mock(spec=Guard)
         mock_guard.name = self.guard_name
+        mock_guard.history = Stack()
 
         # Mock the parse method to return a dict (as if to_dict() was called)
         mock_guard.parse.return_value = Mock()
@@ -49,7 +51,10 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Setup mocks - return a guard struct that will be converted
         mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
+        mock_guard_struct.to_dict.return_value = {
+            "name": self.guard_name,
+            "history": [],
+        }
         mock_from_dict.return_value = mock_guard
         mock_guard_client.get_guard.return_value = mock_guard_struct
 
@@ -205,6 +210,7 @@ class TestValidateEndpoint(unittest.TestCase):
         # Create mock guard
         mock_guard = Mock(spec=Guard)
         mock_guard.name = self.guard_name
+        mock_guard.history = Stack()
 
         # Setup parse to raise ValidationError
         error = ValidationError("Test parse validation error")
@@ -249,6 +255,7 @@ class TestValidateEndpoint(unittest.TestCase):
         # Create mock guard
         mock_guard = Mock(spec=Guard)
         mock_guard.name = self.guard_name
+        mock_guard.history = Stack()
 
         mock_guard.parse.return_value = Mock()
         mock_guard.parse.return_value.to_dict.return_value = {
@@ -289,6 +296,7 @@ class TestValidateEndpoint(unittest.TestCase):
         # Create mock guard
         mock_guard = Mock(spec=Guard)
         mock_guard.name = self.guard_name
+        mock_guard.history = Stack()
 
         # Setup mocks
         mock_guard_struct = Mock()
@@ -368,6 +376,7 @@ class TestValidateEndpoint(unittest.TestCase):
         # Create mock guard
         mock_guard = Mock(spec=Guard)
         mock_guard.name = self.guard_name
+        mock_guard.history = Stack()
 
         # Setup mocks
         mock_guard_struct = Mock()
