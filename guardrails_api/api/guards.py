@@ -297,7 +297,11 @@ async def validate(guard_name: str, request: Request):
         cache_key = f"{guard.name}-{result.call_id}"
         await cache_client.set(cache_key, serialized_history, 300)
     result = attach_validation_summaries(result, guard)
-    return result.to_dict()
+    result_dict = result.to_dict()
+    result_dict["validation_summaries"] = [
+        vs.model_dump() for vs in result.validation_summaries or []
+    ]
+    return result_dict
 
 
 @router.get("/guards/{guard_name}/history/{call_id}")
