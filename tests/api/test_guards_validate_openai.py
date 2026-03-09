@@ -38,15 +38,20 @@ class TestValidateEndpoint(unittest.TestCase):
         # Create mock guard
         mock_guard = Mock(spec=Guard)
         mock_guard.name = self.guard_name
-        mock_guard.history = Stack()
+        mock_guard.history = Mock()
+        mock_guard.history.last = Mock()
+        mock_guard.history.last.validator_logs = []
 
         # Mock the parse method to return a dict (as if to_dict() was called)
-        mock_guard.parse.return_value = Mock()
+        mock_result = Mock()
+        mock_result.validation_summaries = []
+        mock_guard.parse.return_value = mock_result
         mock_guard.parse.return_value.to_dict.return_value = {
             "callId": "mock-call-id",
             "validatedOutput": "Hello world!",
             "validationPassed": True,
             "rawLlmOutput": "Hello world!",
+            "validation_summaries": [],
         }
 
         # Setup mocks - return a guard struct that will be converted
@@ -98,14 +103,19 @@ class TestValidateEndpoint(unittest.TestCase):
         # Create mock guard
         mock_guard = Mock()
         mock_guard.name = self.guard_name
+        mock_guard.history = Mock()
+        mock_guard.history.last = Mock()
+        mock_guard.history.last.validator_logs = []
 
         # Mock the return value for guard() call
         mock_result = Mock()
+        mock_result.validation_summaries = []
         mock_result.to_dict.return_value = {
             "callId": "mock-call-id",
             "validationPassed": False,
             "validatedOutput": None,
             "rawLlmOutput": "Hello world!",
+            "validation_summaries": [],
         }
         mock_guard.return_value = mock_result
 
@@ -257,7 +267,9 @@ class TestValidateEndpoint(unittest.TestCase):
         mock_guard.name = self.guard_name
         mock_guard.history = Stack()
 
-        mock_guard.parse.return_value = Mock()
+        mock_result = Mock()
+        mock_result.validation_summaries = []
+        mock_guard.parse.return_value = mock_result
         mock_guard.parse.return_value.to_dict.return_value = {
             "callId": "mock-call-id",
             "rawLlmOutput": "Hello!",
