@@ -1,17 +1,25 @@
 from contextlib import contextmanager
 from typing import List, Optional
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
+from psycopg2.errors import UniqueViolation
 from guardrails_api_client import Guard as GuardStruct
 from guardrails_api.classes.http_error import HttpError
 from guardrails_api.clients.guard_client import GuardClient
-from guardrails_api.models.guard_item import GuardItem
-from guardrails_api.clients.postgres_client import PostgresClient
-from guardrails_api.models.guard_item_audit import GuardItemAudit
+from guardrails_api.db.models.guard_item import GuardItem
+from guardrails_api.db.postgres_client import PostgresClient
+from guardrails_api.db.models.guard_item_audit import GuardItemAudit
 
 
-def from_guard_item(guard_item: GuardItem) -> GuardStruct:
-    # Temporary fix for the fact that the DB schema is out of date with the API schema
-    # For now, we're just storing the serialized guard in the railspec column
-    return GuardStruct.from_dict(guard_item.railspec)
+def from_guard_item(
+    guard_item: GuardItem | GuardItemAudit | None,
+) -> GuardStruct | None:
+    if not guard_item:
+        return guard_item
+    guard = GuardStruct.from_dict(guard_item.guard)  # type: ignore
+    if guard and guard_item.id:  # type: ignore
+        guard.id = guard_item.id  # type: ignore
+    return guard
 
 
 class PGGuardClient(GuardClient):
@@ -34,15 +42,19 @@ class PGGuardClient(GuardClient):
         return item
 
     def util_create_guard(self, guard: GuardStruct, db) -> GuardStruct:
-        guard_item = GuardItem(
-            name=guard.name,
-            railspec=guard.to_dict(),
-            num_reasks=None,
-            description=guard.description,
-        )
-        db.add(guard_item)
-        db.commit()
-        return from_guard_item(guard_item)
+        try:
+            guard_item = GuardItem(name=guard.name, guard=guard.to_dict())
+            db.add(guard_item)
+            db.commit()
+            return from_guard_item(guard_item)
+        except IntegrityError as ie:
+            if isinstance(ie.orig, UniqueViolation):
+                raise HttpError(
+                    status=409,
+                    message="Conflict",
+                    cause=f"A Guard with the name {guard.name} already exists!",
+                )
+            raise ie
 
     # Below are used directly by Controllers and start db sessions
 
@@ -61,6 +73,8 @@ class PGGuardClient(GuardClient):
                     .first()
                 )
             guard_item = audit_item if audit_item is not None else latest_guard_item
+            if audit_item:
+                guard_item = audit_item.guard_id
             if guard_item is None:
                 raise HttpError(
                     status=404,
@@ -91,8 +105,10 @@ class PGGuardClient(GuardClient):
                         guard_name=guard_name
                     ),
                 )
-            guard_item.railspec = guard.to_dict()
-            guard_item.description = guard.description
+            guard_item.guard = guard.to_dict()
+            guard_item.updated_at = db.execute(
+                select(func.current_timestamp())
+            ).scalar()
             db.commit()
             return from_guard_item(guard_item)
 
@@ -100,8 +116,10 @@ class PGGuardClient(GuardClient):
         with self.get_db_context() as db:
             guard_item = self.util_get_guard_item(guard_name, db)
             if guard_item is not None:
-                guard_item.railspec = guard.to_dict()
-                guard_item.description = guard.description
+                guard_item.guard = guard.to_dict()
+                guard_item.updated_at = db.execute(
+                    select(func.current_timestamp())
+                ).scalar()
                 db.commit()
                 return from_guard_item(guard_item)
             else:

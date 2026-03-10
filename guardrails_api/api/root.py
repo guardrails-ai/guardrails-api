@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from guardrails_api.open_api_spec import get_open_api_spec
 from sqlalchemy import text
 from guardrails_api.classes.health_check import HealthCheck
-from guardrails_api.clients.postgres_client import PostgresClient, postgres_is_enabled
+from guardrails_api.db.postgres_client import PostgresClient, postgres_is_enabled
 from guardrails_api.utils.logger import logger
 
 
@@ -35,7 +35,7 @@ async def health_check():
         query = text("SELECT count(datid) FROM pg_stat_activity;")
         response = pg_client.SessionLocal().execute(query).all()
 
-        logger.info("response: %s", response)
+        logger.debug("response: %s", response)
 
         return HealthCheck(200, "Ok").to_dict()
     except Exception as e:

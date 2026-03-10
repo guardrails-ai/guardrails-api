@@ -8,15 +8,18 @@ from urllib.parse import unquote_plus
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
 from guardrails_api_client import Guard as GuardStruct
+from pydantic import ValidationError
 from guardrails_api.clients.get_guard_client import get_guard_client
 from guardrails_api.clients.cache_client import CacheClient
-from guardrails_api.clients.postgres_client import postgres_is_enabled
+from guardrails_api.db.postgres_client import postgres_is_enabled
+from guardrails_api.utils.attach_validation_summaries import attach_validation_summaries
 from guardrails_api.utils.get_llm_callable import get_llm_callable
 from guardrails_api.utils.openai import (
-    outcome_to_chat_completion,
-    outcome_to_stream_response,
+    guarded_chat_completion,
+    guarded_chat_completion_stream,
 )
 from guardrails_api.utils.handle_error import handle_error
+from guardrails_api.classes.http_error import HttpError
 
 cache_client = CacheClient()
 
@@ -27,6 +30,23 @@ router = APIRouter()
 
 def guard_history_is_enabled():
     return os.environ.get("GUARD_HISTORY_ENABLED", "true").lower() == "true"
+
+
+async def get_guard_body(request: Request) -> GuardStruct | None:
+    try:
+        body = await request.body()
+        guard = GuardStruct.from_json(body.decode("utf-8"))
+        return guard
+    except ValidationError as ve:
+        fields = {}
+        errors = ve.errors()
+        for e in errors:
+            path = ".".join([str(loc) for loc in e["loc"]])
+            if not path:
+                path = "$"
+            fields[path] = e["msg"]
+
+        raise HttpError(status=400, message="BadRequest", fields=fields)
 
 
 @router.get("/guards")
@@ -46,8 +66,7 @@ async def create_guard(request: Request):
             status_code=501,
             detail="Not Implemented POST /guards is not implemented for in-memory guards.",
         )
-    body = await request.body()
-    guard = GuardStruct.from_json(body.decode("utf-8"))
+    guard = await get_guard_body(request)
     if not guard:
         raise HTTPException(status_code=422)
 
@@ -78,8 +97,7 @@ async def update_guard(guard_name: str, request: Request):
             status_code=501,
             detail="PUT /<guard_name> is not implemented for in-memory guards.",
         )
-    body = await request.body()
-    guard = GuardStruct.from_json(body.decode("utf-8"))
+    guard = await get_guard_body(request)
     if not guard:
         raise HTTPException(status_code=422)
 
@@ -120,42 +138,20 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
         if not isinstance(guard_struct, Guard)
         else guard_struct
     )
+    if not guard:
+        raise HttpError(
+            status=404, message=f"Guard with name {decoded_guard_name} not found!"
+        )
     stream = payload.get("stream", False)
-    has_tool_gd_tool_call = any(
-        tool.get("function", {}).get("name") == "gd_response_tool"
-        for tool in payload.get("tools", [])
-    )
 
     if not stream:
-        execution = guard(num_reasks=0, **payload)
-        if inspect.iscoroutine(execution):
-            validation_outcome: ValidationOutcome = await execution
-        else:
-            validation_outcome: ValidationOutcome = execution
-
-        llm_response = guard.history.last.iterations.last.outputs.llm_response_info
-        result = outcome_to_chat_completion(
-            validation_outcome=validation_outcome,
-            llm_response=llm_response,
-            has_tool_gd_tool_call=has_tool_gd_tool_call,
-        )
-        return JSONResponse(content=result)
+        guarded_completion = await guarded_chat_completion(guard, payload)
+        return JSONResponse(content=guarded_completion)
     else:
-
-        async def openai_streamer():
-            try:
-                guard_stream = await guard(num_reasks=0, **payload)
-                async for result in guard_stream:
-                    chunk = json.dumps(
-                        outcome_to_stream_response(validation_outcome=result)
-                    )
-                    yield f"data: {chunk}\n\n"
-                yield "\n"
-            except Exception as e:
-                yield f"data: {json.dumps({'error': {'message': str(e)}})}\n\n"
-                yield "\n"
-
-        return StreamingResponse(openai_streamer(), media_type="text/event-stream")
+        guarded_completion_stream = await guarded_chat_completion_stream(guard, payload)
+        return StreamingResponse(
+            guarded_completion_stream, media_type="text/event-stream"
+        )
 
 
 @router.post("/guards/{guard_name}/validate")
@@ -300,7 +296,12 @@ async def validate(guard_name: str, request: Request):
         serialized_history = [call.to_dict() for call in guard.history]
         cache_key = f"{guard.name}-{result.call_id}"
         await cache_client.set(cache_key, serialized_history, 300)
-    return result.to_dict()
+    result = attach_validation_summaries(result, guard)
+    result_dict = result.to_dict()
+    result_dict["validation_summaries"] = [
+        vs.model_dump() for vs in result.validation_summaries or []
+    ]
+    return result_dict
 
 
 @router.get("/guards/{guard_name}/history/{call_id}")

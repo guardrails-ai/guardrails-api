@@ -1,6 +1,6 @@
 [project]
 name = "guardrails-api"
-dynamic = ["version"]
+version = "0.3.0"
 description = "Guardrails API"
 authors = [
     {name = "Guardrails AI", email = "contact@guardrailsai.com"}
@@ -10,27 +10,20 @@ readme = "README.md"
 keywords = ["Guardrails", "Guardrails AI", "Guardrails API", "Guardrails API"]
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "guardrails-ai>=0.8.1",
+    "guardrails-ai>=0.8.2",
     "jsonschema>=4.22.0,<5",
     "referencing>=0.35.1,<1",
-    "boto3>=1.34.115,<2",
     "psycopg2-binary>=2.9.9,<3",
     "litellm>=1.39.3,<2",
     "typer>=0.9.4,<1",
-    "opentelemetry-api>=1.0.0,<2",
-    "opentelemetry-sdk>=1.0.0,<2",
-    "opentelemetry-exporter-otlp-proto-grpc>=1.0.0,<2",
-    "opentelemetry-exporter-otlp-proto-http>=1.0.0,<2",
-    "opentelemetry-instrumentation-fastapi>=0.48b0",
     "requests>=2.32.3",
     "aiocache>=0.11.1",
     "fastapi>=0.114.1",
     "SQLAlchemy>=2.0.34",
+    "alembic>=1.18.4",
     "uvicorn>=0.30.6",
+    "python-dotenv>=1.2.1"
 ]
-
-[tool.setuptools.dynamic]
-version = {attr = "guardrails_api.__version__"}
 
 [project.scripts]
 guardrails-api = "guardrails_api.cli:cli"
@@ -40,8 +33,18 @@ dev = [
     "ruff",
     "coverage",
     "gunicorn>=22.0.0,<23",
-    "pre-commit"
+    "pre-commit",
+    "opentelemetry-distro",
+    "jsonref",
+    "PyYaml"
 ]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+"guardrails_api" = ["py.typed", "open-api-spec.json"]
 
 [tool.pyright]
 include = ["guardrails_api"]

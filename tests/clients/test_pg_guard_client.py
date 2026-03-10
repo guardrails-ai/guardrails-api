@@ -11,16 +11,16 @@ class TestFromGuardItem(unittest.TestCase):
     @patch("guardrails_api.clients.pg_guard_client.GuardStruct")
     def test_from_guard_item(self, mock_guard_struct):
         """Test converting GuardItem to GuardStruct."""
-        railspec = {"name": "test", "description": "Test guard"}
+        guard = {"name": "test"}
         guard_item = Mock()
-        guard_item.railspec = railspec
+        guard_item.guard = guard
 
         mock_guard = Mock()
         mock_guard_struct.from_dict.return_value = mock_guard
 
         result = from_guard_item(guard_item)
 
-        mock_guard_struct.from_dict.assert_called_once_with(railspec)
+        mock_guard_struct.from_dict.assert_called_once_with(guard)
         self.assertEqual(result, mock_guard)
 
 
@@ -78,7 +78,6 @@ class TestPGGuardClient(unittest.TestCase):
         mock_db = Mock()
         mock_guard = Mock()
         mock_guard.name = "test_guard"
-        mock_guard.description = "Test description"
         mock_guard.to_dict.return_value = {"name": "test_guard"}
 
         mock_guard_item = Mock()
