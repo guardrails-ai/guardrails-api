@@ -1,6 +1,7 @@
 import json
 import os
 import inspect
+import uuid
 from typing import Optional
 from fastapi import HTTPException, Request, APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -35,7 +36,11 @@ def guard_history_is_enabled():
 async def get_guard_body(request: Request) -> GuardStruct | None:
     try:
         body = await request.body()
-        guard = GuardStruct.from_json(body.decode("utf-8"))
+        json_body = json.loads(body.decode("utf-8"))
+        if request.method.lower() == "post" and not json_body.get("id"):
+            json_body["id"] = str(uuid.uuid4())
+
+        guard = GuardStruct.from_json(json.dumps(json_body))
         return guard
     except ValidationError as ve:
         fields = {}
