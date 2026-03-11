@@ -76,7 +76,7 @@ async def guarded_chat_completion(
 
 async def guarded_chat_completion_stream(
     guard: Guard | AsyncGuard, payload: Any
-) -> AsyncGenerator[str]:
+) -> AsyncGenerator[str, None]:
     # Async Streaming for custom llm callables it broken in guardrails-ai<=0.9.1
     # We just force it to be synchronous for now
     _guard: Guard
