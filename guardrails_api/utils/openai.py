@@ -1,7 +1,7 @@
 import contextvars
 from functools import partial
 import json
-from typing import Any, Iterator
+from typing import Any, AsyncGenerator, Iterator
 
 from guardrails import AsyncGuard, Guard
 from guardrails.classes import ValidationOutcome
@@ -17,11 +17,12 @@ ctx_chat_completion_stream = contextvars.ContextVar(
     "x_guardrails_api_ctx_chat_completion_stream"
 )
 
+ctx = contextvars.copy_context()
+
 
 async def guarded_chat_completion(
     guard: Guard | AsyncGuard, payload: Any
 ) -> dict[str, Any]:
-    ctx = contextvars.copy_context()
 
     def llm_wrapper(ctx_var, *args, messages, **kwargs) -> str:
         # We know this is not a streaming respons, hence the type ignores
@@ -75,9 +76,7 @@ async def guarded_chat_completion(
 
 async def guarded_chat_completion_stream(
     guard: Guard | AsyncGuard, payload: Any
-) -> Iterator[str]:
-    ctx = contextvars.copy_context()
-
+) -> AsyncGenerator[str, None]:
     # Async Streaming for custom llm callables it broken in guardrails-ai<=0.9.1
     # We just force it to be synchronous for now
     _guard: Guard
@@ -86,13 +85,13 @@ async def guarded_chat_completion_stream(
     else:
         _guard = guard
 
-    def llm_wrapper(ctx_var, *args, messages, **kwargs) -> Iterator[str]:
+    def llm_wrapper(*args, messages, **kwargs) -> Iterator[str]:
         # We know this _is_ a streaming response, hence the type ignores
         chat_completion_stream: CustomStreamWrapper = litellm.completion(
             *args, messages=messages, **kwargs
         )  # type: ignore
         for chunk in chat_completion_stream:
-            ctx_var.set(chunk)
+            ctx_chat_completion_stream.set(chunk)
             choice: StreamingChoices = chunk.choices[0]
 
             output = ""
@@ -107,10 +106,9 @@ async def guarded_chat_completion_stream(
                 output = delta.tool_calls[-1].function.arguments
             yield output
 
-    def run_guard():
-        llm_api = partial(llm_wrapper, ctx_chat_completion_stream)
+    async def run_guard():
         guard_stream: Iterator[ValidationOutcome] = _guard(
-            num_reasks=0, llm_api=llm_api, **payload
+            num_reasks=0, llm_api=llm_wrapper, **payload
         )  # type: ignore
         validator_logs = []
         for result in guard_stream:

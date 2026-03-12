@@ -253,18 +253,20 @@ class TestGuardedChatCompletionStream(unittest.TestCase):
 
         mock_guard = self._make_fake_stream_guard(mock_outcome)
 
+        async def collect():
+            gen = await guarded_chat_completion_stream(
+                mock_guard,
+                {"messages": [{"role": "user", "content": "Hello"}]},
+            )
+            return [chunk async for chunk in gen]
+
         with patch(
             "guardrails_api.utils.openai.litellm.completion",
             side_effect=lambda *args, **kwargs: iter([mock_chunk]),
         ):
-            result = asyncio.run(
-                guarded_chat_completion_stream(
-                    mock_guard,
-                    {"messages": [{"role": "user", "content": "Hello"}]},
-                )
-            )
             # Must consume generator inside patch context since it's lazy
-            chunks = list(result)
+            chunks = asyncio.run(collect())
+        result = chunks
 
         self.assertIsNotNone(result)
         self.assertGreater(len(chunks), 0)
@@ -288,18 +290,19 @@ class TestGuardedChatCompletionStream(unittest.TestCase):
 
         mock_guard = self._make_fake_stream_guard(mock_outcome)
 
+        async def collect():
+            gen = await guarded_chat_completion_stream(
+                mock_guard,
+                {"messages": [{"role": "user", "content": "Test"}]},
+            )
+            return [chunk async for chunk in gen]
+
         with patch(
             "guardrails_api.utils.openai.litellm.completion",
             side_effect=lambda *args, **kwargs: iter([mock_chunk]),
         ):
-            result = asyncio.run(
-                guarded_chat_completion_stream(
-                    mock_guard,
-                    {"messages": [{"role": "user", "content": "Test"}]},
-                )
-            )
             # Must consume generator inside patch context since it's lazy
-            chunks = list(result)
+            chunks = asyncio.run(collect())
 
         data_chunks = [c for c in chunks if c.startswith("data: ")]
         self.assertGreater(len(data_chunks), 0)
@@ -316,18 +319,19 @@ class TestGuardedChatCompletionStream(unittest.TestCase):
 
         mock_guard = self._make_fake_stream_guard(mock_outcome)
 
+        async def collect():
+            gen = await guarded_chat_completion_stream(
+                mock_guard,
+                {"messages": [{"role": "user", "content": "End"}]},
+            )
+            return [chunk async for chunk in gen]
+
         with patch(
             "guardrails_api.utils.openai.litellm.completion",
             side_effect=lambda *args, **kwargs: iter([mock_chunk]),
         ):
-            result = asyncio.run(
-                guarded_chat_completion_stream(
-                    mock_guard,
-                    {"messages": [{"role": "user", "content": "End"}]},
-                )
-            )
             # Must consume generator inside patch context since it's lazy
-            chunks = list(result)
+            chunks = asyncio.run(collect())
 
         self.assertEqual(chunks[-1], "\n")
 
