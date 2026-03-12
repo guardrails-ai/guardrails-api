@@ -9,11 +9,13 @@ class GuardClient:
         self.initialized = True
 
     def get_guard(
-        self, guard_name: str, as_of_date: Optional[str] = None
+        self, id: str, as_of_date: Optional[str] = None
     ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def get_guards(self) -> List[Union[GuardStruct, Guard]]:
+    def get_guards(
+        self, guard_name: Optional[str] = None
+    ) -> List[Union[GuardStruct, Guard]]:
         raise NotImplementedError
 
     def create_guard(
@@ -22,14 +24,14 @@ class GuardClient:
         raise NotImplementedError
 
     def update_guard(
-        self, guard_name: str, guard: Union[GuardStruct, Guard]
+        self, id: str, guard: Union[GuardStruct, Guard]
     ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
     def upsert_guard(
-        self, guard_name: str, guard: Union[GuardStruct, Guard]
+        self, id: str, guard: Union[GuardStruct, Guard]
     ) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
 
-    def delete_guard(self, guard_name: str) -> Union[GuardStruct, Guard]:
+    def delete_guard(self, id: str) -> Union[GuardStruct, Guard]:
         raise NotImplementedError
