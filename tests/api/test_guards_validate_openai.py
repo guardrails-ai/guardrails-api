@@ -20,7 +20,7 @@ class TestValidateEndpoint(unittest.TestCase):
         self.app.include_router(router)
         self.client = TestClient(self.app)
         self.guard_name = "My Guard's Name"
-        self.encoded_guard_name = "My%20Guard's%20Name"
+        self._id = "my-guard-s-name"
 
     @patch.dict(
         os.environ,
@@ -37,6 +37,7 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Create mock guard
         mock_guard = Mock(spec=Guard)
+        mock_guard.id = self._id
         mock_guard.name = self.guard_name
         mock_guard.history = Mock()
         mock_guard.history.last = Mock()
@@ -65,12 +66,12 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Make request
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/validate",
+            f"/guards/{self._id}/validate",
             json={"llmOutput": "Hello world!", "args": [1, 2, 3], "some_kwarg": "foo"},
         )
 
         # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
+        mock_guard_client.get_guard.assert_called_once_with(self._id)
         # Check that parse was called
         self.assertEqual(mock_guard.parse.call_count, 1)
         call_kwargs = mock_guard.parse.call_args[1]
@@ -127,7 +128,7 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Make request
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/validate",
+            f"/guards/{self._id}/validate",
             json={
                 "promptParams": {"p1": "bar"},
                 "args": [1, 2, 3],
@@ -138,7 +139,7 @@ class TestValidateEndpoint(unittest.TestCase):
         )
 
         # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
+        mock_guard_client.get_guard.assert_called_once_with(self._id)
         # Check call arguments
         self.assertEqual(mock_guard.call_count, 1)
         call_args = mock_guard.call_args
@@ -188,7 +189,7 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Make request
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/validate",
+            f"/guards/{self._id}/validate",
             json={
                 "promptParams": {"p1": "bar"},
                 "args": [1, 2, 3],
@@ -198,7 +199,7 @@ class TestValidateEndpoint(unittest.TestCase):
         )
 
         # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
+        mock_guard_client.get_guard.assert_called_once_with(self._id)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["detail"], "Test guard validation error")
 
@@ -234,12 +235,12 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Make request
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/validate",
+            f"/guards/{self._id}/validate",
             json={"llmOutput": "Hello world!"},
         )
 
         # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
+        mock_guard_client.get_guard.assert_called_once_with(self._id)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["detail"], "Test parse validation error")
 
@@ -285,7 +286,7 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Make request without x-openai-api-key header
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/validate",
+            f"/guards/{self._id}/validate",
             json={"llmOutput": "Hello!"},
         )
 
@@ -318,7 +319,7 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Make request with stream=True and llmOutput
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/validate",
+            f"/guards/{self._id}/validate",
             json={
                 "llmOutput": "Hello world!",
                 "stream": True,
@@ -356,7 +357,7 @@ class TestValidateEndpoint(unittest.TestCase):
         try:
             # Make request with llmApi but no API key (and no x-openai-api-key header)
             response = self.client.post(
-                f"/guards/{self.encoded_guard_name}/validate",
+                f"/guards/{self._id}/validate",
                 json={
                     "llmApi": "openai.Completion.create",
                     "prompt": "Hello",
@@ -398,7 +399,7 @@ class TestValidateEndpoint(unittest.TestCase):
 
         # Make request with numReasks > 1 but no llmApi
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/validate",
+            f"/guards/{self._id}/validate",
             json={
                 "numReasks": 2,
                 "prompt": "Hello",
@@ -420,8 +421,8 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         self.app = FastAPI()
         self.app.include_router(router)
         self.client = TestClient(self.app)
+        self._id = "my-guards-name"
         self.guard_name = "My Guard's Name"
-        self.encoded_guard_name = "My%20Guard's%20Name"
 
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
     @patch("guardrails_api.api.guards.get_guard_client")
@@ -436,7 +437,7 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
 
         # Make request
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/openai/v1/chat/completions",
+            f"/guards/{self._id}/openai/v1/chat/completions",
             json={
                 "messages": [{"role": "user", "content": "Hello world!"}],
             },
@@ -447,9 +448,9 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.json()["detail"],
-            f"A Guard with the name {self.guard_name} does not exist!",
+            f"A Guard with the id {self._id} does not exist!",
         )
-        mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
+        mock_guard_client.get_guard.assert_called_once_with(self._id)
 
     @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
     @patch("guardrails_api.api.guards.get_guard_client")
@@ -495,7 +496,7 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
 
         # Make request
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/openai/v1/chat/completions",
+            f"/guards/{self._id}/openai/v1/chat/completions",
             json={
                 "messages": [{"role": "user", "content": "Hello world!"}],
             },
@@ -503,7 +504,7 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         )
 
         # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self.guard_name)
+        mock_guard_client.get_guard.assert_called_once_with(self._id)
         mock_guarded_chat_completion.assert_called_once_with(
             mock_guard,
             {"messages": [{"role": "user", "content": "Hello world!"}]},
@@ -580,7 +581,7 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
 
         # Make request with gd_response_tool
         response = self.client.post(
-            f"/guards/{self.encoded_guard_name}/openai/v1/chat/completions",
+            f"/guards/{self._id}/openai/v1/chat/completions",
             json={
                 "messages": [{"role": "user", "content": "Hello!"}],
                 "tools": tools,
