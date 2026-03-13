@@ -59,9 +59,11 @@ jobs:
                 echo "Waiting for server..."
                 sleep 5
                 done
-                if "$up" != "T";
-                  echo "Server never started!"
-                  exit 1
+
+                if [ "T" != "${up}" ];
+                    then
+                        echo "Server never started!"
+                        exit 1
                 fi
     
             - name: Run Pytest
