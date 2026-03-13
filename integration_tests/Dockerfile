@@ -30,7 +30,7 @@ COPY ../ /app/guardrails-api
 # openai optional. only used for integration testing
 RUN pip install "uvicorn[standard]" --no-cache-dir
 
-RUN pip install "/app/guardrails-api"
+RUN pip install -U "/app/guardrails-api"
 
 RUN guardrails configure --enable-metrics --enable-remote-inferencing --token $GUARDRAILS_TOKEN
 

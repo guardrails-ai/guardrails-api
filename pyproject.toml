@@ -1,6 +1,6 @@
 [project]
 name = "guardrails-api"
-version = "0.3.1"
+version = "0.3.2"
 description = "Guardrails API"
 authors = [
     {name = "Guardrails AI", email = "contact@guardrailsai.com"}
@@ -47,7 +47,7 @@ build-backend = "setuptools.build_meta"
 "guardrails_api" = ["py.typed", "open-api-spec.json"]
 
 [tool.setuptools.packages.find]
-where = ["guardrails_api"]
+include = ["guardrails_api*"]
 
 [tool.pyright]
 include = ["guardrails_api"]
