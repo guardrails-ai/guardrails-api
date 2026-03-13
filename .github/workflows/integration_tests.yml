@@ -62,6 +62,7 @@ jobs:
                 if "$up" != "T":
                   echo "Server never started!"
                   exit 1
+                fi
     
             - name: Run Pytest
               continue-on-error: false
