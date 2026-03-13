@@ -27,32 +27,34 @@ class TestMemoryGuardClient(unittest.TestCase):
         result = self.client.create_guard(mock_guard)
 
         self.assertEqual(result, mock_guard)
-        self.assertIn("test_guard", self.client.guards)
+        self.assertIn("test-guard", self.client.guards)
         self.assertEqual(self.client.guards["test_guard"], mock_guard)
 
     def test_get_guard_existing(self):
         """Test getting an existing guard."""
         mock_guard = Mock()
+        mock_guard.id = "test-guard"
         mock_guard.name = "test_guard"
-        self.client.guards["test_guard"] = mock_guard
+        self.client.guards["test-guard"] = mock_guard
 
-        result = self.client.get_guard("test_guard")
+        result = self.client.get_guard("test-guard")
 
         self.assertEqual(result, mock_guard)
 
     def test_get_guard_non_existing(self):
         """Test getting a non-existing guard returns None."""
-        result = self.client.get_guard("non_existing")
+        result = self.client.get_guard("non-existing")
 
         self.assertIsNone(result)
 
     def test_get_guard_with_as_of_date(self):
         """Test that as_of_date parameter is accepted but not used."""
         mock_guard = Mock()
+        mock_guard.id = "test-guard"
         mock_guard.name = "test_guard"
-        self.client.guards["test_guard"] = mock_guard
+        self.client.guards["test-guard"] = mock_guard
 
-        result = self.client.get_guard("test_guard", as_of_date="2024-01-01")
+        result = self.client.get_guard("test-guard", as_of_date="2024-01-01")
 
         self.assertEqual(result, mock_guard)
 
@@ -65,12 +67,14 @@ class TestMemoryGuardClient(unittest.TestCase):
     def test_get_guards_multiple(self):
         """Test getting multiple guards."""
         mock_guard1 = Mock()
+        mock_guard1.id = "guard-1"
         mock_guard1.name = "guard1"
         mock_guard2 = Mock()
+        mock_guard2.id = "guard-2"
         mock_guard2.name = "guard2"
 
-        self.client.guards["guard1"] = mock_guard1
-        self.client.guards["guard2"] = mock_guard2
+        self.client.guards["guard-1"] = mock_guard1
+        self.client.guards["guard-2"] = mock_guard2
 
         result = self.client.get_guards()
 
@@ -81,24 +85,27 @@ class TestMemoryGuardClient(unittest.TestCase):
     def test_update_guard_existing(self):
         """Test updating an existing guard."""
         old_guard = Mock()
+        old_guard.id = "test-guard"
         old_guard.name = "test_guard"
         new_guard = Mock()
+        new_guard.id = "test-guard"
         new_guard.name = "test_guard"
 
         self.client.guards["test_guard"] = old_guard
 
-        result = self.client.update_guard("test_guard", new_guard)
+        result = self.client.update_guard("test-guard", new_guard)
 
         self.assertEqual(result, new_guard)
-        self.assertEqual(self.client.guards["test_guard"], new_guard)
+        self.assertEqual(self.client.guards["test-guard"], new_guard)
 
     def test_update_guard_non_existing_raises_error(self):
         """Test updating a non-existing guard raises HttpError."""
         new_guard = Mock()
+        new_guard.id = "test-guard"
         new_guard.name = "test_guard"
 
         with self.assertRaises(HttpError) as context:
-            self.client.update_guard("test_guard", new_guard)
+            self.client.update_guard("test-guard", new_guard)
 
         error = context.exception
         self.assertEqual(error.status, 404)
@@ -107,12 +114,13 @@ class TestMemoryGuardClient(unittest.TestCase):
     def test_upsert_guard(self):
         """Test upserting a guard."""
         mock_guard = Mock()
+        mock_guard.id = "test-guard"
         mock_guard.name = "test_guard"
 
-        result = self.client.upsert_guard("test_guard", mock_guard)
+        result = self.client.upsert_guard("test-guard", mock_guard)
 
         self.assertEqual(result, mock_guard)
-        self.assertIn("test_guard", self.client.guards)
+        self.assertIn("test-guard", self.client.guards)
 
     def test_upsert_guard_overwrites_existing(self):
         """Test that upsert overwrites existing guard."""
