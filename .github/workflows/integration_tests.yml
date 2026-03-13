@@ -57,6 +57,10 @@ jobs:
                     break
                 fi
                 echo "Waiting for server..."
+                if [ i == 30 ]; then
+                  echo "docker container logs: "
+                  docker logs guardrails-server
+                fi
                 sleep 5
                 done
 
