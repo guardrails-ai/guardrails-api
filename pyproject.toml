@@ -46,5 +46,8 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.package-data]
 "guardrails_api" = ["py.typed", "open-api-spec.json"]
 
+[tool.setuptools.packages.find]
+where = ["guardrails_api"]
+
 [tool.pyright]
 include = ["guardrails_api"]

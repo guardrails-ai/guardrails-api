@@ -35,3 +35,4 @@ client-consumer-test.py
 openai-api-spec.yml
 .vscode
 .DS_Store
+!integration_tests/config.py
