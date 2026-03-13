@@ -58,7 +58,7 @@ jobs:
                 fi
                 echo "Waiting for server..."
                 echo "i=$i"
-                if [ i == 30 ]; then
+                if [ $i == 30 ]; then
                   echo "docker container logs: "
                   docker_logs=$(docker logs guardrails-server)
                   echo "$docker_logs"

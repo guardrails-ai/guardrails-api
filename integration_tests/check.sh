@@ -8,6 +8,12 @@ if docker exec guardrails-server curl -s http://localhost:8000/; then
     break
 fi
 echo "Waiting for server..."
+echo "i=$i"
+if [ $i == 30 ]; then
+    echo "docker container logs: "
+    docker_logs=$(docker logs guardrails-server)
+    echo "$docker_logs"
+fi
 sleep 5
 done
 
