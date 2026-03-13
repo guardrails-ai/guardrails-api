@@ -57,9 +57,11 @@ jobs:
                     break
                 fi
                 echo "Waiting for server..."
+                echo "i=$i"
                 if [ i == 30 ]; then
                   echo "docker container logs: "
-                  docker logs guardrails-server
+                  docker_logs=$(docker logs guardrails-server)
+                  echo "$docker_logs"
                 fi
                 sleep 5
                 done
@@ -75,5 +77,8 @@ jobs:
               run: |
                 pip install pytest pytest-asyncio openai ".[api]"
                 pytest integration_tests/tests
+            - name: Cleanup
+              if: always()
+              run: |
                 docker stop guardrails-server
                 docker rm guardrails-server
