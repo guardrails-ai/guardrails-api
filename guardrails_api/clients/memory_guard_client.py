@@ -23,7 +23,10 @@ class MemoryGuardClient(GuardClient):
         return guard
 
     def get_guards(self, guard_name: Optional[str] = None) -> Sequence[Guard]:
-        return [g for g in list(self.guards.values()) if g.name == guard_name]
+        if guard_name:
+            return [g for g in list(self.guards.values()) if g.name == guard_name]
+        else:
+            return [g for g in list(self.guards.values())]
 
     def create_guard(self, guard: Guard) -> Guard:
         self.guards[guard.id] = guard

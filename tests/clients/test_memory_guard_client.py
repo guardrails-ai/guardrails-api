@@ -22,13 +22,14 @@ class TestMemoryGuardClient(unittest.TestCase):
     def test_create_guard(self):
         """Test creating a guard."""
         mock_guard = Mock()
+        mock_guard.id = "test-guard"
         mock_guard.name = "test_guard"
 
         result = self.client.create_guard(mock_guard)
 
         self.assertEqual(result, mock_guard)
         self.assertIn("test-guard", self.client.guards)
-        self.assertEqual(self.client.guards["test_guard"], mock_guard)
+        self.assertEqual(self.client.guards["test-guard"], mock_guard)
 
     def test_get_guard_existing(self):
         """Test getting an existing guard."""
@@ -43,9 +44,13 @@ class TestMemoryGuardClient(unittest.TestCase):
 
     def test_get_guard_non_existing(self):
         """Test getting a non-existing guard returns None."""
-        result = self.client.get_guard("non-existing")
 
-        self.assertIsNone(result)
+        with self.assertRaises(HttpError) as context:
+            self.client.get_guard("non-existing")
+
+        error = context.exception
+        self.assertEqual(error.status, 404)
+        self.assertEqual(error.message, "NotFound")
 
     def test_get_guard_with_as_of_date(self):
         """Test that as_of_date parameter is accepted but not used."""
@@ -91,7 +96,7 @@ class TestMemoryGuardClient(unittest.TestCase):
         new_guard.id = "test-guard"
         new_guard.name = "test_guard"
 
-        self.client.guards["test_guard"] = old_guard
+        self.client.guards["test-guard"] = old_guard
 
         result = self.client.update_guard("test-guard", new_guard)
 
@@ -162,11 +167,12 @@ class TestMemoryGuardClient(unittest.TestCase):
         client2 = MemoryGuardClient()
 
         mock_guard = Mock()
+        mock_guard.id = "shared-guard"
         mock_guard.name = "shared_guard"
         client1.create_guard(mock_guard)
 
         # Both clients should see the same guard
-        self.assertEqual(client2.get_guard("shared_guard"), mock_guard)
+        self.assertEqual(client2.get_guard("shared-guard"), mock_guard)
 
 
 if __name__ == "__main__":

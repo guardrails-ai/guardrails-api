@@ -58,9 +58,7 @@ class TestPGGuardClient(unittest.TestCase):
         """Test util_get_guard_item retrieves guard from database."""
         mock_db = Mock()
         mock_guard_item = Mock()
-        mock_db.query.return_value.filter_by.return_value.first.return_value = (
-            mock_guard_item
-        )
+        mock_db.query.return_value.get.return_value = mock_guard_item
 
         client = PGGuardClient()
         result = client.util_get_guard_item("test_guard", mock_db)
