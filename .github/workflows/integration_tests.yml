@@ -30,6 +30,7 @@ jobs:
 
             - name: Build Docker image
               uses: docker/build-push-action@v6
+              continue-on-error: false
               with:
                 context: .
                 file: integration_tests/Dockerfile
@@ -41,21 +42,29 @@ jobs:
                   GUARDRAILS_TOKEN=${{ secrets.GUARDRAILS_API_KEY }}
 
             - name: Start Docker container
+              continue-on-error: false
               run: |
                   docker run -d --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests
         
             - name: Wait for Docker container to be ready
+              continue-on-error: false
               run: |
+                up="F"
                 for i in {1..30}; do
                 if docker exec guardrails-server curl -s http://localhost:8000/; then
                     echo "Server is up!"
+                    up="T"
                     break
                 fi
                 echo "Waiting for server..."
                 sleep 5
                 done
+                if "$up" != "T":
+                  echo "Server never started!"
+                  exit 1
     
             - name: Run Pytest
+              continue-on-error: false
               run: |
                 pip install pytest pytest-asyncio openai ".[api]"
                 pytest integration_tests/tests
