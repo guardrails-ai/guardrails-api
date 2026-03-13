@@ -3,7 +3,7 @@
 import asyncio
 import json
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from guardrails_api.utils.openai import (
     guarded_chat_completion,
@@ -30,12 +30,12 @@ class TestGuardedChatCompletion(unittest.TestCase):
 
     def _make_fake_guard(self, mock_outcome):
         """Create a mock guard that calls llm_api and returns mock_outcome."""
-        mock_guard = Mock()
+        mock_guard = AsyncMock()
 
-        def fake_guard_call(*args, **kwargs):
+        async def fake_guard_call(*args, **kwargs):
             llm_api = kwargs.get("llm_api")
             if llm_api:
-                llm_api(messages=kwargs.get("messages", []))
+                await llm_api(messages=kwargs.get("messages", []))
             return mock_outcome
 
         mock_guard.side_effect = fake_guard_call
@@ -96,12 +96,12 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_outcome.model_dump.return_value = {"validation_passed": True}
         captured_output = []
 
-        mock_guard = Mock()
+        mock_guard = AsyncMock()
 
-        def fake_guard_call(*args, **kwargs):
+        async def fake_guard_call(*args, **kwargs):
             llm_api = kwargs.get("llm_api")
             if llm_api:
-                output = llm_api(messages=kwargs.get("messages", []))
+                output = await llm_api(messages=kwargs.get("messages", []))
                 captured_output.append(output)
             return mock_outcome
 
@@ -141,12 +141,12 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_outcome.model_dump.return_value = {"validation_passed": True}
         captured_output = []
 
-        mock_guard = Mock()
+        mock_guard = AsyncMock()
 
-        def fake_guard_call(*args, **kwargs):
+        async def fake_guard_call(*args, **kwargs):
             llm_api = kwargs.get("llm_api")
             if llm_api:
-                output = llm_api(messages=[])
+                output = await llm_api(messages=[])
                 captured_output.append(output)
             return mock_outcome
 
@@ -186,12 +186,12 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_outcome.model_dump.return_value = {"validation_passed": True}
         captured_output = []
 
-        mock_guard = Mock()
+        mock_guard = AsyncMock()
 
-        def fake_guard_call(*args, **kwargs):
+        async def fake_guard_call(*args, **kwargs):
             llm_api = kwargs.get("llm_api")
             if llm_api:
-                output = llm_api(messages=[])
+                output = await llm_api(messages=[])
                 captured_output.append(output)
             return mock_outcome
 
