@@ -1,3 +1,5 @@
+import sys
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -40,6 +42,8 @@ def register_config(config: Optional[str] = None):
         if spec and spec.loader:
             config_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(config_module)
+            importlib.invalidate_caches()
+            sys.modules["config"] = config_module
 
     return config_file_path
 

@@ -1,5 +1,4 @@
 import contextvars
-from functools import partial
 import json
 from typing import Any, AsyncGenerator, Iterator
 
@@ -24,12 +23,12 @@ async def guarded_chat_completion(
     guard: Guard | AsyncGuard, payload: Any
 ) -> dict[str, Any]:
 
-    def llm_wrapper(ctx_var, *args, messages, **kwargs) -> str:
+    def llm_wrapper(*args, messages, **kwargs) -> str:
         # We know this is not a streaming respons, hence the type ignores
         chat_completion: ModelResponse = litellm.completion(
             *args, messages=messages, **kwargs
         )  # type: ignore
-        ctx_var.set(chat_completion)
+        ctx_chat_completion.set(chat_completion)
         choice: Choices = chat_completion.choices[0]  # type: ignore
 
         output = ""
@@ -44,20 +43,20 @@ async def guarded_chat_completion(
             output = message.tool_calls[-1].function.arguments
         return output
 
-    async def async_llm_wrapper(ctx_var, *args, messages, **kwargs) -> str:
-        return llm_wrapper(ctx_var, *args, messages=messages, **kwargs)
+    async def async_llm_wrapper(*args, messages, **kwargs) -> str:
+        return llm_wrapper(*args, messages=messages, **kwargs)
 
     async def run_guard():
-        if isinstance(guard, AsyncGuard):
-            llm_api = partial(async_llm_wrapper, ctx_chat_completion)
-            validation_outcome: ValidationOutcome = await guard(
-                num_reasks=0, llm_api=llm_api, **payload
-            )  # type: ignore
+        # Force Guard to be Async to preserve context
+        _guard: AsyncGuard
+        if isinstance(guard, Guard) and not isinstance(guard, AsyncGuard):
+            _guard = AsyncGuard.from_dict(guard.to_dict())  # type: ignore
         else:
-            llm_api = partial(llm_wrapper, ctx_chat_completion)
-            validation_outcome: ValidationOutcome = guard(
-                num_reasks=0, llm_api=llm_api, **payload
-            )  # type: ignore
+            _guard = guard
+
+        validation_outcome: ValidationOutcome = await _guard(
+            num_reasks=0, llm_api=async_llm_wrapper, **payload
+        )  # type: ignore
 
         chat_completion = ctx_chat_completion.get()
         if not chat_completion:
