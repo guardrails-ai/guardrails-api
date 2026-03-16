@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 from guardrails_api_client import Guard as GuardStruct
+from sqlalchemy.orm import Session
 from guardrails_api.classes.http_error import HttpError
 from guardrails_api.clients.guard_client import GuardClient
 from guardrails_api.db.models.guard_item import GuardItem
@@ -37,8 +38,8 @@ class PGGuardClient(GuardClient):
 
     # These are only internal utilities and do not start db sessions
 
-    def util_get_guard_item(self, guard_name: str, db) -> GuardItem:
-        item = db.query(GuardItem).filter_by(name=guard_name).first()
+    def util_get_guard_item(self, id: str, db: Session) -> GuardItem:
+        item = db.query(GuardItem).get(id)
         return item
 
     def util_create_guard(self, guard: GuardStruct, db) -> GuardStruct:
@@ -58,16 +59,14 @@ class PGGuardClient(GuardClient):
 
     # Below are used directly by Controllers and start db sessions
 
-    def get_guard(
-        self, guard_name: str, as_of_date: Optional[str] = None
-    ) -> GuardStruct:
+    def get_guard(self, id: str, as_of_date: Optional[str] = None) -> GuardStruct:
         with self.get_db_context() as db:
-            latest_guard_item = db.query(GuardItem).filter_by(name=guard_name).first()
+            latest_guard_item = db.query(GuardItem).get(id)
             audit_item = None
             if as_of_date is not None:
                 audit_item = (
                     db.query(GuardItemAudit)
-                    .filter_by(name=guard_name)
+                    .filter_by(guard_id=id)
                     .filter(GuardItemAudit.replaced_on > as_of_date)
                     .order_by(GuardItemAudit.replaced_on.asc())
                     .first()
@@ -79,31 +78,31 @@ class PGGuardClient(GuardClient):
                 raise HttpError(
                     status=404,
                     message="NotFound",
-                    cause="A Guard with the name {guard_name} does not exist!".format(
-                        guard_name=guard_name
-                    ),
+                    cause="A Guard with the id {id} does not exist!".format(id=id),
                 )
             return from_guard_item(guard_item)
 
-    def get_guards(self) -> List[GuardStruct]:
+    def get_guards(self, guard_name: Optional[str] = None) -> List[GuardStruct]:
         with self.get_db_context() as db:
-            guard_items = db.query(GuardItem).all()
+            guard_items: list[GuardItem] = []
+            if guard_name:
+                guard_items = db.query(GuardItem).filter_by(name=guard_name).all()
+            else:
+                guard_items = db.query(GuardItem).all()
             return [from_guard_item(gi) for gi in guard_items]
 
     def create_guard(self, guard: GuardStruct) -> GuardStruct:
         with self.get_db_context() as db:
             return self.util_create_guard(guard, db)
 
-    def update_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
+    def update_guard(self, id: str, guard: GuardStruct) -> GuardStruct:
         with self.get_db_context() as db:
-            guard_item = self.util_get_guard_item(guard_name, db)
+            guard_item = self.util_get_guard_item(id, db)
             if guard_item is None:
                 raise HttpError(
                     status=404,
                     message="NotFound",
-                    cause="A Guard with the name {guard_name} does not exist!".format(
-                        guard_name=guard_name
-                    ),
+                    cause="A Guard with the id {id} does not exist!".format(id=id),
                 )
             guard_item.guard = guard.to_dict()
             guard_item.updated_at = db.execute(
@@ -112,9 +111,9 @@ class PGGuardClient(GuardClient):
             db.commit()
             return from_guard_item(guard_item)
 
-    def upsert_guard(self, guard_name: str, guard: GuardStruct) -> GuardStruct:
+    def upsert_guard(self, id: str, guard: GuardStruct) -> GuardStruct:
         with self.get_db_context() as db:
-            guard_item = self.util_get_guard_item(guard_name, db)
+            guard_item = self.util_get_guard_item(id, db)
             if guard_item is not None:
                 guard_item.guard = guard.to_dict()
                 guard_item.updated_at = db.execute(
@@ -125,16 +124,14 @@ class PGGuardClient(GuardClient):
             else:
                 return self.util_create_guard(guard, db)
 
-    def delete_guard(self, guard_name: str) -> GuardStruct:
+    def delete_guard(self, id: str) -> GuardStruct:
         with self.get_db_context() as db:
-            guard_item = self.util_get_guard_item(guard_name, db)
+            guard_item = self.util_get_guard_item(id, db)
             if guard_item is None:
                 raise HttpError(
                     status=404,
                     message="NotFound",
-                    cause="A Guard with the name {guard_name} does not exist!".format(
-                        guard_name=guard_name
-                    ),
+                    cause="A Guard with the id {id} does not exist!".format(id=id),
                 )
             db.delete(guard_item)
             db.commit()
