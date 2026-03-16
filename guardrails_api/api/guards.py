@@ -56,9 +56,10 @@ async def get_guard_body(request: Request) -> GuardStruct | None:
 
 @router.get("/guards")
 @handle_error
-async def get_guards():
+async def get_guards(name: Optional[str] = None):
     guard_client = get_guard_client()
-    guards = guard_client.get_guards()
+    guard_name = unquote_plus(name) if name else None
+    guards = guard_client.get_guards(guard_name=guard_name)
     return [g.to_dict() for g in guards]
 
 
@@ -79,63 +80,63 @@ async def create_guard(request: Request):
     return new_guard.to_dict()
 
 
-@router.get("/guards/{guard_name}")
+@router.get("/guards/{id}")
 @handle_error
-async def get_guard(guard_name: str, asOf: Optional[str] = None):
+async def get_guard(id: str, asOf: Optional[str] = None):
     guard_client = get_guard_client()
-    decoded_guard_name = unquote_plus(guard_name)
-    guard = guard_client.get_guard(decoded_guard_name, asOf)
+    decoded_guard_id = unquote_plus(id)
+    guard = guard_client.get_guard(decoded_guard_id, asOf)
     if guard is None:
         raise HTTPException(
             status_code=404,
-            detail=f"A Guard with the name {decoded_guard_name} does not exist!",
+            detail=f"A Guard with the id {decoded_guard_id} does not exist!",
         )
     return guard.to_dict()
 
 
-@router.put("/guards/{guard_name}")
+@router.put("/guards/{id}")
 @handle_error
-async def update_guard(guard_name: str, request: Request):
+async def update_guard(id: str, request: Request):
     guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
-            detail="PUT /<guard_name> is not implemented for in-memory guards.",
+            detail="PUT /guards/{id} is not implemented for in-memory guards.",
         )
     guard = await get_guard_body(request)
     if not guard:
         raise HTTPException(status_code=422)
 
-    decoded_guard_name = unquote_plus(guard_name)
-    updated_guard = guard_client.upsert_guard(decoded_guard_name, guard)  # type: ignore
+    decoded_guard_id = unquote_plus(id)
+    updated_guard = guard_client.upsert_guard(decoded_guard_id, guard)  # type: ignore
     return updated_guard.to_dict()
 
 
-@router.delete("/guards/{guard_name}")
+@router.delete("/guards/{id}")
 @handle_error
-async def delete_guard(guard_name: str):
+async def delete_guard(id: str):
     guard_client = get_guard_client()
     if not postgres_is_enabled():
         raise HTTPException(
             status_code=501,
-            detail="DELETE /<guard_name> is not implemented for in-memory guards.",
+            detail="DELETE /guards/{id} is not implemented for in-memory guards.",
         )
-    decoded_guard_name = unquote_plus(guard_name)
-    guard = guard_client.delete_guard(decoded_guard_name)
+    decoded_guard_id = unquote_plus(id)
+    guard = guard_client.delete_guard(decoded_guard_id)
     return guard.to_dict()
 
 
-@router.post("/guards/{guard_name}/openai/v1/chat/completions")
+@router.post("/guards/{id}/openai/v1/chat/completions")
 @handle_error
-async def openai_v1_chat_completions(guard_name: str, request: Request):
+async def openai_v1_chat_completions(id: str, request: Request):
     guard_client = get_guard_client()
     payload = await request.json()
-    decoded_guard_name = unquote_plus(guard_name)
-    guard_struct = guard_client.get_guard(decoded_guard_name)
+    decoded_guard_id = unquote_plus(id)
+    guard_struct = guard_client.get_guard(decoded_guard_id)
     if guard_struct is None:
         raise HTTPException(
             status_code=404,
-            detail=f"A Guard with the name {decoded_guard_name} does not exist!",
+            detail=f"A Guard with the id {decoded_guard_id} does not exist!",
         )
 
     guard = (
@@ -145,7 +146,7 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
     )
     if not guard:
         raise HttpError(
-            status=404, message=f"Guard with name {decoded_guard_name} not found!"
+            status=404, message=f"Guard with id {decoded_guard_id} not found!"
         )
     stream = payload.get("stream", False)
 
@@ -159,16 +160,16 @@ async def openai_v1_chat_completions(guard_name: str, request: Request):
         )
 
 
-@router.post("/guards/{guard_name}/validate")
+@router.post("/guards/{id}/validate")
 @handle_error
-async def validate(guard_name: str, request: Request):
+async def validate(id: str, request: Request):
     guard_client = get_guard_client()
     payload = await request.json()
     openai_api_key = request.headers.get(
         "x-openai-api-key", os.environ.get("OPENAI_API_KEY")
     )
-    decoded_guard_name = unquote_plus(guard_name)
-    guard_struct = guard_client.get_guard(decoded_guard_name)
+    decoded_guard_id = unquote_plus(id)
+    guard_struct = guard_client.get_guard(decoded_guard_id)
 
     llm_output = payload.pop("llmOutput", None)
     num_reasks = payload.pop("numReasks", None)
@@ -299,7 +300,7 @@ async def validate(guard_name: str, request: Request):
                 result: ValidationOutcome = execution
     if guard_history_is_enabled():
         serialized_history = [call.to_dict() for call in guard.history]
-        cache_key = f"{guard.name}-{result.call_id}"
+        cache_key = f"{guard.id}-{result.call_id}"
         await cache_client.set(cache_key, serialized_history, 300)
     result = attach_validation_summaries(result, guard)
     result_dict = result.to_dict()
@@ -309,8 +310,8 @@ async def validate(guard_name: str, request: Request):
     return result_dict
 
 
-@router.get("/guards/{guard_name}/history/{call_id}")
+@router.get("/guards/{id}/history/{call_id}")
 @handle_error
-async def guard_history(guard_name: str, call_id: str):
-    cache_key = f"{guard_name}-{call_id}"
+async def guard_history(id: str, call_id: str):
+    cache_key = f"{id}-{call_id}"
     return await cache_client.get(cache_key)
