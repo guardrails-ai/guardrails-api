@@ -56,9 +56,10 @@ async def get_guard_body(request: Request) -> GuardStruct | None:
 
 @router.get("/guards")
 @handle_error
-async def get_guards():
+async def get_guards(name: Optional[str] = None):
     guard_client = get_guard_client()
-    guards = guard_client.get_guards()
+    guard_name = unquote_plus(name) if name else None
+    guards = guard_client.get_guards(guard_name=guard_name)
     return [g.to_dict() for g in guards]
 
 
