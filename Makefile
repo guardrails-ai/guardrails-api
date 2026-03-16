@@ -75,6 +75,9 @@ qa:
 test:
 	python -m unittest discover -s tests --buffer --failfast
 
+test-single:
+	python -m unittest tests.cli.__init__.TestVersionCallback
+
 test-cov:
 	coverage run -m unittest discover --start-directory tests --buffer --failfast
 	coverage report -m
@@ -83,7 +86,7 @@ test-cov-ci:
 	coverage run -m unittest discover --start-directory tests --buffer --failfast
 
 view-test-cov:
-	coverage run -m unittest discover --start-directory tests --buffer --failfast
+	coverage run --source=guardrails_api -m unittest discover --start-directory tests --buffer --failfast
 	coverage html
 	open htmlcov/index.html
 

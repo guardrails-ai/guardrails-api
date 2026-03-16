@@ -84,7 +84,7 @@ class PGGuardClient(GuardClient):
 
     def get_guards(self, guard_name: Optional[str] = None) -> List[GuardStruct]:
         with self.get_db_context() as db:
-            guard_items = []
+            guard_items: list[GuardItem] = []
             if guard_name:
                 guard_items = db.query(GuardItem).filter_by(name=guard_name).all()
             else:

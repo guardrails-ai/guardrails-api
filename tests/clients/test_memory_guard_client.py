@@ -87,6 +87,23 @@ class TestMemoryGuardClient(unittest.TestCase):
         self.assertIn(mock_guard1, result)
         self.assertIn(mock_guard2, result)
 
+    def test_get_guards_by_name(self):
+        """Test querying guards by name."""
+        mock_guard1 = Mock()
+        mock_guard1.id = "guard-1"
+        mock_guard1.name = "guard1"
+        mock_guard2 = Mock()
+        mock_guard2.id = "guard-2"
+        mock_guard2.name = "guard2"
+
+        self.client.guards["guard-1"] = mock_guard1
+        self.client.guards["guard-2"] = mock_guard2
+
+        result = self.client.get_guards(guard_name="guard1")
+
+        self.assertEqual(len(result), 1)
+        self.assertIn(mock_guard1, result)
+
     def test_update_guard_existing(self):
         """Test updating an existing guard."""
         old_guard = Mock()
@@ -108,6 +125,8 @@ class TestMemoryGuardClient(unittest.TestCase):
         new_guard = Mock()
         new_guard.id = "test-guard"
         new_guard.name = "test_guard"
+
+        self.client.guards = {}
 
         with self.assertRaises(HttpError) as context:
             self.client.update_guard("test-guard", new_guard)
