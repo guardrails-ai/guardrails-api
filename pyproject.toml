@@ -11,8 +11,7 @@ keywords = ["Guardrails", "Guardrails AI", "Guardrails API", "Guardrails API"]
 requires-python = ">=3.10,<4.0"
 dependencies = [
     "guardrails-ai>=0.8.2",
-    "jsonschema>=4.22.0,<5",
-    "referencing>=0.35.1,<1",
+    "guardrails-ai-types>=0.4.0a5",
     "psycopg2-binary>=2.9.9,<3",
     "litellm>=1.39.3,<2",
     "typer>=0.9.4,<1",
@@ -22,7 +21,9 @@ dependencies = [
     "SQLAlchemy>=2.0.34",
     "alembic>=1.18.4",
     "uvicorn>=0.30.6",
-    "python-dotenv>=1.2.1"
+    "python-dotenv>=1.2.1",
+    "openai>=1",
+    "typing-extensions>=4.8.0,<5.0.0; python_version < '3.11'",
 ]
 
 [project.scripts]
@@ -36,7 +37,8 @@ dev = [
     "pre-commit",
     "opentelemetry-distro",
     "jsonref",
-    "PyYaml"
+    "PyYaml",
+    "pyright[nodejs]>=1.1.396"
 ]
 
 [build-system]

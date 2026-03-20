@@ -105,7 +105,7 @@ def create_app(
 
     resolved_config_file_path = register_config(config)
 
-    app = FastAPI(openapi_url="")
+    app = FastAPI()
 
     # Add CORS middleware
     app.add_middleware(
@@ -157,7 +157,7 @@ def create_app(
     guards = guard_client.get_guards()
 
     for g in guards:
-        g_dict = g.to_dict()
+        g_dict = g.model_dump(exclude_none=True, by_alias=True)
         console.print(
             f"- Guard: [bold white]{g_dict.get('name')}[/bold white] {self_endpoint}/guards/{g_dict.get('name')}/openai/v1"
         )

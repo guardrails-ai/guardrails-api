@@ -14,15 +14,6 @@ lock:
 install-lock:
 	pip install -r requirements-lock.txt
 
-build:
-	make install-dev
-	
-	cp "$$(python -c "import guardrails_api_client as _; print(_.__path__[0])")/openapi-spec.json" ./guardrails_api/open-api-spec.json
-
-	curl https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml -o ./openai-api-spec.yml
-
-	python ./scripts/pluck_openai_api_spec.py
-
 bootstrap:
 	opentelemetry-bootstrap -a install
 	
@@ -67,9 +58,12 @@ lint:
 	ruff check guardrails_api/ tests/
 	ruff format guardrails_api/ tests/
 
+type:
+	pyright
+
 qa:
-	make build
 	make lint
+	make type
 	make test-cov
 
 test:
