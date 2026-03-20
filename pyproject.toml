@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = ["Guardrails", "Guardrails AI", "Guardrails API", "Guardrails API"]
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "guardrails-ai>=0.8.2",
+    "guardrails-ai>=0.10.0a0",
     "guardrails-ai-types>=0.4.0a5",
     "psycopg2-binary>=2.9.9,<3",
     "litellm>=1.39.3,<2",
