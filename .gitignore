@@ -36,3 +36,4 @@ openai-api-spec.yml
 .vscode
 .DS_Store
 !integration_tests/config.py
+.guardrails

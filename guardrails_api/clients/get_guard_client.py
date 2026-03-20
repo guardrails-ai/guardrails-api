@@ -1,5 +1,5 @@
 import importlib
-from guardrails_api_client import Guard
+from guardrails import Guard, AsyncGuard
 from guardrails_api.clients.memory_guard_client import MemoryGuardClient
 from guardrails_api.clients.pg_guard_client import PGGuardClient
 from guardrails_api.db.postgres_client import postgres_is_enabled
@@ -26,8 +26,8 @@ def get_guard_client():
             exports = config.__dir__()
             for export_name in exports:
                 export = getattr(config, export_name)
-                is_guard = isinstance(export, Guard)
+                is_guard = isinstance(export, Guard) or isinstance(export, AsyncGuard)
                 if is_guard:
-                    guard_client.create_guard(export)
+                    guard_client.guards[export.id] = export
 
     return guard_client
