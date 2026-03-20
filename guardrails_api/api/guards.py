@@ -317,10 +317,6 @@ async def validate(
         cache_key = f"{guard.id}-{result.call_id}"
         await cache_client.set(cache_key, json.dumps(serialized_history), 300)
     result = attach_validation_summaries(result, guard)
-    # result_dict = result.to_dict()
-    # result_dict["validation_summaries"] = [
-    #     vs.model_dump(exclude_none=True) for vs in result.validation_summaries or []
-    # ]
     return result
 
 
