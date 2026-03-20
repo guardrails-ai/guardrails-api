@@ -1,4 +1,4 @@
-.PHONY: install install-dev lock install-lock build bootstrap serve db env refresh format lint qa test test-cov view-test-cov type generate custom-gen
+.PHONY: install install-dev lock install-lock bootstrap serve db env refresh format lint qa test test-cov view-test-cov type generate custom-gen
 # Installs production dependencies
 install:
 	pip install .;
@@ -70,7 +70,7 @@ test:
 	python -m unittest discover -s tests --buffer --failfast
 
 test-single:
-	python -m unittest tests.cli.__init__.TestVersionCallback
+	python -m unittest tests.api.test_guards -v
 
 test-cov:
 	coverage run -m unittest discover --start-directory tests --buffer --failfast

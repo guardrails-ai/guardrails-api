@@ -2,464 +2,426 @@
 
 import unittest
 import os
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
-from guardrails import Guard
+from guardrails import AsyncGuard
 from guardrails.errors import ValidationError
-from guardrails.classes.generic import Stack
+from guardrails_ai.types import Guard as IGuard
 from guardrails_api.api.guards import router
+
+HISTORY_OFF = {"GUARD_HISTORY_ENABLED": "false"}
+PGHOST = {"PGHOST": "localhost"}
+BASE_ENV = {**PGHOST, **HISTORY_OFF}
+
+# A minimal serializable outcome dict that FastAPI can return directly.
+_OUTCOME = {
+    "callId": "mock-call-id",
+    "validationPassed": True,
+    "validatedOutput": "Hello!",
+    "rawLlmOutput": "Hello!",
+}
+
+
+def _guard_client(guard_struct):
+    gc = Mock()
+    gc.get_guard.return_value = guard_struct
+    return gc
 
 
 class TestValidateEndpoint(unittest.TestCase):
-    """Test cases for the /guards/{guard_name}/validate endpoint."""
+    """Tests for POST /guards/{id}/validate."""
 
     def setUp(self):
-        """Set up test client and common mocks."""
         self.app = FastAPI()
         self.app.include_router(router)
         self.client = TestClient(self.app)
-        self.guard_name = "My Guard's Name"
-        self._id = "my-guard-s-name"
+        self._id = "my-guard"
+        # Real IGuard so isinstance(guard_struct, IGuard) is True in the endpoint,
+        # which triggers the AsyncGuard.from_dict path.
+        self.guard_struct = IGuard(name="my-guard", id=self._id)
 
-    @patch.dict(
-        os.environ,
-        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
-        clear=False,
-    )
+    # ------------------------------------------------------------------ #
+    # parse path (llm_output present)
+    # ------------------------------------------------------------------ #
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
     @patch("guardrails_api.api.guards.get_guard_client")
-    @patch("guardrails_api.api.guards.Guard.from_dict")
-    def test_validate_parse(self, mock_from_dict, mock_get_guard_client):
-        """Test validate endpoint with llmOutput (calls guard.parse)."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
-        mock_guard = Mock(spec=Guard)
-        mock_guard.id = self._id
-        mock_guard.name = self.guard_name
-        mock_guard.history = Mock()
-        mock_guard.history.last = Mock()
-        mock_guard.history.last.validator_logs = []
-
-        # Mock the parse method to return a dict (as if to_dict() was called)
-        mock_result = Mock()
-        mock_result.validation_summaries = []
-        mock_guard.parse.return_value = mock_result
-        mock_guard.parse.return_value.to_dict.return_value = {
-            "callId": "mock-call-id",
-            "validatedOutput": "Hello world!",
-            "validationPassed": True,
-            "rawLlmOutput": "Hello world!",
-            "validation_summaries": [],
-        }
-
-        # Setup mocks - return a guard struct that will be converted
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {
-            "name": self.guard_name,
-            "history": [],
-        }
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_llm_output_routes_to_parse(self, mock_from_dict, mock_get_gc, mock_attach):
+        """When llm_output is provided, guard.parse is called (not guard.__call__)."""
+        mock_guard = Mock(spec=AsyncGuard)
+        mock_guard.parse = AsyncMock(return_value=Mock())
         mock_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
 
-        # Make request
         response = self.client.post(
             f"/guards/{self._id}/validate",
-            json={"llmOutput": "Hello world!", "args": [1, 2, 3], "some_kwarg": "foo"},
+            json={"llm_output": "Hello!"},
         )
 
-        # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self._id)
-        # Check that parse was called
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(mock_guard.parse.call_count, 1)
-        call_kwargs = mock_guard.parse.call_args[1]
-        self.assertEqual(call_kwargs["llm_output"], "Hello world!")
-        self.assertIsNone(call_kwargs["num_reasks"])
-        self.assertEqual(call_kwargs["prompt_params"], {})
-        self.assertIsNone(call_kwargs["llm_api"])
-        self.assertEqual(call_kwargs["some_kwarg"], "foo")
 
-        self.assertEqual(response.status_code, 200)
-        response_data = response.json()
-        self.assertEqual(response_data["callId"], "mock-call-id")
-        self.assertEqual(response_data["validatedOutput"], "Hello world!")
-        self.assertTrue(response_data["validationPassed"])
-        self.assertEqual(response_data["rawLlmOutput"], "Hello world!")
-
-    @patch.dict(
-        os.environ,
-        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
-        clear=False,
-    )
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
     @patch("guardrails_api.api.guards.get_guard_client")
-    @patch("guardrails_api.api.guards.Guard.from_dict")
-    def test_validate_call(self, mock_from_dict, mock_get_guard_client):
-        """Test validate endpoint with prompt (calls guard.__call__)."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
-        mock_guard = Mock()
-        mock_guard.name = self.guard_name
-        mock_guard.history = Mock()
-        mock_guard.history.last = Mock()
-        mock_guard.history.last.validator_logs = []
-
-        # Mock the return value for guard() call
-        mock_result = Mock()
-        mock_result.validation_summaries = []
-        mock_result.to_dict.return_value = {
-            "callId": "mock-call-id",
-            "validationPassed": False,
-            "validatedOutput": None,
-            "rawLlmOutput": "Hello world!",
-            "validation_summaries": [],
-        }
-        mock_guard.return_value = mock_result
-
-        # Setup mocks - return a guard struct that will be converted
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_parse_receives_correct_kwargs(
+        self, mock_from_dict, mock_get_gc, mock_attach
+    ):
+        """guard.parse is called with llm_output, prompt_params, num_reasks, and api_key."""
+        mock_guard = Mock(spec=AsyncGuard)
+        mock_guard.parse = AsyncMock(return_value=Mock())
         mock_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
 
-        # Make request
-        response = self.client.post(
+        self.client.post(
             f"/guards/{self._id}/validate",
-            json={
-                "promptParams": {"p1": "bar"},
-                "args": [1, 2, 3],
-                "some_kwarg": "foo",
-                "prompt": "Hello world!",
-            },
-            headers={"x-openai-api-key": "mock-key"},
+            json={"llm_output": "Hello!", "prompt_params": {"k": "v"}, "num_reasks": 2},
+            headers={"x-openai-api-key": "test-key"},
         )
 
-        # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self._id)
-        # Check call arguments
+        kwargs = mock_guard.parse.call_args.kwargs
+        self.assertEqual(kwargs["llm_output"], "Hello!")
+        self.assertEqual(kwargs["prompt_params"], {"k": "v"})
+        self.assertEqual(kwargs["num_reasks"], 2)
+        self.assertEqual(kwargs["api_key"], "test-key")
+        # llm_api is stripped from the payload before calling parse
+        self.assertNotIn("llm_api", kwargs)
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_parse_result_returned_in_response(
+        self, mock_from_dict, mock_get_gc, mock_attach
+    ):
+        """Response body reflects the outcome returned by attach_validation_summaries."""
+        mock_guard = Mock(spec=AsyncGuard)
+        mock_guard.parse = AsyncMock(return_value=Mock())
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
+
+        response = self.client.post(
+            f"/guards/{self._id}/validate",
+            json={"llm_output": "Hello!"},
+        )
+
+        data = response.json()
+        self.assertEqual(data["callId"], "mock-call-id")
+        self.assertTrue(data["validationPassed"])
+        self.assertEqual(data["validatedOutput"], "Hello!")
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_parse_validation_error_returns_400(self, mock_from_dict, mock_get_gc):
+        """ValidationError raised by guard.parse yields a 400 response."""
+        mock_guard = Mock(spec=AsyncGuard)
+        mock_guard.parse = AsyncMock(side_effect=ValidationError("bad output"))
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+
+        response = self.client.post(
+            f"/guards/{self._id}/validate",
+            json={"llm_output": "Hello!"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("bad output", response.json()["detail"])
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_stream_with_llm_output_returns_400(self, mock_from_dict, mock_get_gc):
+        """stream=True combined with llm_output is not supported and returns 400."""
+        mock_guard = Mock(spec=AsyncGuard)
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+
+        response = self.client.post(
+            f"/guards/{self._id}/validate",
+            json={"llm_output": "Hello!", "stream": True},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Streaming is not supported", response.json()["detail"])
+
+    # ------------------------------------------------------------------ #
+    # guard.__call__ path (no llm_output)
+    # ------------------------------------------------------------------ #
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_no_llm_output_calls_guard(self, mock_from_dict, mock_get_gc, mock_attach):
+        """Without llm_output, guard.__call__ is invoked instead of guard.parse."""
+        mock_guard = Mock()
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
+
+        response = self.client.post(
+            f"/guards/{self._id}/validate",
+            json={},
+        )
+
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(mock_guard.call_count, 1)
-        call_args = mock_guard.call_args
-        self.assertEqual(call_args[0], (1, 2, 3))  # positional args
-        self.assertIsNone(call_args[1]["llm_api"])
-        self.assertEqual(call_args[1]["prompt_params"], {"p1": "bar"})
-        self.assertIsNone(call_args[1]["num_reasks"])
-        self.assertEqual(call_args[1]["some_kwarg"], "foo")
-        self.assertEqual(call_args[1]["api_key"], "mock-key")
-        self.assertEqual(call_args[1]["prompt"], "Hello world!")
 
-        self.assertEqual(response.status_code, 200)
-        response_data = response.json()
-        self.assertEqual(response_data["callId"], "mock-call-id")
-        self.assertFalse(response_data["validationPassed"])
-        self.assertIsNone(response_data["validatedOutput"])
-        self.assertEqual(response_data["rawLlmOutput"], "Hello world!")
-
-    @patch.dict(
-        os.environ,
-        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
-        clear=False,
-    )
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
     @patch("guardrails_api.api.guards.get_guard_client")
-    @patch("guardrails_api.api.guards.Guard.from_dict")
-    def test_validate_call_throws_validation_error(
-        self, mock_from_dict, mock_get_guard_client
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_call_receives_correct_kwargs(
+        self, mock_from_dict, mock_get_gc, mock_attach
     ):
-        """Test validate endpoint when guard.__call__ raises ValidationError."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
+        """guard() receives prompt_params, num_reasks, and api_key."""
         mock_guard = Mock()
-        mock_guard.name = self.guard_name
-
-        # Setup side_effect to raise ValidationError
-        error = ValidationError("Test guard validation error")
-        mock_guard.side_effect = error
-
-        # Setup mocks - return a guard struct that will be converted
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
         mock_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
 
-        # Make request
-        response = self.client.post(
+        self.client.post(
             f"/guards/{self._id}/validate",
-            json={
-                "promptParams": {"p1": "bar"},
-                "args": [1, 2, 3],
-                "some_kwarg": "foo",
-                "prompt": "Hello world!",
-            },
+            json={"prompt_params": {"p": "val"}, "num_reasks": 1},
+            headers={"x-openai-api-key": "header-key"},
         )
 
-        # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self._id)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()["detail"], "Test guard validation error")
+        kwargs = mock_guard.call_args.kwargs
+        self.assertEqual(kwargs["prompt_params"], {"p": "val"})
+        self.assertEqual(kwargs["num_reasks"], 1)
+        self.assertEqual(kwargs["api_key"], "header-key")
 
-    @patch.dict(
-        os.environ,
-        {"PGHOST": "localhost", "GUARD_HISTORY_ENABLED": "false"},
-        clear=False,
-    )
+    @patch.dict(os.environ, BASE_ENV)
     @patch("guardrails_api.api.guards.get_guard_client")
-    @patch("guardrails_api.api.guards.Guard.from_dict")
-    def test_validate_parse_throws_validation_error(
-        self, mock_from_dict, mock_get_guard_client
-    ):
-        """Test validate endpoint when guard.parse raises ValidationError."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
-        mock_guard = Mock(spec=Guard)
-        mock_guard.name = self.guard_name
-        mock_guard.history = Stack()
-
-        # Setup parse to raise ValidationError
-        error = ValidationError("Test parse validation error")
-        mock_guard.parse.side_effect = error
-
-        # Setup mocks
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_call_validation_error_returns_400(self, mock_from_dict, mock_get_gc):
+        """ValidationError raised by guard.__call__ yields a 400 response."""
+        mock_guard = Mock()
+        mock_guard.side_effect = ValidationError("invalid")
         mock_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
 
-        # Make request
         response = self.client.post(
             f"/guards/{self._id}/validate",
-            json={"llmOutput": "Hello world!"},
+            json={},
         )
 
-        # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self._id)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()["detail"], "Test parse validation error")
+        self.assertIn("invalid", response.json()["detail"])
 
-    @patch.dict(
-        os.environ,
-        {
-            "PGHOST": "localhost",
-            "OPENAI_API_KEY": "env-api-key",
-            "GUARD_HISTORY_ENABLED": "false",
-        },
-        clear=False,
-    )
+    # ------------------------------------------------------------------ #
+    # API key resolution
+    # ------------------------------------------------------------------ #
+
+    @patch.dict(os.environ, {**BASE_ENV, "OPENAI_API_KEY": "env-key"})
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
     @patch("guardrails_api.api.guards.get_guard_client")
-    @patch("guardrails_api.api.guards.Guard.from_dict")
-    def test_validate_with_api_key_from_env(
-        self, mock_from_dict, mock_get_guard_client
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_api_key_falls_back_to_env_var(
+        self, mock_from_dict, mock_get_gc, mock_attach
     ):
-        """Test validate endpoint uses OPENAI_API_KEY from environment."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
-        mock_guard = Mock(spec=Guard)
-        mock_guard.name = self.guard_name
-        mock_guard.history = Stack()
-
-        mock_result = Mock()
-        mock_result.validation_summaries = []
-        mock_guard.parse.return_value = mock_result
-        mock_guard.parse.return_value.to_dict.return_value = {
-            "callId": "mock-call-id",
-            "rawLlmOutput": "Hello!",
-            "validatedOutput": "Hello!",
-            "validationPassed": True,
-        }
-
-        # Setup mocks
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
+        """OPENAI_API_KEY env var is used when no x-openai-api-key header is sent."""
+        mock_guard = Mock(spec=AsyncGuard)
+        mock_guard.parse = AsyncMock(return_value=Mock())
         mock_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
 
-        # Make request without x-openai-api-key header
-        response = self.client.post(
+        self.client.post(
             f"/guards/{self._id}/validate",
-            json={"llmOutput": "Hello!"},
+            json={"llm_output": "Hello!"},
         )
 
-        # Should use env variable
-        self.assertEqual(response.status_code, 200)
-        call_args = mock_guard.parse.call_args
-        self.assertEqual(call_args[1]["api_key"], "env-api-key")
+        self.assertEqual(mock_guard.parse.call_args.kwargs["api_key"], "env-key")
 
-    @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
+    @patch.dict(os.environ, {**BASE_ENV, "OPENAI_API_KEY": "env-key"})
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
     @patch("guardrails_api.api.guards.get_guard_client")
-    @patch("guardrails_api.api.guards.Guard.from_dict")
-    def test_validate_stream_with_parse_raises_error(
-        self, mock_from_dict, mock_get_guard_client
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_header_api_key_overrides_env_var(
+        self, mock_from_dict, mock_get_gc, mock_attach
     ):
-        """Test validate endpoint raises error when stream=True with llmOutput."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
-        mock_guard = Mock(spec=Guard)
-        mock_guard.name = self.guard_name
-        mock_guard.history = Stack()
-
-        # Setup mocks
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
+        """x-openai-api-key header takes precedence over OPENAI_API_KEY env var."""
+        mock_guard = Mock(spec=AsyncGuard)
+        mock_guard.parse = AsyncMock(return_value=Mock())
         mock_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
 
-        # Make request with stream=True and llmOutput
-        response = self.client.post(
+        self.client.post(
             f"/guards/{self._id}/validate",
-            json={
-                "llmOutput": "Hello world!",
-                "stream": True,
-            },
+            json={"llm_output": "Hello!"},
+            headers={"x-openai-api-key": "header-key"},
         )
 
-        # Should raise 400 error
-        self.assertEqual(response.status_code, 400)
-        self.assertIn(
-            "Streaming is not supported for parse calls", response.json()["detail"]
+        self.assertEqual(mock_guard.parse.call_args.kwargs["api_key"], "header-key")
+
+    # ------------------------------------------------------------------ #
+    # Guard lookup
+    # ------------------------------------------------------------------ #
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.get_guard_client")
+    def test_guard_not_found_returns_404(self, mock_get_gc):
+        """Returns 404 when the guard does not exist."""
+        mock_get_gc.return_value = _guard_client(None)
+
+        response = self.client.post(
+            f"/guards/{self._id}/validate",
+            json={},
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_guard_fetched_by_decoded_id(
+        self, mock_from_dict, mock_get_gc, mock_attach
+    ):
+        """get_guard is called with the URL-decoded guard id."""
+        mock_guard = Mock()
+        mock_from_dict.return_value = mock_guard
+        mock_gc = Mock()
+        mock_gc.get_guard.return_value = self.guard_struct
+        mock_get_gc.return_value = mock_gc
+        mock_attach.return_value = _OUTCOME
+
+        self.client.post(f"/guards/{self._id}/validate", json={})
+
+        mock_gc.get_guard.assert_called_once_with(self._id)
+
+    @patch.dict(os.environ, BASE_ENV)
+    @patch("guardrails_api.api.guards.attach_validation_summaries")
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_from_dict_called_with_guard_struct_data(
+        self, mock_from_dict, mock_get_gc, mock_attach
+    ):
+        """AsyncGuard.from_dict receives the model_dump of the IGuard struct."""
+        mock_guard = Mock()
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_attach.return_value = _OUTCOME
+
+        self.client.post(f"/guards/{self._id}/validate", json={})
+
+        mock_from_dict.assert_called_once_with(
+            self.guard_struct.model_dump(exclude_none=True)
         )
 
 
 class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
-    """Test cases for the /guards/{guard_name}/openai/v1/chat/completions endpoint."""
+    """Tests for POST /guards/{id}/openai/v1/chat/completions."""
 
     def setUp(self):
-        """Set up test client and common mocks."""
         self.app = FastAPI()
         self.app.include_router(router)
         self.client = TestClient(self.app)
-        self._id = "my-guards-name"
-        self.guard_name = "My Guard's Name"
+        self._id = "my-guard"
+        self.guard_struct = IGuard(name="my-guard", id=self._id)
 
-    @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
+    _CHAT_PAYLOAD = {
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": "Hello!"}],
+    }
+
+    @patch.dict(os.environ, PGHOST)
     @patch("guardrails_api.api.guards.get_guard_client")
-    def test_openai_v1_chat_completions_raises_404(self, mock_get_guard_client):
-        """Test OpenAI chat completions endpoint returns 404 when guard not found."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
+    def test_guard_not_found_returns_404(self, mock_get_gc):
+        """Returns 404 when the guard does not exist."""
+        mock_get_gc.return_value = _guard_client(None)
 
-        # Setup guard_client to return None
-        mock_guard_client.get_guard.return_value = None
-
-        # Make request
         response = self.client.post(
             f"/guards/{self._id}/openai/v1/chat/completions",
-            json={
-                "messages": [{"role": "user", "content": "Hello world!"}],
-            },
-            headers={"x-openai-api-key": "mock-key"},
+            json=self._CHAT_PAYLOAD,
         )
 
-        # Assertions
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(
-            response.json()["detail"],
-            f"A Guard with the id {self._id} does not exist!",
-        )
-        mock_guard_client.get_guard.assert_called_once_with(self._id)
+        self.assertIn("does not exist", response.json()["detail"])
 
-    @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
+    @patch.dict(os.environ, PGHOST)
+    @patch("guardrails_api.api.guards.guarded_chat_completion")
     @patch("guardrails_api.api.guards.get_guard_client")
     @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
-    @patch("guardrails_api.api.guards.guarded_chat_completion")
-    def test_openai_v1_chat_completions_call(
-        self,
-        mock_guarded_chat_completion,
-        mock_async_from_dict,
-        mock_get_guard_client,
+    def test_successful_call_returns_200(
+        self, mock_from_dict, mock_get_gc, mock_completion
     ):
-        """Test OpenAI chat completions endpoint successful call."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
+        """A valid request returns 200 with choices and guardrails fields."""
         mock_guard = Mock()
-        mock_guard.name = self.guard_name
-
-        # Setup the guarded_chat_completion mock
-        expected_response = {
-            "choices": [
-                {
-                    "message": {
-                        "content": "Hello world!",
-                    },
-                }
-            ],
-            "guardrails": {
-                "reask": None,
-                "validation_passed": False,
-                "error": None,
-            },
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_completion.return_value = {
+            "choices": [{"message": {"content": "Hello!"}}],
+            "guardrails": {"reask": None, "validation_passed": True, "error": None},
         }
-        mock_guarded_chat_completion.return_value = expected_response
 
-        # Setup mocks - return a guard struct (not a Guard instance)
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
-        mock_async_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
-
-        # Make request
         response = self.client.post(
             f"/guards/{self._id}/openai/v1/chat/completions",
-            json={
-                "messages": [{"role": "user", "content": "Hello world!"}],
-            },
+            json=self._CHAT_PAYLOAD,
             headers={"x-openai-api-key": "mock-key"},
-        )
-
-        # Assertions
-        mock_guard_client.get_guard.assert_called_once_with(self._id)
-        mock_guarded_chat_completion.assert_called_once_with(
-            mock_guard,
-            {"messages": [{"role": "user", "content": "Hello world!"}]},
         )
 
         self.assertEqual(response.status_code, 200)
-        response_data = response.json()
-        self.assertIn("choices", response_data)
-        self.assertIn("guardrails", response_data)
-        self.assertEqual(
-            response_data["choices"][0]["message"]["content"], "Hello world!"
-        )
-        self.assertFalse(response_data["guardrails"]["validation_passed"])
+        data = response.json()
+        self.assertIn("choices", data)
+        self.assertIn("guardrails", data)
+        self.assertEqual(data["choices"][0]["message"]["content"], "Hello!")
 
-    @patch.dict(os.environ, {"PGHOST": "localhost"}, clear=False)
+    @patch.dict(os.environ, PGHOST)
+    @patch("guardrails_api.api.guards.guarded_chat_completion")
     @patch("guardrails_api.api.guards.get_guard_client")
     @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
-    @patch("guardrails_api.api.guards.guarded_chat_completion")
-    def test_openai_v1_chat_completions_with_tools(
-        self,
-        mock_guarded_chat_completion,
-        mock_async_from_dict,
-        mock_get_guard_client,
+    def test_passes_guard_and_payload_to_guarded_chat_completion(
+        self, mock_from_dict, mock_get_gc, mock_completion
     ):
-        """Test OpenAI chat completions with gd_response_tool."""
-        # Setup mock guard client first
-        mock_guard_client = Mock()
-        mock_get_guard_client.return_value = mock_guard_client
-
-        # Create mock guard
+        """guarded_chat_completion receives the resolved guard and the full payload."""
         mock_guard = Mock()
-        mock_guard.name = self.guard_name
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        mock_completion.return_value = {"choices": [], "guardrails": {}}
 
-        # Setup guarded_chat_completion
-        expected_response = {
+        self.client.post(
+            f"/guards/{self._id}/openai/v1/chat/completions",
+            json=self._CHAT_PAYLOAD,
+        )
+
+        mock_completion.assert_called_once()
+        call_args = mock_completion.call_args[0]
+        self.assertIs(call_args[0], mock_guard)
+        self.assertEqual(call_args[1]["model"], "gpt-4")
+        self.assertIn("messages", call_args[1])
+
+    @patch.dict(os.environ, PGHOST)
+    @patch("guardrails_api.api.guards.guarded_chat_completion")
+    @patch("guardrails_api.api.guards.get_guard_client")
+    @patch("guardrails_api.api.guards.AsyncGuard.from_dict")
+    def test_tools_forwarded_in_payload(
+        self, mock_from_dict, mock_get_gc, mock_completion
+    ):
+        """Tools array is forwarded to guarded_chat_completion in the payload."""
+        mock_guard = Mock()
+        mock_from_dict.return_value = mock_guard
+        mock_get_gc.return_value = _guard_client(self.guard_struct)
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "gd_response_tool",
+                    "description": "Guardrails tool",
+                },
+            }
+        ]
+        mock_completion.return_value = {
             "choices": [
                 {
                     "message": {
@@ -468,54 +430,42 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
                             {
                                 "function": {
                                     "name": "gd_response_tool",
-                                    "arguments": '{"validated_output": "Tool response!"}',
+                                    "arguments": '{"validated_output": "ok"}',
                                 }
                             }
                         ],
-                    },
+                    }
                 }
             ],
-            "guardrails": {
-                "reask": None,
-                "validation_passed": True,
-                "error": None,
-            },
+            "guardrails": {"reask": None, "validation_passed": True, "error": None},
         }
-        mock_guarded_chat_completion.return_value = expected_response
 
-        # Setup mocks
-        mock_guard_struct = Mock()
-        mock_guard_struct.to_dict.return_value = {"name": self.guard_name}
-        mock_async_from_dict.return_value = mock_guard
-        mock_guard_client.get_guard.return_value = mock_guard_struct
-
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "gd_response_tool",
-                    "description": "Guardrails response tool",
-                },
-            }
-        ]
-
-        # Make request with gd_response_tool
         response = self.client.post(
             f"/guards/{self._id}/openai/v1/chat/completions",
-            json={
-                "messages": [{"role": "user", "content": "Hello!"}],
-                "tools": tools,
-            },
+            json={**self._CHAT_PAYLOAD, "tools": tools},
         )
 
-        # Assertions
         self.assertEqual(response.status_code, 200)
+        payload_arg = mock_completion.call_args[0][1]
+        self.assertIn("tools", payload_arg)
+        self.assertEqual(payload_arg["tools"], tools)
 
-        # Verify guarded_chat_completion was called with the correct guard and payload (including tools)
-        call_args = mock_guarded_chat_completion.call_args
-        self.assertEqual(call_args[0][0], mock_guard)
-        self.assertIn("tools", call_args[0][1])
-        self.assertEqual(call_args[0][1]["tools"], tools)
+    @patch.dict(os.environ, PGHOST)
+    @patch("guardrails_api.api.guards.get_guard_client")
+    def test_guard_fetched_by_decoded_id(self, mock_get_gc):
+        """get_guard is called with the URL-decoded guard id."""
+        mock_gc = Mock()
+        mock_gc.get_guard.return_value = (
+            None  # causes 404, but we only care about the call
+        )
+        mock_get_gc.return_value = mock_gc
+
+        self.client.post(
+            f"/guards/{self._id}/openai/v1/chat/completions",
+            json=self._CHAT_PAYLOAD,
+        )
+
+        mock_gc.get_guard.assert_called_once_with(self._id)
 
 
 if __name__ == "__main__":

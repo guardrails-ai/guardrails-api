@@ -19,18 +19,6 @@ class TestMemoryGuardClient(unittest.TestCase):
         self.assertTrue(self.client.initialized)
         self.assertIsInstance(self.client.guards, dict)
 
-    def test_create_guard(self):
-        """Test creating a guard."""
-        mock_guard = Mock()
-        mock_guard.id = "test-guard"
-        mock_guard.name = "test_guard"
-
-        result = self.client.create_guard(mock_guard)
-
-        self.assertEqual(result, mock_guard)
-        self.assertIn("test-guard", self.client.guards)
-        self.assertEqual(self.client.guards["test-guard"], mock_guard)
-
     def test_get_guard_existing(self):
         """Test getting an existing guard."""
         mock_guard = Mock()
@@ -104,82 +92,6 @@ class TestMemoryGuardClient(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertIn(mock_guard1, result)
 
-    def test_update_guard_existing(self):
-        """Test updating an existing guard."""
-        old_guard = Mock()
-        old_guard.id = "test-guard"
-        old_guard.name = "test_guard"
-        new_guard = Mock()
-        new_guard.id = "test-guard"
-        new_guard.name = "test_guard"
-
-        self.client.guards["test-guard"] = old_guard
-
-        result = self.client.update_guard("test-guard", new_guard)
-
-        self.assertEqual(result, new_guard)
-        self.assertEqual(self.client.guards["test-guard"], new_guard)
-
-    def test_update_guard_non_existing_raises_error(self):
-        """Test updating a non-existing guard raises HttpError."""
-        new_guard = Mock()
-        new_guard.id = "test-guard"
-        new_guard.name = "test_guard"
-
-        self.client.guards = {}
-
-        with self.assertRaises(HttpError) as context:
-            self.client.update_guard("test-guard", new_guard)
-
-        error = context.exception
-        self.assertEqual(error.status, 404)
-        self.assertEqual(error.message, "NotFound")
-
-    def test_upsert_guard(self):
-        """Test upserting a guard."""
-        mock_guard = Mock()
-        mock_guard.id = "test-guard"
-        mock_guard.name = "test_guard"
-
-        result = self.client.upsert_guard("test-guard", mock_guard)
-
-        self.assertEqual(result, mock_guard)
-        self.assertIn("test-guard", self.client.guards)
-
-    def test_upsert_guard_overwrites_existing(self):
-        """Test that upsert overwrites existing guard."""
-        old_guard = Mock()
-        old_guard.name = "test_guard"
-        new_guard = Mock()
-        new_guard.name = "test_guard"
-
-        self.client.guards["test_guard"] = old_guard
-
-        result = self.client.upsert_guard("test_guard", new_guard)
-
-        self.assertEqual(result, new_guard)
-        self.assertEqual(self.client.guards["test_guard"], new_guard)
-
-    def test_delete_guard_existing(self):
-        """Test deleting an existing guard."""
-        mock_guard = Mock()
-        mock_guard.name = "test_guard"
-        self.client.guards["test_guard"] = mock_guard
-
-        result = self.client.delete_guard("test_guard")
-
-        self.assertEqual(result, mock_guard)
-        self.assertNotIn("test_guard", self.client.guards)
-
-    def test_delete_guard_non_existing_raises_error(self):
-        """Test deleting a non-existing guard raises HttpError."""
-        with self.assertRaises(HttpError) as context:
-            self.client.delete_guard("non_existing")
-
-        error = context.exception
-        self.assertEqual(error.status, 404)
-        self.assertEqual(error.message, "NotFound")
-
     def test_guards_dict_is_shared(self):
         """Test that guards dict is shared across instances."""
         client1 = MemoryGuardClient()
@@ -188,7 +100,7 @@ class TestMemoryGuardClient(unittest.TestCase):
         mock_guard = Mock()
         mock_guard.id = "shared-guard"
         mock_guard.name = "shared_guard"
-        client1.create_guard(mock_guard)
+        client1.guards["shared-guard"] = mock_guard
 
         # Both clients should see the same guard
         self.assertEqual(client2.get_guard("shared-guard"), mock_guard)
