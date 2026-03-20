@@ -1,4 +1,4 @@
-import importlib
+import importlib.metadata
 import typer
 import guardrails_api.cli.start  # noqa
 from typing import Optional

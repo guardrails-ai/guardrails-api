@@ -14,7 +14,7 @@ class MemoryGuardClient(GuardClient):
 
     def get_guard(
         self, id: str, as_of_date: Optional[str] = None
-    ) -> Guard | AsyncGuard | None:
+    ) -> Guard | AsyncGuard:
         guard = self.guards.get(id, None)
         if guard is None:
             raise HttpError(
@@ -24,7 +24,7 @@ class MemoryGuardClient(GuardClient):
             )
         return guard
 
-    def get_guards(
+    def get_guards(  # type: ignore
         self, guard_name: Optional[str] = None
     ) -> Sequence[Guard | AsyncGuard]:
         if guard_name:

@@ -242,23 +242,25 @@ async def validate(
                 is_async = inspect.iscoroutine(call)
                 if is_async:
                     guard_stream = await call
-                    async for result in guard_stream:
+                    async for result in guard_stream:  # type: ignore
                         validation_output = ValidationOutcome.from_guard_history(
-                            guard.history.last
+                            guard.history.last  # type: ignore
                         )
                         yield validation_output, result
                 else:
                     guard_stream = call
-                    for result in guard_stream:
+                    for result in guard_stream:  # type: ignore
                         validation_output = ValidationOutcome.from_guard_history(
-                            guard.history.last
+                            guard.history.last  # type: ignore
                         )
                         yield validation_output, result
 
             async def validate_streamer(guard_iter):
                 try:
                     async for validation_output, result in guard_iter:
-                        fragment_dict = result.to_dict()
+                        fragment_dict = result.model_dump(
+                            exclude_none=True, by_alias=True
+                        )
                         fragment_dict["error_spans"] = [
                             json.dumps(
                                 {"start": x.start, "end": x.end, "reason": x.reason}
@@ -268,21 +270,23 @@ async def validate(
                         yield json.dumps(fragment_dict) + "\n"
 
                     call = guard.history.last
-                    final_validation_output = ValidationOutcome(
-                        callId=call.id,
-                        validation_passed=result.validation_passed,
-                        validated_output=result.validated_output,
-                        history=guard.history,
-                        raw_llm_output=result.raw_llm_output,
-                    )
-                    final_output_dict = final_validation_output.model_dump(
-                        exclude_none=True, by_alias=True
-                    )
-                    final_output_dict["error_spans"] = [
-                        json.dumps({"start": x.start, "end": x.end, "reason": x.reason})
-                        for x in guard.error_spans_in_output()
-                    ]
-                    yield json.dumps(final_output_dict) + "\n"
+                    if call:
+                        final_validation_output = ValidationOutcome(
+                            callId=call.id,
+                            validationPassed=result.validation_passed,  # type: ignore
+                            validatedOutput=result.validated_output,  # type: ignore
+                            rawLlmOutput=result.raw_llm_output,  # type: ignore
+                        )
+                        final_output_dict = final_validation_output.model_dump(
+                            exclude_none=True, by_alias=True
+                        )
+                        final_output_dict["error_spans"] = [
+                            json.dumps(
+                                {"start": x.start, "end": x.end, "reason": x.reason}
+                            )
+                            for x in guard.error_spans_in_output()
+                        ]
+                        yield json.dumps(final_output_dict) + "\n"
                 except Exception as e:
                     yield json.dumps({"error": {"message": str(e)}}) + "\n"
 
@@ -291,7 +295,7 @@ async def validate(
                         call.model_dump(exclude_none=True, by_alias=True)
                         for call in guard.history
                     ]
-                    cache_key = f"{guard.id}-{final_validation_output.call_id}"
+                    cache_key = f"{guard.id}-{final_validation_output.call_id}"  # type: ignore
                     await cache_client.set(
                         cache_key, json.dumps(serialized_history), 300
                     )
@@ -307,7 +311,7 @@ async def validate(
                 **payload,
             )
             if inspect.iscoroutine(execution):
-                result: ValidationOutcome = await execution
+                result: ValidationOutcome = await execution  # type: ignore
             else:
                 result: ValidationOutcome = execution
     if guard_history_is_enabled():
