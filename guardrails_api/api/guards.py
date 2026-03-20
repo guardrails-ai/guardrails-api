@@ -128,8 +128,9 @@ async def delete_guard(id: str) -> IGuard:
 )
 @handle_error
 async def openai_v1_chat_completions(
-    id: str, payload: CreateChatCompletionRequest
+    id: str, create_chat_completion_request: CreateChatCompletionRequest
 ) -> GuardedChatCompletion | StreamingResponse:
+    payload = dict(create_chat_completion_request)
     guard_client = get_guard_client()
     decoded_guard_id = unquote_plus(id)
     guard_struct = guard_client.get_guard(decoded_guard_id)
@@ -185,10 +186,10 @@ async def validate(
     decoded_guard_id = unquote_plus(id)
     guard_struct = guard_client.get_guard(decoded_guard_id)
 
-    llm_output = payload.pop("llmOutput", None)
-    num_reasks = payload.pop("numReasks", None)
-    prompt_params = payload.pop("promptParams", {})
-    _llm_api = payload.pop("llmApi", None)
+    llm_output = payload.pop("llm_output", None)
+    num_reasks = payload.pop("num_reasks", None)
+    prompt_params = payload.pop("prompt_params", {})
+    _llm_api = payload.pop("llm_api", None)
     if _llm_api:
         warnings.warn(
             "Specifying llmApi is deprecated.  Its value will be ignored.",
@@ -290,7 +291,7 @@ async def validate(
                         call.model_dump(exclude_none=True, by_alias=True)
                         for call in guard.history
                     ]
-                    cache_key = f"{guard.name}-{final_validation_output.call_id}"
+                    cache_key = f"{guard.id}-{final_validation_output.call_id}"
                     await cache_client.set(
                         cache_key, json.dumps(serialized_history), 300
                     )
@@ -328,4 +329,5 @@ async def validate(
 @handle_error
 async def guard_history(id: str, call_id: str) -> list[Call]:
     cache_key = f"{id}-{call_id}"
-    return await cache_client.get(cache_key) or []
+    cached_value = await cache_client.get(cache_key) or "[]"
+    return json.loads(cached_value)

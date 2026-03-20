@@ -1,6 +1,7 @@
 import sys
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -144,6 +145,19 @@ def create_app(
         return JSONResponse(
             status_code=400,
             content={"message": str(exc)},
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
+        exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
+        # Log the error details for debugging
+        print(f"{request.method} {request.url} - Validation error: {exc_str}")
+
+        content = {"status_code": 10422, "message": exc_str, "data": None}
+        return JSONResponse(
+            content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
 
     console.print(f"\n:rocket: Guardrails API is available at {self_endpoint}")
