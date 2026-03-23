@@ -7,9 +7,7 @@ from unittest.mock import patch
 
 class TestVersionCallback(unittest.TestCase):
     @patch("builtins.print")
-    @patch(
-        "guardrails_api.cli.__init__.importlib.metadata.version", return_value="0.X.0"
-    )
+    @patch("guardrails_api.cli.importlib.metadata.version", return_value="0.X.0")
     def test_version_callback_with_true(self, mock_importlib, mock_print):
         """Test that cli object exists."""
         from guardrails_api.cli import version_callback
@@ -24,9 +22,7 @@ class TestVersionCallback(unittest.TestCase):
         self.assertEqual(mock_importlib.call_count, 1)
 
     @patch("builtins.print")
-    @patch(
-        "guardrails_api.cli.__init__.importlib.metadata.version", return_value="0.X.0"
-    )
+    @patch("guardrails_api.cli.importlib.metadata.version", return_value="0.X.0")
     def test_version_callback_with_false(self, mock_importlib, mock_print):
         """Test that cli object exists."""
         from guardrails_api.cli import version_callback
