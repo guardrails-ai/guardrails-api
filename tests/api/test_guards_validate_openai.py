@@ -9,6 +9,7 @@ from guardrails import AsyncGuard
 from guardrails.errors import ValidationError
 from guardrails_ai.types import Guard as IGuard
 from guardrails_api.api.guards import router
+from guardrails_api.classes.guarded_chat_completion import GuardedChatCompletion
 
 HISTORY_OFF = {"GUARD_HISTORY_ENABLED": "false"}
 PGHOST = {"PGHOST": "localhost"}
@@ -360,10 +361,17 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
         mock_guard = Mock()
         mock_from_dict.return_value = mock_guard
         mock_get_gc.return_value = _guard_client(self.guard_struct)
-        mock_completion.return_value = {
-            "choices": [{"message": {"content": "Hello!"}}],
-            "guardrails": {"reask": None, "validation_passed": True, "error": None},
-        }
+        mock_completion.return_value = GuardedChatCompletion(
+            **{
+                "choices": [{"message": {"content": "Hello!"}}],
+                "guardrails": {
+                    "call_id": "123",
+                    "reask": None,
+                    "validation_passed": True,
+                    "error": None,
+                },
+            }
+        )
 
         response = self.client.post(
             f"/guards/{self._id}/openai/v1/chat/completions",
@@ -421,24 +429,31 @@ class TestOpenAIV1ChatCompletionsEndpoint(unittest.TestCase):
                 },
             }
         ]
-        mock_completion.return_value = {
-            "choices": [
-                {
-                    "message": {
-                        "content": None,
-                        "tool_calls": [
-                            {
-                                "function": {
-                                    "name": "gd_response_tool",
-                                    "arguments": '{"validated_output": "ok"}',
+        mock_completion.return_value = GuardedChatCompletion(
+            **{
+                "choices": [
+                    {
+                        "message": {
+                            "content": None,
+                            "tool_calls": [
+                                {
+                                    "function": {
+                                        "name": "gd_response_tool",
+                                        "arguments": '{"validated_output": "ok"}',
+                                    }
                                 }
-                            }
-                        ],
+                            ],
+                        }
                     }
-                }
-            ],
-            "guardrails": {"reask": None, "validation_passed": True, "error": None},
-        }
+                ],
+                "guardrails": {
+                    "call_id": "123",
+                    "reask": None,
+                    "validation_passed": True,
+                    "error": None,
+                },
+            }
+        )
 
         response = self.client.post(
             f"/guards/{self._id}/openai/v1/chat/completions",
