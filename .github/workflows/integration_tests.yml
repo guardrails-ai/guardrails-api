@@ -168,6 +168,8 @@ jobs:
             continue-on-error: false
             run: |
               pip install openai ".[api]"
+              guardrails configure --enable-metrics --enable-remote-inferencing --token ${{ secrets.GUARDRAILS_API_KEY }}
+              guardrails hub install hub://guardrails/two_words
               python -m unittest integration_tests.tests.test_server_w_db -v
           - name: Cleanup
             if: always()
