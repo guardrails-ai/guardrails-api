@@ -1,2 +1,8 @@
 [report]
 fail_under = 85
+
+include = guardrails_api/*
+
+omit = 
+    guardrails_api/db/extras/audit.py
+    guardrails_api/db/migrations/*
