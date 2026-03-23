@@ -37,3 +37,4 @@ openai-api-spec.yml
 .DS_Store
 !integration_tests/config.py
 .guardrails
+!integration_tests/integration_tests.env
