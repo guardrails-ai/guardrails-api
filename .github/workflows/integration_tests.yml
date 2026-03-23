@@ -167,6 +167,8 @@ jobs:
           - name: Run Pytest
             continue-on-error: false
             run: |
+              python -m venv ./.venv
+              source ./.venv/bin/activate
               pip install openai ".[api]"
               guardrails configure --enable-metrics --enable-remote-inferencing --token ${{ secrets.GUARDRAILS_API_KEY }}
               guardrails hub install hub://guardrails/two_words
