@@ -1,3 +1,4 @@
+import warnings
 import openai
 import os
 import unittest
@@ -8,6 +9,9 @@ from guardrails.hub import TwoWords
 
 class TestApiWithPostgresDB(unittest.TestCase):
     def setUp(self):
+        warnings.filterwarnings(
+            "ignore", category=ResourceWarning, message="unclosed <socket.socket"
+        )
         self.guard = Guard(name="test-db-guard", base_url="http://localhost:8000").use(
             TwoWords(on_fail="fix")
         )
@@ -115,3 +119,7 @@ class TestApiWithPostgresDB(unittest.TestCase):
         )
         self.assertTrue("Whispers of" in completion.choices[0].message.content)  # type: ignore
         self.assertTrue((completion.guardrails.get("validation_passed")))  # type: ignore
+
+
+if __name__ == "__main__":
+    unittest.main(warnings="ignore")
