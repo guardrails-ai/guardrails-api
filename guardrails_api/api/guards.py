@@ -119,12 +119,13 @@ async def delete_guard(id: str) -> IGuard:
             "description": "Successful Response",
             "content": {
                 "application/json": {
-                    "schema": GuardedChatCompletion.model_json_schema()
+                    "schema": GuardedChatCompletion.model_json_schema(by_alias=False)
                 },
                 "text/event-stream": {"additionalProperties": True},
             },
         }
     },
+    response_model_by_alias=False,
 )
 @handle_error
 async def openai_v1_chat_completions(
@@ -153,7 +154,7 @@ async def openai_v1_chat_completions(
 
     if not stream:
         guarded_completion = await guarded_chat_completion(guard, payload)
-        return guarded_completion
+        return guarded_completion.model_dump(exclude_none=True)  # type: ignore - force snake_case
     else:
         guarded_completion_stream = await guarded_chat_completion_stream(guard, payload)
         return StreamingResponse(
@@ -286,7 +287,6 @@ async def validate(
                             )
                             for x in guard.error_spans_in_output()
                         ]
-                        yield json.dumps(final_output_dict) + "\n"
                 except Exception as e:
                     yield json.dumps({"error": {"message": str(e)}}) + "\n"
 

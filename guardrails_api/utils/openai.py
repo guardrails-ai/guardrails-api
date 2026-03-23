@@ -64,9 +64,7 @@ async def guarded_chat_completion(
             )
 
         completion = chat_completion.model_dump(exclude_none=True)
-        completion["guardrails"] = validation_outcome.model_dump(
-            exclude_none=True, by_alias=True
-        )
+        completion["guardrails"] = validation_outcome.model_dump(exclude_none=True)
 
         guarded_completion = GuardedChatCompletion.model_validate(completion)
 
