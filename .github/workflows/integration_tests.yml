@@ -136,7 +136,7 @@ jobs:
           - name: Start Docker container
             continue-on-error: false
             run: |
-                docker run -d --network ${{ job.container.network }} --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests-db
+                docker run -d --network="host" --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests-db
       
           - name: Wait for Docker container to be ready
             continue-on-error: false
