@@ -1,0 +1,4477 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Guardrails API",
+    "version": "0.0.0",
+    "description": "Guardrails CRUD API"
+  },
+  "paths": {
+    "/health-check": {
+      "get": {
+        "tags": [
+          "Service Health"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the status of the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheck"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards": {
+      "get": {
+        "operationId": "getGuards",
+        "tags": [
+          "guard"
+        ],
+        "summary": "Fetches the configuration for all Guards the user has access to.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of Guards.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Guard"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createGuard",
+        "tags": [
+          "guard"
+        ],
+        "summary": "Creates a Guard",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Guard"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the new Guard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guard"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards/{guardName}": {
+      "get": {
+        "operationId": "getGuard",
+        "tags": [
+          "guard"
+        ],
+        "summary": "Fetches a specific Guard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/GuardName"
+          },
+          {
+            "$ref": "#/components/parameters/AsOf"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the fetched Guard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guard"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateGuard",
+        "tags": [
+          "guard"
+        ],
+        "summary": "Updates a Guard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/GuardName"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Guard"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the updated Guard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guard"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteGuard",
+        "tags": [
+          "guard"
+        ],
+        "summary": "Deletes a Guard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/GuardName"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the deleted Guard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guard"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards/{guardName}/openai/v1/chat/completions": {
+      "post": {
+        "operationId": "createChatCompletion",
+        "tags": [
+          "Chat"
+        ],
+        "summary": "OpenAI SDK compatible endpoint for Chat Completions",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChatCompletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateChatCompletionResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateChatCompletionStreamResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/GuardName"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/guards/{guardName}/validate": {
+      "post": {
+        "operationId": "validate",
+        "tags": [
+          "validate"
+        ],
+        "summary": "Runs the validations specified in a Guard",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/GuardName"
+          },
+          {
+            "$ref": "#/components/parameters/OpenAiApiKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The output of the validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcome"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards/{guardName}/history/{callId}": {
+      "get": {
+        "operationId": "getGuardHistory",
+        "tags": [
+          "guard"
+        ],
+        "summary": "Fetches the history for a specific Guard execution by using the id for the most recent Call",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/GuardName"
+          },
+          {
+            "$ref": "#/components/parameters/CallId"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the fetched Guard History",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/call"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "authorization"
+      }
+    },
+    "parameters": {
+      "GuardName": {
+        "name": "guardName",
+        "in": "path",
+        "description": "Guard name",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "CallId": {
+        "name": "callId",
+        "in": "path",
+        "description": "Call id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "AsOf": {
+        "name": "asOf",
+        "in": "query",
+        "description": "Used to query for data as it existed at this date and time",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "OpenAiApiKey": {
+        "name": "x-openai-api-key",
+        "in": "header",
+        "description": "A valid OpenAI API Key for calling LLM's on your behalf",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "password"
+        }
+      }
+    },
+    "schemas": {
+      "HttpError": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "description": "A valid http status code"
+          },
+          "message": {
+            "type": "string",
+            "description": "A message explaining the status"
+          },
+          "cause": {
+            "type": "string",
+            "description": "Used to describe the origin of an error if that original error has meaning to the client.  This field should add specificity to 'message'."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Used to identify specific fields in a JSON body that caused the error.  Typically only used for 4xx type responses.  The key should be the json path to the invalid property and the value should be a list of error messages specific to that property.",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "context": {
+            "type": "string",
+            "description": "Used to identify what part of the request caused the error for non-JSON payloads."
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ]
+      },
+      "HealthCheck": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "description": "A valid http status code"
+          },
+          "message": {
+            "type": "string",
+            "description": "A message explaining the status"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ]
+      },
+      "ValidationOutcome": {
+        "$ref": "#/components/schemas/validation-outcome"
+      },
+      "primitives": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "objects": {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      "arrays": {
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/primitives"
+            },
+            {
+              "$ref": "#/components/schemas/objects"
+            }
+          ]
+        }
+      },
+      "validation-outcome": {
+        "title": "ValidationOutcome",
+        "description": "The output from a Guard execution.",
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "description": "Foreign key to the most recent Call this resulted from."
+          },
+          "rawLlmOutput": {
+            "type": "string",
+            "description": "The raw, unchanged string content from the LLM call."
+          },
+          "validationSummaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/validation-summary"
+            }
+          },
+          "validatedOutput": {
+            "description": "The validated, and potentially fixed, output from the LLM call after undergoing validation.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/any-type"
+                }
+              }
+            ]
+          },
+          "reask": {
+            "description": "If validation continuously fails and all allocated reasks are used, this field will contain the final reask that would have been sent to the LLM if additional reasks were available.",
+            "$ref": "#/components/schemas/reask"
+          },
+          "validationPassed": {
+            "description": "A boolean to indicate whether or not the LLM output passed validation.  If this is False, the validated_output may be invalid.",
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string",
+            "description": "If the validation process raised a handleable exception, this field will contain the error message."
+          }
+        },
+        "required": [
+          "callId"
+        ]
+      },
+      "validation-summary": {
+        "title": "ValidationSummary",
+        "type": "object",
+        "properties": {
+          "validatorName": {
+            "type": "string",
+            "description": "The class name of the validator.",
+            "format": "PascalCase"
+          },
+          "validatorStatus": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail"
+            ]
+          },
+          "propertyPath": {
+            "type": "string",
+            "description": "The JSON path to the property which was validated that produced this log."
+          },
+          "failureReason": {
+            "type": "string",
+            "description": "The error message indicating why validation failed."
+          },
+          "errorSpans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/error-span"
+            }
+          }
+        },
+        "required": [
+          "validatorName",
+          "validatorStatus"
+        ]
+      },
+      "error-span": {
+        "title": "ErrorSpan",
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer"
+          },
+          "end": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": "string",
+            "description": "The reason validation failed, specific to this chunk."
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "reason"
+        ]
+      },
+      "any-type": {
+        "title": "AnyType",
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/primitives"
+          },
+          {
+            "$ref": "#/components/schemas/objects"
+          },
+          {
+            "$ref": "#/components/schemas/arrays"
+          }
+        ],
+        "definitions": {
+          "primitives": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "objects": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "arrays": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/primitives"
+                },
+                {
+                  "$ref": "#/components/schemas/objects"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "reask": {
+        "title": "ReAsk",
+        "type": "object",
+        "properties": {
+          "incorrectValue": {
+            "$ref": "#/components/schemas/any-type"
+          },
+          "failResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/fail-result"
+            }
+          }
+        },
+        "additionalProperties": {}
+      },
+      "fail-result": {
+        "title": "FailResult",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/validation-result"
+          }
+        ],
+        "properties": {
+          "outcome": {
+            "const": "fail"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "fixValue": {
+            "$ref": "#/components/schemas/any-type"
+          },
+          "errorSpans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/error-span"
+            }
+          }
+        },
+        "required": [
+          "outcome",
+          "errorMessage"
+        ]
+      },
+      "validation-result": {
+        "title": "ValidationResult",
+        "type": "object",
+        "description": "The output from a single Validator.",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "validatedChunk": {
+            "$ref": "#/components/schemas/any-type"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "Guard": {
+        "$ref": "#/components/schemas/guard"
+      },
+      "ValidatorReference": {
+        "title": "ValidatorReference",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/args-and-kwargs"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for this Validator.  Often the hub id; e.g. guardrails/regex_match"
+          },
+          "on": {
+            "description": "A reference to the property this validator should be applied against.  Can be a valid JSON path or a meta-property such as \"messages\" or \"output\"",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "messages",
+                  "output"
+                ],
+                "description": "meta-property"
+              },
+              {
+                "type": "string",
+                "description": "JSON path to property; e.g. $.foo.bar"
+              }
+            ]
+          },
+          "onFail": {
+            "type": "string",
+            "enum": [
+              "exception",
+              "filter",
+              "fix",
+              "fix_reask",
+              "noop",
+              "reask",
+              "refrain",
+              "custom"
+            ],
+            "default": "noop"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "schemaArray": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "$dynamicRef": "#meta"
+        }
+      },
+      "nonNegativeInteger": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "nonNegativeIntegerDefault0": {
+        "$ref": "#/components/schemas/nonNegativeInteger",
+        "default": 0
+      },
+      "simpleTypes": {
+        "enum": [
+          "array",
+          "boolean",
+          "integer",
+          "null",
+          "number",
+          "object",
+          "string"
+        ]
+      },
+      "stringArray": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true,
+        "default": []
+      },
+      "CallInputs": {
+        "title": "CallInputs",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/inputs"
+          },
+          {
+            "$ref": "#/components/schemas/args-and-kwargs"
+          }
+        ]
+      },
+      "LLMResponse": {
+        "type": "object",
+        "description": "Information from the LLM response.",
+        "properties": {
+          "promptTokenCount": {
+            "type": "integer"
+          },
+          "responseTokenCount": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "string"
+          },
+          "streamOutput": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "asyncStreamOutput": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "output"
+        ]
+      },
+      "guard": {
+        "title": "Guard",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the Guard.",
+            "format": "kebab-case"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name for the Guard."
+          },
+          "description": {
+            "type": "string",
+            "description": "A description that concisely states the expected behaviour or purpose of the Guard."
+          },
+          "validators": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidatorReference"
+            }
+          },
+          "output_schema": {
+            "$ref": "#/components/schemas/schema"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/call"
+            },
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "definitions": {
+          "ValidatorReference": {
+            "title": "ValidatorReference",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/args-and-kwargs"
+              }
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The unique identifier for this Validator.  Often the hub id; e.g. guardrails/regex_match"
+              },
+              "on": {
+                "description": "A reference to the property this validator should be applied against.  Can be a valid JSON path or a meta-property such as \"messages\" or \"output\"",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "messages",
+                      "output"
+                    ],
+                    "description": "meta-property"
+                  },
+                  {
+                    "type": "string",
+                    "description": "JSON path to property; e.g. $.foo.bar"
+                  }
+                ]
+              },
+              "onFail": {
+                "type": "string",
+                "enum": [
+                  "exception",
+                  "filter",
+                  "fix",
+                  "fix_reask",
+                  "noop",
+                  "reask",
+                  "refrain",
+                  "custom"
+                ],
+                "default": "noop"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        }
+      },
+      "schema": {
+        "title": "Core and Validation specifications meta-schema",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/core"
+          },
+          {
+            "$ref": "#/components/schemas/applicator"
+          },
+          {
+            "$ref": "#/components/schemas/unevaluated"
+          },
+          {
+            "$ref": "#/components/schemas/validation"
+          },
+          {
+            "$ref": "#/components/schemas/meta-data"
+          },
+          {
+            "$ref": "#/components/schemas/format-annotation"
+          },
+          {
+            "$ref": "#/components/schemas/content"
+          }
+        ],
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "definitions": {
+            "$comment": "While no longer an official keyword as it is replaced by $defs, this keyword is retained in the meta-schema to prevent incompatible extensions as it remains in common use.",
+            "type": "object",
+            "additionalProperties": {
+              "$dynamicRef": "#meta"
+            },
+            "default": {}
+          },
+          "dependencies": {
+            "$comment": "\"dependencies\" is no longer a keyword, but schema authors should avoid redefining it to facilitate a smooth transition to \"dependentSchemas\" and \"dependentRequired\"",
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$dynamicRef": "#meta"
+                },
+                {
+                  "$ref": "#/components/schemas/validation/definitions/stringArray"
+                }
+              ]
+            }
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "core": {
+        "title": "Core vocabulary meta-schema",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "$anchor": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][-A-Za-z0-9._]*$"
+          },
+          "$ref": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "$dynamicRef": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "$dynamicAnchor": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][-A-Za-z0-9._]*$"
+          },
+          "$vocabulary": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "format": "uri"
+            },
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "$comment": {
+            "type": "string"
+          },
+          "$defs": {
+            "type": "object",
+            "additionalProperties": {
+              "$dynamicRef": "#meta"
+            },
+            "default": {}
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "applicator": {
+        "title": "Applicator vocabulary meta-schema",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "prefixItems": {
+            "$ref": "#/components/schemas/schemaArray"
+          },
+          "items": {
+            "$dynamicRef": "#meta"
+          },
+          "contains": {
+            "$dynamicRef": "#meta"
+          },
+          "additionalProperties": {
+            "$dynamicRef": "#meta"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "$dynamicRef": "#meta"
+            },
+            "default": {}
+          },
+          "patternProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "$dynamicRef": "#meta"
+            },
+            "propertyNames": {
+              "format": "regex"
+            },
+            "default": {}
+          },
+          "dependentSchemas": {
+            "type": "object",
+            "additionalProperties": {
+              "$dynamicRef": "#meta"
+            }
+          },
+          "propertyNames": {
+            "$dynamicRef": "#meta"
+          },
+          "if": {
+            "$dynamicRef": "#meta"
+          },
+          "then": {
+            "$dynamicRef": "#meta"
+          },
+          "else": {
+            "$dynamicRef": "#meta"
+          },
+          "allOf": {
+            "$ref": "#/components/schemas/schemaArray"
+          },
+          "anyOf": {
+            "$ref": "#/components/schemas/schemaArray"
+          },
+          "oneOf": {
+            "$ref": "#/components/schemas/schemaArray"
+          },
+          "not": {
+            "$dynamicRef": "#meta"
+          }
+        },
+        "definitions": {
+          "schemaArray": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$dynamicRef": "#meta"
+            }
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "unevaluated": {
+        "title": "Unevaluated applicator vocabulary meta-schema",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "unevaluatedItems": {
+            "$dynamicRef": "#meta"
+          },
+          "unevaluatedProperties": {
+            "$dynamicRef": "#meta"
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "validation": {
+        "title": "Validation vocabulary meta-schema",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "multipleOf": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "maximum": {
+            "type": "number"
+          },
+          "exclusiveMaximum": {
+            "type": "number"
+          },
+          "minimum": {
+            "type": "number"
+          },
+          "exclusiveMinimum": {
+            "type": "number"
+          },
+          "maxLength": {
+            "$ref": "#/components/schemas/nonNegativeInteger"
+          },
+          "minLength": {
+            "$ref": "#/components/schemas/nonNegativeIntegerDefault0"
+          },
+          "pattern": {
+            "type": "string",
+            "format": "regex"
+          },
+          "maxItems": {
+            "$ref": "#/components/schemas/nonNegativeInteger"
+          },
+          "minItems": {
+            "$ref": "#/components/schemas/nonNegativeIntegerDefault0"
+          },
+          "uniqueItems": {
+            "type": "boolean",
+            "default": false
+          },
+          "maxContains": {
+            "$ref": "#/components/schemas/nonNegativeInteger"
+          },
+          "minContains": {
+            "$ref": "#/components/schemas/nonNegativeInteger",
+            "default": 1
+          },
+          "maxProperties": {
+            "$ref": "#/components/schemas/nonNegativeInteger"
+          },
+          "minProperties": {
+            "$ref": "#/components/schemas/nonNegativeIntegerDefault0"
+          },
+          "required": {
+            "$ref": "#/components/schemas/stringArray"
+          },
+          "dependentRequired": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/stringArray"
+            }
+          },
+          "const": true,
+          "enum": {
+            "type": "array",
+            "items": true
+          },
+          "type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/simpleTypes"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/simpleTypes"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            ]
+          }
+        },
+        "definitions": {
+          "nonNegativeInteger": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nonNegativeIntegerDefault0": {
+            "$ref": "#/components/schemas/nonNegativeInteger",
+            "default": 0
+          },
+          "simpleTypes": {
+            "enum": [
+              "array",
+              "boolean",
+              "integer",
+              "null",
+              "number",
+              "object",
+              "string"
+            ]
+          },
+          "stringArray": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true,
+            "default": []
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "meta-data": {
+        "title": "Meta-data vocabulary meta-schema",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "default": true,
+          "deprecated": {
+            "type": "boolean",
+            "default": false
+          },
+          "readOnly": {
+            "type": "boolean",
+            "default": false
+          },
+          "writeOnly": {
+            "type": "boolean",
+            "default": false
+          },
+          "examples": {
+            "type": "array",
+            "items": true
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "format-annotation": {
+        "title": "Format vocabulary meta-schema for annotation results",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "format": {
+            "type": "string"
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "content": {
+        "title": "Content vocabulary meta-schema",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "properties": {
+          "contentMediaType": {
+            "type": "string"
+          },
+          "contentEncoding": {
+            "type": "string"
+          },
+          "contentSchema": {
+            "$dynamicRef": "#meta"
+          }
+        },
+        "$dynamicAnchor": "meta"
+      },
+      "call": {
+        "title": "Call",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for this Call.  Can be used as an identifier for a specific execution of a Guard."
+          },
+          "iterations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/iteration"
+            },
+            "default": []
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/CallInputs",
+            "default": {}
+          },
+          "exception": {
+            "type": "string"
+          }
+        },
+        "definitions": {
+          "CallInputs": {
+            "title": "CallInputs",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/inputs"
+              },
+              {
+                "$ref": "#/components/schemas/args-and-kwargs"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "iteration": {
+        "title": "Iteration",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for this Call.  Can be used as an identifier for a specific execution of a Guard."
+          },
+          "index": {
+            "type": "integer",
+            "description": "The zero-based index of this iteration within the current Call."
+          },
+          "callId": {
+            "type": "string",
+            "description": "The unique identifier for the Call that this iteration is a part of."
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/inputs"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/outputs"
+          }
+        },
+        "required": [
+          "id",
+          "index",
+          "callId"
+        ]
+      },
+      "inputs": {
+        "title": "Inputs",
+        "type": "object",
+        "properties": {
+          "llmApi": {
+            "type": "string",
+            "description": "The LLM resource targeted by the user. e.g. openai.chat.completions.create"
+          },
+          "llmOutput": {
+            "type": "string",
+            "description": "The string output from an external LLM call provided by the user via Guard.parse."
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "description": "The messages for chat models."
+          },
+          "promptParams": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Parameters to be formatted into the messages."
+          },
+          "numReasks": {
+            "type": "integer",
+            "description": "The total number of times the LLM can be called to correct output excluding the initial call."
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Additional data to be used by Validators during execution time."
+          },
+          "fullSchemaReask": {
+            "type": "boolean",
+            "description": "Whether to perform reasks for the entire schema rather than for individual fields."
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "Whether to use streaming."
+          }
+        }
+      },
+      "outputs": {
+        "title": "Outputs",
+        "type": "object",
+        "properties": {
+          "llmResponseInfo": {
+            "$ref": "#/components/schemas/LLMResponse"
+          },
+          "rawOutput": {
+            "type": "string",
+            "description": "The string content from the LLM response."
+          },
+          "parsedOutput": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/any-type"
+                }
+              }
+            ]
+          },
+          "validationResponse": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/reask"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/any-type"
+                }
+              }
+            ]
+          },
+          "guardedOutput": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/any-type"
+                }
+              }
+            ]
+          },
+          "reasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/reask"
+            }
+          },
+          "validatorLogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/validator-log"
+            }
+          },
+          "error": {
+            "type": "string",
+            "description": "The error message from any exception which interrupted the Guard execution process."
+          }
+        },
+        "definitions": {
+          "LLMResponse": {
+            "type": "object",
+            "description": "Information from the LLM response.",
+            "properties": {
+              "promptTokenCount": {
+                "type": "integer"
+              },
+              "responseTokenCount": {
+                "type": "integer"
+              },
+              "output": {
+                "type": "string"
+              },
+              "streamOutput": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "asyncStreamOutput": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "output"
+            ]
+          }
+        }
+      },
+      "validator-log": {
+        "title": "ValidatorLog",
+        "type": "object",
+        "properties": {
+          "validatorName": {
+            "type": "string",
+            "description": "The class name of the validator.",
+            "format": "PascalCase"
+          },
+          "registeredName": {
+            "type": "string",
+            "description": "The registry id of the validator.",
+            "format": "kebab-case"
+          },
+          "instanceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "A unique identifier for the validator that produced this log within the session."
+          },
+          "propertyPath": {
+            "type": "string",
+            "description": "The JSON path to the property which was validated that produced this log."
+          },
+          "valueBeforeValidation": {
+            "$ref": "#/components/schemas/any-type"
+          },
+          "valueAfterValidation": {
+            "$ref": "#/components/schemas/any-type"
+          },
+          "validationResult": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/pass-result"
+              },
+              {
+                "$ref": "#/components/schemas/fail-result"
+              }
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "validatorName",
+          "registeredName",
+          "valueBeforeValidation",
+          "propertyPath"
+        ]
+      },
+      "pass-result": {
+        "title": "PassResult",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/validation-result"
+          }
+        ],
+        "properties": {
+          "outcome": {
+            "const": "pass"
+          },
+          "valueOverride": {
+            "$ref": "#/components/schemas/any-type"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "args-and-kwargs": {
+        "title": "ArgsAndKwargs",
+        "type": "object",
+        "properties": {
+          "args": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/any-type"
+            }
+          },
+          "kwargs": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "ValidatePayload": {
+        "type": "object",
+        "properties": {
+          "llmOutput": {
+            "type": "string",
+            "description": "The LLM output as a string or the input prompts for the LLM",
+            "example": "stubbed llm output"
+          },
+          "numReasks": {
+            "type": "integer",
+            "description": "An override for the number of re-asks to perform"
+          },
+          "promptParams": {
+            "type": "object",
+            "description": "additional params for llm prompts",
+            "properties": {},
+            "additionalProperties": {}
+          },
+          "llmApi": {
+            "$ref": "#/components/schemas/LLMResource"
+          }
+        },
+        "additionalProperties": {}
+      },
+      "LLMResource": {
+        "type": "string",
+        "enum": [
+          "openai.Completion.create",
+          "openai.completions.create",
+          "openai.ChatCompletion.create",
+          "openai.chat.completions.create",
+          "openai.Completion.acreate",
+          "openai.ChatCompletion.acreate",
+          "litellm.completion",
+          "litellm.acompletion"
+        ]
+      },
+      "CreateChatCompletionRequest": {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "description": "Set of 16 key-value pairs that can be attached to an object. This can be\nuseful for storing additional information about the object in a structured\nformat, and querying for objects via API or the dashboard.\n\nKeys are strings with a maximum length of 64 characters. Values are strings\nwith a maximum length of 512 characters.\n",
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "x-oaiTypeLabel": "map"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "top_logprobs": {
+                    "anyOf": [
+                      {
+                        "description": "An integer between 0 and 20 specifying the number of most likely tokens to\nreturn at each token position, each with an associated log probability.\n",
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 20
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "temperature": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 2,
+                        "default": 1,
+                        "example": 1,
+                        "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\nWe generally recommend altering this or `top_p` but not both.\n"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "top_p": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "default": 1,
+                        "example": 1,
+                        "description": "An alternative to sampling with temperature, called nucleus sampling,\nwhere the model considers the results of the tokens with top_p probability\nmass. So 0.1 means only the tokens comprising the top 10% probability mass\nare considered.\n\nWe generally recommend altering this or `temperature` but not both.\n"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "user": {
+                    "type": "string",
+                    "example": "user-1234",
+                    "deprecated": true,
+                    "description": "This field is being replaced by `safety_identifier` and `prompt_cache_key`. Use `prompt_cache_key` instead to maintain caching optimizations.\nA stable identifier for your end-users.\nUsed to boost cache hit rates by better bucketing similar requests and  to help OpenAI detect and prevent abuse. [Learn more](/docs/guides/safety-best-practices#safety-identifiers).\n"
+                  },
+                  "safety_identifier": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "example": "safety-identifier-1234",
+                    "description": "A stable identifier used to help detect users of your application that may be violating OpenAI's usage policies.\nThe IDs should be a string that uniquely identifies each user, with a maximum length of 64 characters. We recommend hashing their username or email address, in order to avoid sending us any identifying information. [Learn more](/docs/guides/safety-best-practices#safety-identifiers).\n"
+                  },
+                  "prompt_cache_key": {
+                    "type": "string",
+                    "example": "prompt-cache-key-1234",
+                    "description": "Used by OpenAI to cache responses for similar requests to optimize your cache hit rates. Replaces the `user` field. [Learn more](/docs/guides/prompt-caching).\n"
+                  },
+                  "service_tier": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "description": "Specifies the processing type used for serving the request.\n  - If set to 'auto', then the request will be processed with the service tier configured in the Project settings. Unless otherwise configured, the Project will use 'default'.\n  - If set to 'default', then the request will be processed with the standard pricing and performance for the selected model.\n  - If set to '[flex](/docs/guides/flex-processing)' or '[priority](https://openai.com/api-priority-processing/)', then the request will be processed with the corresponding service tier.\n  - When not set, the default behavior is 'auto'.\n\n  When the `service_tier` parameter is set, the response body will include the `service_tier` value based on the processing mode actually used to serve the request. This response value may be different from the value set in the parameter.\n",
+                        "enum": [
+                          "auto",
+                          "default",
+                          "flex",
+                          "scale",
+                          "priority"
+                        ],
+                        "default": "auto"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "prompt_cache_retention": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "in-memory",
+                          "24h"
+                        ],
+                        "description": "The retention policy for the prompt cache. Set to `24h` to enable extended prompt caching, which keeps cached prefixes active for longer, up to a maximum of 24 hours. [Learn more](/docs/guides/prompt-caching#prompt-cache-retention).\n"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "top_logprobs": {
+                    "description": "An integer between 0 and 20 specifying the number of most likely tokens to\nreturn at each token position, each with an associated log probability.\n",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 20
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "messages": {
+                "description": "A list of messages comprising the conversation so far. Depending on the\n[model](/docs/models) you use, different message types (modalities) are\nsupported, like [text](/docs/guides/text-generation),\n[images](/docs/guides/vision), and [audio](/docs/guides/audio).\n",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "title": "Developer message",
+                      "description": "Developer-provided instructions that the model should follow, regardless of\nmessages sent by the user. With o1 models and newer, `developer` messages\nreplace the previous `system` messages.\n",
+                      "properties": {
+                        "content": {
+                          "description": "The contents of the developer message.",
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "description": "The contents of the developer message.",
+                              "title": "Text content"
+                            },
+                            {
+                              "type": "array",
+                              "description": "An array of content parts with a defined type. For developer messages, only type `text` is supported.",
+                              "title": "Array of content parts",
+                              "items": {
+                                "type": "object",
+                                "title": "Text content part",
+                                "description": "Learn about [text inputs](/docs/guides/text-generation).\n",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "text"
+                                    ],
+                                    "description": "The type of the content part.",
+                                    "x-stainless-const": true
+                                  },
+                                  "text": {
+                                    "type": "string",
+                                    "description": "The text content."
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "text"
+                                ]
+                              },
+                              "minItems": 1
+                            }
+                          ]
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "developer"
+                          ],
+                          "description": "The role of the messages author, in this case `developer`.",
+                          "x-stainless-const": true
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "An optional name for the participant. Provides the model information to differentiate between participants of the same role."
+                        }
+                      },
+                      "required": [
+                        "content",
+                        "role"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "title": "System message",
+                      "description": "Developer-provided instructions that the model should follow, regardless of\nmessages sent by the user. With o1 models and newer, use `developer` messages\nfor this purpose instead.\n",
+                      "properties": {
+                        "content": {
+                          "description": "The contents of the system message.",
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "description": "The contents of the system message.",
+                              "title": "Text content"
+                            },
+                            {
+                              "type": "array",
+                              "description": "An array of content parts with a defined type. For system messages, only type `text` is supported.",
+                              "title": "Array of content parts",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "title": "Text content part",
+                                    "description": "Learn about [text inputs](/docs/guides/text-generation).\n",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "text"
+                                        ],
+                                        "description": "The type of the content part.",
+                                        "x-stainless-const": true
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "description": "The text content."
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "minItems": 1
+                            }
+                          ]
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "system"
+                          ],
+                          "description": "The role of the messages author, in this case `system`.",
+                          "x-stainless-const": true
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "An optional name for the participant. Provides the model information to differentiate between participants of the same role."
+                        }
+                      },
+                      "required": [
+                        "content",
+                        "role"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "title": "User message",
+                      "description": "Messages sent by an end user, containing prompts or additional context\ninformation.\n",
+                      "properties": {
+                        "content": {
+                          "description": "The contents of the user message.\n",
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "description": "The text contents of the message.",
+                              "title": "Text content"
+                            },
+                            {
+                              "type": "array",
+                              "description": "An array of content parts with a defined type. Supported options differ based on the [model](/docs/models) being used to generate the response. Can contain text, image, or audio inputs.",
+                              "title": "Array of content parts",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "title": "Text content part",
+                                    "description": "Learn about [text inputs](/docs/guides/text-generation).\n",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "text"
+                                        ],
+                                        "description": "The type of the content part.",
+                                        "x-stainless-const": true
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "description": "The text content."
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "title": "Image content part",
+                                    "description": "Learn about [image inputs](/docs/guides/vision).\n",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image_url"
+                                        ],
+                                        "description": "The type of the content part.",
+                                        "x-stainless-const": true
+                                      },
+                                      "image_url": {
+                                        "type": "object",
+                                        "properties": {
+                                          "url": {
+                                            "type": "string",
+                                            "description": "Either a URL of the image or the base64 encoded image data.",
+                                            "format": "uri"
+                                          },
+                                          "detail": {
+                                            "type": "string",
+                                            "description": "Specifies the detail level of the image. Learn more in the [Vision guide](/docs/guides/vision#low-or-high-fidelity-image-understanding).",
+                                            "enum": [
+                                              "auto",
+                                              "low",
+                                              "high"
+                                            ],
+                                            "default": "auto"
+                                          }
+                                        },
+                                        "required": [
+                                          "url"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "image_url"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "title": "Audio content part",
+                                    "description": "Learn about [audio inputs](/docs/guides/audio).\n",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "input_audio"
+                                        ],
+                                        "description": "The type of the content part. Always `input_audio`.",
+                                        "x-stainless-const": true
+                                      },
+                                      "input_audio": {
+                                        "type": "object",
+                                        "properties": {
+                                          "data": {
+                                            "type": "string",
+                                            "description": "Base64 encoded audio data."
+                                          },
+                                          "format": {
+                                            "type": "string",
+                                            "enum": [
+                                              "wav",
+                                              "mp3"
+                                            ],
+                                            "description": "The format of the encoded audio data. Currently supports \"wav\" and \"mp3\".\n"
+                                          }
+                                        },
+                                        "required": [
+                                          "data",
+                                          "format"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "input_audio"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "title": "File content part",
+                                    "description": "Learn about [file inputs](/docs/guides/text) for text generation.\n",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "file"
+                                        ],
+                                        "description": "The type of the content part. Always `file`.",
+                                        "x-stainless-const": true
+                                      },
+                                      "file": {
+                                        "type": "object",
+                                        "properties": {
+                                          "filename": {
+                                            "type": "string",
+                                            "description": "The name of the file, used when passing the file to the model as a \nstring.\n"
+                                          },
+                                          "file_data": {
+                                            "type": "string",
+                                            "description": "The base64 encoded file data, used when passing the file to the model \nas a string.\n"
+                                          },
+                                          "file_id": {
+                                            "type": "string",
+                                            "description": "The ID of an uploaded file to use as input.\n"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "file"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "minItems": 1
+                            }
+                          ]
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user"
+                          ],
+                          "description": "The role of the messages author, in this case `user`.",
+                          "x-stainless-const": true
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "An optional name for the participant. Provides the model information to differentiate between participants of the same role."
+                        }
+                      },
+                      "required": [
+                        "content",
+                        "role"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "title": "Assistant message",
+                      "description": "Messages sent by the model in response to user messages.\n",
+                      "properties": {
+                        "content": {
+                          "anyOf": [
+                            {
+                              "oneOf": [
+                                {
+                                  "type": "string",
+                                  "description": "The contents of the assistant message.",
+                                  "title": "Text content"
+                                },
+                                {
+                                  "type": "array",
+                                  "description": "An array of content parts with a defined type. Can be one or more of type `text`, or exactly one of type `refusal`.",
+                                  "title": "Array of content parts",
+                                  "items": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "title": "Text content part",
+                                        "description": "Learn about [text inputs](/docs/guides/text-generation).\n",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "enum": [
+                                              "text"
+                                            ],
+                                            "description": "The type of the content part.",
+                                            "x-stainless-const": true
+                                          },
+                                          "text": {
+                                            "type": "string",
+                                            "description": "The text content."
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "text"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "title": "Refusal content part",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "enum": [
+                                              "refusal"
+                                            ],
+                                            "description": "The type of the content part.",
+                                            "x-stainless-const": true
+                                          },
+                                          "refusal": {
+                                            "type": "string",
+                                            "description": "The refusal message generated by the model."
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "refusal"
+                                        ]
+                                      }
+                                    ],
+                                    "discriminator": {
+                                      "propertyName": "type"
+                                    }
+                                  },
+                                  "minItems": 1
+                                }
+                              ],
+                              "description": "The contents of the assistant message. Required unless `tool_calls` or `function_call` is specified.\n"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "refusal": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "The refusal message by the assistant."
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "assistant"
+                          ],
+                          "description": "The role of the messages author, in this case `assistant`.",
+                          "x-stainless-const": true
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "An optional name for the participant. Provides the model information to differentiate between participants of the same role."
+                        },
+                        "audio": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "description": "Data about a previous audio response from the model.\n[Learn more](/docs/guides/audio).\n",
+                              "required": [
+                                "id"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique identifier for a previous audio response from the model.\n"
+                                }
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "tool_calls": {
+                          "type": "array",
+                          "description": "The tool calls generated by the model, such as function calls.",
+                          "items": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "title": "Function tool call",
+                                "description": "A call to a function tool created by the model.\n",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "The ID of the tool call."
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "function"
+                                    ],
+                                    "description": "The type of the tool. Currently, only `function` is supported.",
+                                    "x-stainless-const": true
+                                  },
+                                  "function": {
+                                    "type": "object",
+                                    "description": "The function that the model called.",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "description": "The name of the function to call."
+                                      },
+                                      "arguments": {
+                                        "type": "string",
+                                        "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "arguments"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "type",
+                                  "function"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "title": "Custom tool call",
+                                "description": "A call to a custom tool created by the model.\n",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "The ID of the tool call."
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "custom"
+                                    ],
+                                    "description": "The type of the tool. Always `custom`.",
+                                    "x-stainless-const": true
+                                  },
+                                  "custom": {
+                                    "type": "object",
+                                    "description": "The custom tool that the model called.",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "description": "The name of the custom tool to call."
+                                      },
+                                      "input": {
+                                        "type": "string",
+                                        "description": "The input for the custom tool call generated by the model."
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "input"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "type",
+                                  "custom"
+                                ]
+                              }
+                            ],
+                            "discriminator": {
+                              "propertyName": "type"
+                            }
+                          }
+                        },
+                        "function_call": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "deprecated": true,
+                              "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+                              "properties": {
+                                "arguments": {
+                                  "type": "string",
+                                  "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "The name of the function to call."
+                                }
+                              },
+                              "required": [
+                                "arguments",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "role"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "title": "Tool message",
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "tool"
+                          ],
+                          "description": "The role of the messages author, in this case `tool`.",
+                          "x-stainless-const": true
+                        },
+                        "content": {
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "description": "The contents of the tool message.",
+                              "title": "Text content"
+                            },
+                            {
+                              "type": "array",
+                              "description": "An array of content parts with a defined type. For tool messages, only type `text` is supported.",
+                              "title": "Array of content parts",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "title": "Text content part",
+                                    "description": "Learn about [text inputs](/docs/guides/text-generation).\n",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "text"
+                                        ],
+                                        "description": "The type of the content part.",
+                                        "x-stainless-const": true
+                                      },
+                                      "text": {
+                                        "type": "string",
+                                        "description": "The text content."
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "text"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "minItems": 1
+                            }
+                          ],
+                          "description": "The contents of the tool message."
+                        },
+                        "tool_call_id": {
+                          "type": "string",
+                          "description": "Tool call that this message is responding to."
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "content",
+                        "tool_call_id"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "title": "Function message",
+                      "deprecated": true,
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "function"
+                          ],
+                          "description": "The role of the messages author, in this case `function`.",
+                          "x-stainless-const": true
+                        },
+                        "content": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "The contents of the function message."
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the function to call."
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "content",
+                        "name"
+                      ]
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "role"
+                  }
+                }
+              },
+              "model": {
+                "example": "gpt-5.4",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "gpt-5.4",
+                      "gpt-5.4-mini",
+                      "gpt-5.4-nano",
+                      "gpt-5.4-mini-2026-03-17",
+                      "gpt-5.4-nano-2026-03-17",
+                      "gpt-5.3-chat-latest",
+                      "gpt-5.2",
+                      "gpt-5.2-2025-12-11",
+                      "gpt-5.2-chat-latest",
+                      "gpt-5.2-pro",
+                      "gpt-5.2-pro-2025-12-11",
+                      "gpt-5.1",
+                      "gpt-5.1-2025-11-13",
+                      "gpt-5.1-codex",
+                      "gpt-5.1-mini",
+                      "gpt-5.1-chat-latest",
+                      "gpt-5",
+                      "gpt-5-mini",
+                      "gpt-5-nano",
+                      "gpt-5-2025-08-07",
+                      "gpt-5-mini-2025-08-07",
+                      "gpt-5-nano-2025-08-07",
+                      "gpt-5-chat-latest",
+                      "gpt-4.1",
+                      "gpt-4.1-mini",
+                      "gpt-4.1-nano",
+                      "gpt-4.1-2025-04-14",
+                      "gpt-4.1-mini-2025-04-14",
+                      "gpt-4.1-nano-2025-04-14",
+                      "o4-mini",
+                      "o4-mini-2025-04-16",
+                      "o3",
+                      "o3-2025-04-16",
+                      "o3-mini",
+                      "o3-mini-2025-01-31",
+                      "o1",
+                      "o1-2024-12-17",
+                      "o1-preview",
+                      "o1-preview-2024-09-12",
+                      "o1-mini",
+                      "o1-mini-2024-09-12",
+                      "gpt-4o",
+                      "gpt-4o-2024-11-20",
+                      "gpt-4o-2024-08-06",
+                      "gpt-4o-2024-05-13",
+                      "gpt-4o-audio-preview",
+                      "gpt-4o-audio-preview-2024-10-01",
+                      "gpt-4o-audio-preview-2024-12-17",
+                      "gpt-4o-audio-preview-2025-06-03",
+                      "gpt-4o-mini-audio-preview",
+                      "gpt-4o-mini-audio-preview-2024-12-17",
+                      "gpt-4o-search-preview",
+                      "gpt-4o-mini-search-preview",
+                      "gpt-4o-search-preview-2025-03-11",
+                      "gpt-4o-mini-search-preview-2025-03-11",
+                      "chatgpt-4o-latest",
+                      "codex-mini-latest",
+                      "gpt-4o-mini",
+                      "gpt-4o-mini-2024-07-18",
+                      "gpt-4-turbo",
+                      "gpt-4-turbo-2024-04-09",
+                      "gpt-4-0125-preview",
+                      "gpt-4-turbo-preview",
+                      "gpt-4-1106-preview",
+                      "gpt-4-vision-preview",
+                      "gpt-4",
+                      "gpt-4-0314",
+                      "gpt-4-0613",
+                      "gpt-4-32k",
+                      "gpt-4-32k-0314",
+                      "gpt-4-32k-0613",
+                      "gpt-3.5-turbo",
+                      "gpt-3.5-turbo-16k",
+                      "gpt-3.5-turbo-0301",
+                      "gpt-3.5-turbo-0613",
+                      "gpt-3.5-turbo-1106",
+                      "gpt-3.5-turbo-0125",
+                      "gpt-3.5-turbo-16k-0613"
+                    ]
+                  }
+                ]
+              },
+              "modalities": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "description": "Output types that you would like the model to generate.\nMost models are capable of generating text, which is the default:\n\n`[\"text\"]`\n\nThe `gpt-4o-audio-preview` model can also be used to\n[generate audio](/docs/guides/audio). To request that this model generate\nboth text and audio responses, you can use:\n\n`[\"text\", \"audio\"]`\n",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "audio"
+                      ]
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "verbosity": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high"
+                    ],
+                    "default": "medium",
+                    "description": "Constrains the verbosity of the model's response. Lower values will result in\nmore concise responses, while higher values will result in more verbose responses.\nCurrently supported values are `low`, `medium`, and `high`.\n"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reasoning_effort": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "minimal",
+                      "low",
+                      "medium",
+                      "high",
+                      "xhigh"
+                    ],
+                    "default": "medium",
+                    "description": "Constrains effort on reasoning for\n[reasoning models](https://platform.openai.com/docs/guides/reasoning).\nCurrently supported values are `none`, `minimal`, `low`, `medium`, `high`, and `xhigh`. Reducing\nreasoning effort can result in faster responses and fewer tokens used\non reasoning in a response.\n\n- `gpt-5.1` defaults to `none`, which does not perform reasoning. The supported reasoning values for `gpt-5.1` are `none`, `low`, `medium`, and `high`. Tool calls are supported for all reasoning values in gpt-5.1.\n- All models before `gpt-5.1` default to `medium` reasoning effort, and do not support `none`.\n- The `gpt-5-pro` model defaults to (and only supports) `high` reasoning effort.\n- `xhigh` is supported for all models after `gpt-5.1-codex-max`.\n"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "max_completion_tokens": {
+                "description": "An upper bound for the number of tokens that can be generated for a completion, including visible output tokens and [reasoning tokens](/docs/guides/reasoning).\n",
+                "type": "integer",
+                "nullable": true
+              },
+              "frequency_penalty": {
+                "type": "number",
+                "default": 0,
+                "minimum": -2,
+                "maximum": 2,
+                "nullable": true,
+                "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on\ntheir existing frequency in the text so far, decreasing the model's\nlikelihood to repeat the same line verbatim.\n"
+              },
+              "presence_penalty": {
+                "type": "number",
+                "default": 0,
+                "minimum": -2,
+                "maximum": 2,
+                "nullable": true,
+                "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on\nwhether they appear in the text so far, increasing the model's likelihood\nto talk about new topics.\n"
+              },
+              "web_search_options": {
+                "type": "object",
+                "title": "Web search",
+                "description": "This tool searches the web for relevant results to use in a response.\nLearn more about the [web search tool](/docs/guides/tools-web-search?api-mode=chat).\n",
+                "properties": {
+                  "user_location": {
+                    "type": "object",
+                    "nullable": true,
+                    "required": [
+                      "type",
+                      "approximate"
+                    ],
+                    "description": "Approximate location parameters for the search.\n",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "The type of location approximation. Always `approximate`.\n",
+                        "enum": [
+                          "approximate"
+                        ],
+                        "x-stainless-const": true
+                      },
+                      "approximate": {
+                        "type": "object",
+                        "title": "Web search location",
+                        "description": "Approximate location parameters for the search.",
+                        "properties": {
+                          "country": {
+                            "type": "string",
+                            "description": "The two-letter \n[ISO country code](https://en.wikipedia.org/wiki/ISO_3166-1) of the user,\ne.g. `US`.\n"
+                          },
+                          "region": {
+                            "type": "string",
+                            "description": "Free text input for the region of the user, e.g. `California`.\n"
+                          },
+                          "city": {
+                            "type": "string",
+                            "description": "Free text input for the city of the user, e.g. `San Francisco`.\n"
+                          },
+                          "timezone": {
+                            "type": "string",
+                            "description": "The [IANA timezone](https://timeapi.io/documentation/iana-timezones) \nof the user, e.g. `America/Los_Angeles`.\n"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "search_context_size": {
+                    "type": "string",
+                    "description": "High level guidance for the amount of context window space to use for the \nsearch. One of `low`, `medium`, or `high`. `medium` is the default.\n",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high"
+                    ],
+                    "default": "medium"
+                  }
+                }
+              },
+              "top_logprobs": {
+                "description": "An integer between 0 and 20 specifying the number of most likely tokens to\nreturn at each token position, each with an associated log probability.\n`logprobs` must be set to `true` if this parameter is used.\n",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20,
+                "nullable": true
+              },
+              "response_format": {
+                "description": "An object specifying the format that the model must output.\n\nSetting to `{ \"type\": \"json_schema\", \"json_schema\": {...} }` enables\nStructured Outputs which ensures the model will match your supplied JSON\nschema. Learn more in the [Structured Outputs\nguide](/docs/guides/structured-outputs).\n\nSetting to `{ \"type\": \"json_object\" }` enables the older JSON mode, which\nensures the message the model generates is valid JSON. Using `json_schema`\nis preferred for models that support it.\n",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "title": "Text",
+                    "description": "Default response format. Used to generate text responses.\n",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "The type of response format being defined. Always `text`.",
+                        "enum": [
+                          "text"
+                        ],
+                        "x-stainless-const": true
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "title": "JSON schema",
+                    "description": "JSON Schema response format. Used to generate structured JSON responses.\nLearn more about [Structured Outputs](/docs/guides/structured-outputs).\n",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "The type of response format being defined. Always `json_schema`.",
+                        "enum": [
+                          "json_schema"
+                        ],
+                        "x-stainless-const": true
+                      },
+                      "json_schema": {
+                        "type": "object",
+                        "title": "JSON schema",
+                        "description": "Structured Outputs configuration options, including a JSON Schema.\n",
+                        "properties": {
+                          "description": {
+                            "type": "string",
+                            "description": "A description of what the response format is for, used by the model to\ndetermine how to respond in the format.\n"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "The name of the response format. Must be a-z, A-Z, 0-9, or contain\nunderscores and dashes, with a maximum length of 64.\n"
+                          },
+                          "schema": {
+                            "type": "object",
+                            "title": "JSON schema",
+                            "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
+                            "additionalProperties": true
+                          },
+                          "strict": {
+                            "anyOf": [
+                              {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "Whether to enable strict schema adherence when generating the output.\nIf set to true, the model will always follow the exact schema defined\nin the `schema` field. Only a subset of JSON Schema is supported when\n`strict` is `true`. To learn more, read the [Structured Outputs\nguide](/docs/guides/structured-outputs).\n"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "json_schema"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "title": "JSON object",
+                    "description": "JSON object response format. An older method of generating JSON responses.\nUsing `json_schema` is recommended for models that support it. Note that the\nmodel will not generate JSON without a system or user message instructing it\nto do so.\n",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "The type of response format being defined. Always `json_object`.",
+                        "enum": [
+                          "json_object"
+                        ],
+                        "x-stainless-const": true
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "type"
+                }
+              },
+              "audio": {
+                "type": "object",
+                "nullable": true,
+                "description": "Parameters for audio output. Required when audio output is requested with\n`modalities: [\"audio\"]`. [Learn more](/docs/guides/audio).\n",
+                "required": [
+                  "voice",
+                  "format"
+                ],
+                "properties": {
+                  "voice": {
+                    "title": "Voice",
+                    "description": "A built-in voice name or a custom voice reference.\n",
+                    "anyOf": [
+                      {
+                        "example": "ash",
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "alloy",
+                              "ash",
+                              "ballad",
+                              "coral",
+                              "echo",
+                              "sage",
+                              "shimmer",
+                              "verse",
+                              "marin",
+                              "cedar"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "description": "Custom voice reference.",
+                        "additionalProperties": false,
+                        "required": [
+                          "id"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "The custom voice ID, e.g. `voice_1234`.",
+                            "example": "voice_1234"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "wav",
+                      "aac",
+                      "mp3",
+                      "flac",
+                      "opus",
+                      "pcm16"
+                    ],
+                    "description": "Specifies the output audio format. Must be one of `wav`, `mp3`, `flac`,\n`opus`, or `pcm16`.\n"
+                  }
+                }
+              },
+              "store": {
+                "type": "boolean",
+                "default": false,
+                "nullable": true,
+                "description": "Whether or not to store the output of this chat completion request for\nuse in our [model distillation](/docs/guides/distillation) or\n[evals](/docs/guides/evals) products.\n\nSupports text and image inputs. Note: image inputs over 8MB will be dropped.\n"
+              },
+              "stream": {
+                "description": "If set to true, the model response data will be streamed to the client\nas it is generated using [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format).\nSee the [Streaming section below](/docs/api-reference/chat/streaming)\nfor more information, along with the [streaming responses](/docs/guides/streaming-responses)\nguide for more information on how to handle the streaming events.\n",
+                "type": "boolean",
+                "nullable": true,
+                "default": false
+              },
+              "stop": {
+                "description": "Not supported with latest reasoning models `o3` and `o4-mini`.\n\nUp to 4 sequences where the API will stop generating further tokens. The\nreturned text will not contain the stop sequence.\n",
+                "default": null,
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "default": "<|endoftext|>",
+                    "example": "\n",
+                    "nullable": true
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "string",
+                      "example": "[\"\\n\"]"
+                    }
+                  }
+                ]
+              },
+              "logit_bias": {
+                "type": "object",
+                "x-oaiTypeLabel": "map",
+                "default": null,
+                "nullable": true,
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "description": "Modify the likelihood of specified tokens appearing in the completion.\n\nAccepts a JSON object that maps tokens (specified by their token ID in the\ntokenizer) to an associated bias value from -100 to 100. Mathematically,\nthe bias is added to the logits generated by the model prior to sampling.\nThe exact effect will vary per model, but values between -1 and 1 should\ndecrease or increase likelihood of selection; values like -100 or 100\nshould result in a ban or exclusive selection of the relevant token.\n"
+              },
+              "logprobs": {
+                "description": "Whether to return log probabilities of the output tokens or not. If true,\nreturns the log probabilities of each output token returned in the\n`content` of `message`.\n",
+                "type": "boolean",
+                "default": false,
+                "nullable": true
+              },
+              "max_tokens": {
+                "description": "The maximum number of [tokens](/tokenizer) that can be generated in the\nchat completion. This value can be used to control\n[costs](https://openai.com/api/pricing/) for text generated via API.\n\nThis value is now deprecated in favor of `max_completion_tokens`, and is\nnot compatible with [o-series models](/docs/guides/reasoning).\n",
+                "type": "integer",
+                "nullable": true,
+                "deprecated": true
+              },
+              "n": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 128,
+                "default": 1,
+                "example": 1,
+                "nullable": true,
+                "description": "How many chat completion choices to generate for each input message. Note that you will be charged based on the number of generated tokens across all of the choices. Keep `n` as `1` to minimize costs."
+              },
+              "prediction": {
+                "nullable": true,
+                "description": "Configuration for a [Predicted Output](/docs/guides/predicted-outputs),\nwhich can greatly improve response times when large parts of the model\nresponse are known ahead of time. This is most common when you are\nregenerating a file with only minor changes to most of the content.\n",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "title": "Static Content",
+                    "description": "Static predicted output content, such as the content of a text file that is\nbeing regenerated.\n",
+                    "required": [
+                      "type",
+                      "content"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "content"
+                        ],
+                        "description": "The type of the predicted content you want to provide. This type is\ncurrently always `content`.\n",
+                        "x-stainless-const": true
+                      },
+                      "content": {
+                        "description": "The content that should be matched when generating a model response.\nIf generated tokens would match this content, the entire model response\ncan be returned much more quickly.\n",
+                        "oneOf": [
+                          {
+                            "type": "string",
+                            "title": "Text content",
+                            "description": "The content used for a Predicted Output. This is often the\ntext of a file you are regenerating with minor changes.\n"
+                          },
+                          {
+                            "type": "array",
+                            "description": "An array of content parts with a defined type. Supported options differ based on the [model](/docs/models) being used to generate the response. Can contain text inputs.",
+                            "title": "Array of content parts",
+                            "items": {
+                              "type": "object",
+                              "title": "Text content part",
+                              "description": "Learn about [text inputs](/docs/guides/text-generation).\n",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "text"
+                                  ],
+                                  "description": "The type of the content part.",
+                                  "x-stainless-const": true
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "description": "The text content."
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "text"
+                              ]
+                            },
+                            "minItems": 1
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "seed": {
+                "type": "integer",
+                "minimum": -9223372036854776000,
+                "maximum": 9223372036854776000,
+                "nullable": true,
+                "deprecated": true,
+                "description": "This feature is in Beta.\nIf specified, our system will make a best effort to sample deterministically, such that repeated requests with the same `seed` and parameters should return the same result.\nDeterminism is not guaranteed, and you should refer to the `system_fingerprint` response parameter to monitor changes in the backend.\n",
+                "x-oaiMeta": {
+                  "beta": true
+                }
+              },
+              "stream_options": {
+                "anyOf": [
+                  {
+                    "description": "Options for streaming response. Only set this when you set `stream: true`.\n",
+                    "type": "object",
+                    "default": null,
+                    "properties": {
+                      "include_usage": {
+                        "type": "boolean",
+                        "description": "If set, an additional chunk will be streamed before the `data: [DONE]`\nmessage. The `usage` field on this chunk shows the token usage statistics\nfor the entire request, and the `choices` field will always be an empty\narray.\n\nAll other chunks will also include a `usage` field, but with a null\nvalue. **NOTE:** If the stream is interrupted, you may not receive the\nfinal usage chunk which contains the total token usage for the request.\n"
+                      },
+                      "include_obfuscation": {
+                        "type": "boolean",
+                        "description": "When true, stream obfuscation will be enabled. Stream obfuscation adds\nrandom characters to an `obfuscation` field on streaming delta events to\nnormalize payload sizes as a mitigation to certain side-channel attacks.\nThese obfuscation fields are included by default, but add a small amount\nof overhead to the data stream. You can set `include_obfuscation` to\nfalse to optimize for bandwidth if you trust the network links between\nyour application and the OpenAI API.\n"
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tools": {
+                "type": "array",
+                "description": "A list of tools the model may call. You can provide either\n[custom tools](/docs/guides/function-calling#custom-tools) or\n[function tools](/docs/guides/function-calling).\n",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "title": "Function tool",
+                      "description": "A function tool that can be used to generate a response.\n",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "function"
+                          ],
+                          "description": "The type of the tool. Currently, only `function` is supported.",
+                          "x-stainless-const": true
+                        },
+                        "function": {
+                          "type": "object",
+                          "properties": {
+                            "description": {
+                              "type": "string",
+                              "description": "A description of what the function does, used by the model to choose when and how to call the function."
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64."
+                            },
+                            "parameters": {
+                              "type": "object",
+                              "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
+                              "additionalProperties": true
+                            },
+                            "strict": {
+                              "anyOf": [
+                                {
+                                  "type": "boolean",
+                                  "default": false,
+                                  "description": "Whether to enable strict schema adherence when generating the function call. If set to true, the model will follow the exact schema defined in the `parameters` field. Only a subset of JSON Schema is supported when `strict` is `true`. Learn more about Structured Outputs in the [function calling guide](/docs/guides/function-calling)."
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "function"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "title": "Custom tool",
+                      "description": "A custom tool that processes input using a specified format.\n",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "custom"
+                          ],
+                          "description": "The type of the custom tool. Always `custom`.",
+                          "x-stainless-const": true
+                        },
+                        "custom": {
+                          "type": "object",
+                          "title": "Custom tool properties",
+                          "description": "Properties of the custom tool.\n",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "The name of the custom tool, used to identify it in tool calls."
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "Optional description of the custom tool, used to provide more context.\n"
+                            },
+                            "format": {
+                              "description": "The input format for the custom tool. Default is unconstrained text.\n",
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "title": "Text format",
+                                  "description": "Unconstrained free-form text.",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "text"
+                                      ],
+                                      "description": "Unconstrained text format. Always `text`.",
+                                      "x-stainless-const": true
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "title": "Grammar format",
+                                  "description": "A grammar defined by the user.",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "grammar"
+                                      ],
+                                      "description": "Grammar format. Always `grammar`.",
+                                      "x-stainless-const": true
+                                    },
+                                    "grammar": {
+                                      "type": "object",
+                                      "title": "Grammar format",
+                                      "description": "Your chosen grammar.",
+                                      "properties": {
+                                        "definition": {
+                                          "type": "string",
+                                          "description": "The grammar definition."
+                                        },
+                                        "syntax": {
+                                          "type": "string",
+                                          "description": "The syntax of the grammar definition. One of `lark` or `regex`.",
+                                          "enum": [
+                                            "lark",
+                                            "regex"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "definition",
+                                        "syntax"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "grammar"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "custom"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "tool_choice": {
+                "description": "Controls which (if any) tool is called by the model.\n`none` means the model will not call any tool and instead generates a message.\n`auto` means the model can pick between generating a message or calling one or more tools.\n`required` means the model must call one or more tools.\nSpecifying a particular tool via `{\"type\": \"function\", \"function\": {\"name\": \"my_function\"}}` forces the model to call that tool.\n\n`none` is the default when no tools are present. `auto` is the default if tools are present.\n",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "title": "Tool choice mode",
+                    "description": "`none` means the model will not call any tool and instead generates a message. `auto` means the model can pick between generating a message or calling one or more tools. `required` means the model must call one or more tools.\n",
+                    "enum": [
+                      "none",
+                      "auto",
+                      "required"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "title": "Allowed tools",
+                    "description": "Constrains the tools available to the model to a pre-defined set.\n",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "allowed_tools"
+                        ],
+                        "description": "Allowed tool configuration type. Always `allowed_tools`.",
+                        "x-stainless-const": true
+                      },
+                      "allowed_tools": {
+                        "type": "object",
+                        "title": "Allowed tools",
+                        "description": "Constrains the tools available to the model to a pre-defined set.\n",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "auto",
+                              "required"
+                            ],
+                            "description": "Constrains the tools available to the model to a pre-defined set.\n\n`auto` allows the model to pick from among the allowed tools and generate a\nmessage.\n\n`required` requires the model to call one or more of the allowed tools.\n"
+                          },
+                          "tools": {
+                            "type": "array",
+                            "description": "A list of tool definitions that the model should be allowed to call.\n\nFor the Chat Completions API, the list of tool definitions might look like:\n```json\n[\n  { \"type\": \"function\", \"function\": { \"name\": \"get_weather\" } },\n  { \"type\": \"function\", \"function\": { \"name\": \"get_time\" } }\n]\n```\n",
+                            "items": {
+                              "type": "object",
+                              "x-oaiExpandable": false,
+                              "description": "A tool definition that the model should be allowed to call.\n",
+                              "additionalProperties": true
+                            }
+                          }
+                        },
+                        "required": [
+                          "mode",
+                          "tools"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "allowed_tools"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "title": "Function tool choice",
+                    "description": "Specifies a tool the model should use. Use to force the model to call a specific function.",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "function"
+                        ],
+                        "description": "For function calling, the type is always `function`.",
+                        "x-stainless-const": true
+                      },
+                      "function": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "The name of the function to call."
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "function"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "title": "Custom tool choice",
+                    "description": "Specifies a tool the model should use. Use to force the model to call a specific custom tool.",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "custom"
+                        ],
+                        "description": "For custom tool calling, the type is always `custom`.",
+                        "x-stainless-const": true
+                      },
+                      "custom": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "The name of the custom tool to call."
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "custom"
+                    ]
+                  }
+                ]
+              },
+              "parallel_tool_calls": {
+                "description": "Whether to enable [parallel function calling](/docs/guides/function-calling#configuring-parallel-function-calling) during tool use.",
+                "type": "boolean",
+                "default": true
+              },
+              "function_call": {
+                "deprecated": true,
+                "description": "Deprecated in favor of `tool_choice`.\n\nControls which (if any) function is called by the model.\n\n`none` means the model will not call a function and instead generates a\nmessage.\n\n`auto` means the model can pick between generating a message or calling a\nfunction.\n\nSpecifying a particular function via `{\"name\": \"my_function\"}` forces the\nmodel to call that function.\n\n`none` is the default when no functions are present. `auto` is the default\nif functions are present.\n",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "`none` means the model will not call a function and instead generates a message. `auto` means the model can pick between generating a message or calling a function.\n",
+                    "enum": [
+                      "none",
+                      "auto"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "description": "Specifying a particular function via `{\"name\": \"my_function\"}` forces the model to call that function.\n",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "The name of the function to call."
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                ]
+              },
+              "functions": {
+                "deprecated": true,
+                "description": "Deprecated in favor of `tools`.\n\nA list of functions the model may generate JSON inputs for.\n",
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 128,
+                "items": {
+                  "type": "object",
+                  "deprecated": true,
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "A description of what the function does, used by the model to choose when and how to call the function."
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64."
+                    },
+                    "parameters": {
+                      "type": "object",
+                      "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "model",
+              "messages"
+            ]
+          }
+        ]
+      },
+      "CreateChatCompletionResponse": {
+        "type": "object",
+        "description": "Represents a chat completion response returned by model, based on the provided input.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the chat completion."
+          },
+          "choices": {
+            "type": "array",
+            "description": "A list of chat completion choices. Can be more than one if `n` is greater than 1.",
+            "items": {
+              "type": "object",
+              "required": [
+                "finish_reason",
+                "index",
+                "message",
+                "logprobs"
+              ],
+              "properties": {
+                "finish_reason": {
+                  "type": "string",
+                  "description": "The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,\n`length` if the maximum number of tokens specified in the request was reached,\n`content_filter` if content was omitted due to a flag from our content filters,\n`tool_calls` if the model called a tool, or `function_call` (deprecated) if the model called a function.\n",
+                  "enum": [
+                    "stop",
+                    "length",
+                    "tool_calls",
+                    "content_filter",
+                    "function_call"
+                  ]
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "The index of the choice in the list of choices."
+                },
+                "message": {
+                  "type": "object",
+                  "description": "A chat completion message generated by the model.",
+                  "properties": {
+                    "content": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "The contents of the message."
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "refusal": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "The refusal message generated by the model."
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "tool_calls": {
+                      "type": "array",
+                      "description": "The tool calls generated by the model, such as function calls.",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "title": "Function tool call",
+                            "description": "A call to a function tool created by the model.\n",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "The ID of the tool call."
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "function"
+                                ],
+                                "description": "The type of the tool. Currently, only `function` is supported.",
+                                "x-stainless-const": true
+                              },
+                              "function": {
+                                "type": "object",
+                                "description": "The function that the model called.",
+                                "properties": {
+                                  "name": {
+                                    "type": "string",
+                                    "description": "The name of the function to call."
+                                  },
+                                  "arguments": {
+                                    "type": "string",
+                                    "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "arguments"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "type",
+                              "function"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "title": "Custom tool call",
+                            "description": "A call to a custom tool created by the model.\n",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "The ID of the tool call."
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "custom"
+                                ],
+                                "description": "The type of the tool. Always `custom`.",
+                                "x-stainless-const": true
+                              },
+                              "custom": {
+                                "type": "object",
+                                "description": "The custom tool that the model called.",
+                                "properties": {
+                                  "name": {
+                                    "type": "string",
+                                    "description": "The name of the custom tool to call."
+                                  },
+                                  "input": {
+                                    "type": "string",
+                                    "description": "The input for the custom tool call generated by the model."
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "input"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "type",
+                              "custom"
+                            ]
+                          }
+                        ],
+                        "discriminator": {
+                          "propertyName": "type"
+                        }
+                      }
+                    },
+                    "annotations": {
+                      "type": "array",
+                      "description": "Annotations for the message, when applicable, as when using the\n[web search tool](/docs/guides/tools-web-search?api-mode=chat).\n",
+                      "items": {
+                        "type": "object",
+                        "description": "A URL citation when using web search.\n",
+                        "required": [
+                          "type",
+                          "url_citation"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "description": "The type of the URL citation. Always `url_citation`.",
+                            "enum": [
+                              "url_citation"
+                            ],
+                            "x-stainless-const": true
+                          },
+                          "url_citation": {
+                            "type": "object",
+                            "description": "A URL citation when using web search.",
+                            "required": [
+                              "end_index",
+                              "start_index",
+                              "url",
+                              "title"
+                            ],
+                            "properties": {
+                              "end_index": {
+                                "type": "integer",
+                                "description": "The index of the last character of the URL citation in the message."
+                              },
+                              "start_index": {
+                                "type": "integer",
+                                "description": "The index of the first character of the URL citation in the message."
+                              },
+                              "url": {
+                                "type": "string",
+                                "description": "The URL of the web resource."
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "The title of the web resource."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "assistant"
+                      ],
+                      "description": "The role of the author of this message.",
+                      "x-stainless-const": true
+                    },
+                    "function_call": {
+                      "type": "object",
+                      "deprecated": true,
+                      "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+                      "properties": {
+                        "arguments": {
+                          "type": "string",
+                          "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the function to call."
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "arguments"
+                      ]
+                    },
+                    "audio": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "description": "If the audio output modality is requested, this object contains data\nabout the audio response from the model. [Learn more](/docs/guides/audio).\n",
+                          "required": [
+                            "id",
+                            "expires_at",
+                            "data",
+                            "transcript"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique identifier for this audio response."
+                            },
+                            "expires_at": {
+                              "type": "integer",
+                              "description": "The Unix timestamp (in seconds) for when this audio response will\nno longer be accessible on the server for use in multi-turn\nconversations.\n"
+                            },
+                            "data": {
+                              "type": "string",
+                              "description": "Base64 encoded audio bytes generated by the model, in the format\nspecified in the request.\n"
+                            },
+                            "transcript": {
+                              "type": "string",
+                              "description": "Transcript of the audio generated by the model."
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "content",
+                    "refusal"
+                  ]
+                },
+                "logprobs": {
+                  "anyOf": [
+                    {
+                      "description": "Log probability information for the choice.",
+                      "type": "object",
+                      "properties": {
+                        "content": {
+                          "anyOf": [
+                            {
+                              "description": "A list of message content tokens with log probability information.",
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "token": {
+                                    "description": "The token.",
+                                    "type": "string"
+                                  },
+                                  "logprob": {
+                                    "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                                    "type": "number"
+                                  },
+                                  "bytes": {
+                                    "anyOf": [
+                                      {
+                                        "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                        "type": "array",
+                                        "items": {
+                                          "type": "integer"
+                                        }
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "top_logprobs": {
+                                    "description": "List of the most likely tokens and their log probability, at this token position. In rare cases, there may be fewer than the number of requested `top_logprobs` returned.",
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "description": "The token.",
+                                          "type": "string"
+                                        },
+                                        "logprob": {
+                                          "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                                          "type": "number"
+                                        },
+                                        "bytes": {
+                                          "anyOf": [
+                                            {
+                                              "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                              "type": "array",
+                                              "items": {
+                                                "type": "integer"
+                                              }
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "token",
+                                        "logprob",
+                                        "bytes"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "token",
+                                  "logprob",
+                                  "bytes",
+                                  "top_logprobs"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "refusal": {
+                          "anyOf": [
+                            {
+                              "description": "A list of message refusal tokens with log probability information.",
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "token": {
+                                    "description": "The token.",
+                                    "type": "string"
+                                  },
+                                  "logprob": {
+                                    "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                                    "type": "number"
+                                  },
+                                  "bytes": {
+                                    "anyOf": [
+                                      {
+                                        "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                        "type": "array",
+                                        "items": {
+                                          "type": "integer"
+                                        }
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "top_logprobs": {
+                                    "description": "List of the most likely tokens and their log probability, at this token position. In rare cases, there may be fewer than the number of requested `top_logprobs` returned.",
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "description": "The token.",
+                                          "type": "string"
+                                        },
+                                        "logprob": {
+                                          "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                                          "type": "number"
+                                        },
+                                        "bytes": {
+                                          "anyOf": [
+                                            {
+                                              "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                              "type": "array",
+                                              "items": {
+                                                "type": "integer"
+                                              }
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "token",
+                                        "logprob",
+                                        "bytes"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "token",
+                                  "logprob",
+                                  "bytes",
+                                  "top_logprobs"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "content",
+                        "refusal"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "created": {
+            "type": "integer",
+            "description": "The Unix timestamp (in seconds) of when the chat completion was created."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for the chat completion."
+          },
+          "service_tier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Specifies the processing type used for serving the request.\n  - If set to 'auto', then the request will be processed with the service tier configured in the Project settings. Unless otherwise configured, the Project will use 'default'.\n  - If set to 'default', then the request will be processed with the standard pricing and performance for the selected model.\n  - If set to '[flex](/docs/guides/flex-processing)' or '[priority](https://openai.com/api-priority-processing/)', then the request will be processed with the corresponding service tier.\n  - When not set, the default behavior is 'auto'.\n\n  When the `service_tier` parameter is set, the response body will include the `service_tier` value based on the processing mode actually used to serve the request. This response value may be different from the value set in the parameter.\n",
+                "enum": [
+                  "auto",
+                  "default",
+                  "flex",
+                  "scale",
+                  "priority"
+                ],
+                "default": "auto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "system_fingerprint": {
+            "type": "string",
+            "deprecated": true,
+            "description": "This fingerprint represents the backend configuration that the model runs with.\n\nCan be used in conjunction with the `seed` request parameter to understand when backend changes have been made that might impact determinism.\n"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, which is always `chat.completion`.",
+            "enum": [
+              "chat.completion"
+            ],
+            "x-stainless-const": true
+          },
+          "usage": {
+            "type": "object",
+            "description": "Usage statistics for the completion request.",
+            "properties": {
+              "completion_tokens": {
+                "type": "integer",
+                "default": 0,
+                "description": "Number of tokens in the generated completion."
+              },
+              "prompt_tokens": {
+                "type": "integer",
+                "default": 0,
+                "description": "Number of tokens in the prompt."
+              },
+              "total_tokens": {
+                "type": "integer",
+                "default": 0,
+                "description": "Total number of tokens used in the request (prompt + completion)."
+              },
+              "completion_tokens_details": {
+                "type": "object",
+                "description": "Breakdown of tokens used in a completion.",
+                "properties": {
+                  "accepted_prediction_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "When using Predicted Outputs, the number of tokens in the\nprediction that appeared in the completion.\n"
+                  },
+                  "audio_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Audio input tokens generated by the model."
+                  },
+                  "reasoning_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Tokens generated by the model for reasoning."
+                  },
+                  "rejected_prediction_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "When using Predicted Outputs, the number of tokens in the\nprediction that did not appear in the completion. However, like\nreasoning tokens, these tokens are still counted in the total\ncompletion tokens for purposes of billing, output, and context window\nlimits.\n"
+                  }
+                }
+              },
+              "prompt_tokens_details": {
+                "type": "object",
+                "description": "Breakdown of tokens used in the prompt.",
+                "properties": {
+                  "audio_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Audio input tokens present in the prompt."
+                  },
+                  "cached_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Cached tokens present in the prompt."
+                  }
+                }
+              }
+            },
+            "required": [
+              "prompt_tokens",
+              "completion_tokens",
+              "total_tokens"
+            ]
+          }
+        },
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ]
+      },
+      "CreateChatCompletionStreamResponse": {
+        "type": "object",
+        "description": "Represents a streamed chunk of a chat completion response returned\nby the model, based on the provided input. \n[Learn more](/docs/guides/streaming-responses).\n",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the chat completion. Each chunk has the same ID."
+          },
+          "choices": {
+            "type": "array",
+            "description": "A list of chat completion choices. Can contain more than one elements if `n` is greater than 1. Can also be empty for the\nlast chunk if you set `stream_options: {\"include_usage\": true}`.\n",
+            "items": {
+              "type": "object",
+              "required": [
+                "delta",
+                "finish_reason",
+                "index"
+              ],
+              "properties": {
+                "delta": {
+                  "type": "object",
+                  "description": "A chat completion delta generated by streamed model responses.",
+                  "properties": {
+                    "content": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "The contents of the chunk message."
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "function_call": {
+                      "deprecated": true,
+                      "type": "object",
+                      "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+                      "properties": {
+                        "arguments": {
+                          "type": "string",
+                          "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the function to call."
+                        }
+                      }
+                    },
+                    "tool_calls": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "index": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string",
+                            "description": "The ID of the tool call."
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "function"
+                            ],
+                            "description": "The type of the tool. Currently, only `function` is supported.",
+                            "x-stainless-const": true
+                          },
+                          "function": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "The name of the function to call."
+                              },
+                              "arguments": {
+                                "type": "string",
+                                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "index"
+                        ]
+                      }
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "developer",
+                        "system",
+                        "user",
+                        "assistant",
+                        "tool"
+                      ],
+                      "description": "The role of the author of this message."
+                    },
+                    "refusal": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "The refusal message generated by the model."
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "logprobs": {
+                  "description": "Log probability information for the choice.",
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "content": {
+                      "description": "A list of message content tokens with log probability information.",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "token": {
+                            "description": "The token.",
+                            "type": "string"
+                          },
+                          "logprob": {
+                            "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                            "type": "number"
+                          },
+                          "bytes": {
+                            "anyOf": [
+                              {
+                                "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "top_logprobs": {
+                            "description": "List of the most likely tokens and their log probability, at this token position. In rare cases, there may be fewer than the number of requested `top_logprobs` returned.",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "token": {
+                                  "description": "The token.",
+                                  "type": "string"
+                                },
+                                "logprob": {
+                                  "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                                  "type": "number"
+                                },
+                                "bytes": {
+                                  "anyOf": [
+                                    {
+                                      "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer"
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "token",
+                                "logprob",
+                                "bytes"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "token",
+                          "logprob",
+                          "bytes",
+                          "top_logprobs"
+                        ]
+                      },
+                      "nullable": true
+                    },
+                    "refusal": {
+                      "description": "A list of message refusal tokens with log probability information.",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "token": {
+                            "description": "The token.",
+                            "type": "string"
+                          },
+                          "logprob": {
+                            "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                            "type": "number"
+                          },
+                          "bytes": {
+                            "anyOf": [
+                              {
+                                "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "top_logprobs": {
+                            "description": "List of the most likely tokens and their log probability, at this token position. In rare cases, there may be fewer than the number of requested `top_logprobs` returned.",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "token": {
+                                  "description": "The token.",
+                                  "type": "string"
+                                },
+                                "logprob": {
+                                  "description": "The log probability of this token, if it is within the top 20 most likely tokens. Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.",
+                                  "type": "number"
+                                },
+                                "bytes": {
+                                  "anyOf": [
+                                    {
+                                      "description": "A list of integers representing the UTF-8 bytes representation of the token. Useful in instances where characters are represented by multiple tokens and their byte representations must be combined to generate the correct text representation. Can be `null` if there is no bytes representation for the token.",
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer"
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "token",
+                                "logprob",
+                                "bytes"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "token",
+                          "logprob",
+                          "bytes",
+                          "top_logprobs"
+                        ]
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "content",
+                    "refusal"
+                  ]
+                },
+                "finish_reason": {
+                  "type": "string",
+                  "description": "The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,\n`length` if the maximum number of tokens specified in the request was reached,\n`content_filter` if content was omitted due to a flag from our content filters,\n`tool_calls` if the model called a tool, or `function_call` (deprecated) if the model called a function.\n",
+                  "enum": [
+                    "stop",
+                    "length",
+                    "tool_calls",
+                    "content_filter",
+                    "function_call"
+                  ],
+                  "nullable": true
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "The index of the choice in the list of choices."
+                }
+              }
+            }
+          },
+          "created": {
+            "type": "integer",
+            "description": "The Unix timestamp (in seconds) of when the chat completion was created. Each chunk has the same timestamp."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model to generate the completion."
+          },
+          "service_tier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Specifies the processing type used for serving the request.\n  - If set to 'auto', then the request will be processed with the service tier configured in the Project settings. Unless otherwise configured, the Project will use 'default'.\n  - If set to 'default', then the request will be processed with the standard pricing and performance for the selected model.\n  - If set to '[flex](/docs/guides/flex-processing)' or '[priority](https://openai.com/api-priority-processing/)', then the request will be processed with the corresponding service tier.\n  - When not set, the default behavior is 'auto'.\n\n  When the `service_tier` parameter is set, the response body will include the `service_tier` value based on the processing mode actually used to serve the request. This response value may be different from the value set in the parameter.\n",
+                "enum": [
+                  "auto",
+                  "default",
+                  "flex",
+                  "scale",
+                  "priority"
+                ],
+                "default": "auto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "system_fingerprint": {
+            "type": "string",
+            "deprecated": true,
+            "description": "This fingerprint represents the backend configuration that the model runs with.\nCan be used in conjunction with the `seed` request parameter to understand when backend changes have been made that might impact determinism.\n"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, which is always `chat.completion.chunk`.",
+            "enum": [
+              "chat.completion.chunk"
+            ],
+            "x-stainless-const": true
+          },
+          "usage": {
+            "type": "object",
+            "description": "Usage statistics for the completion request.",
+            "properties": {
+              "completion_tokens": {
+                "type": "integer",
+                "default": 0,
+                "description": "Number of tokens in the generated completion."
+              },
+              "prompt_tokens": {
+                "type": "integer",
+                "default": 0,
+                "description": "Number of tokens in the prompt."
+              },
+              "total_tokens": {
+                "type": "integer",
+                "default": 0,
+                "description": "Total number of tokens used in the request (prompt + completion)."
+              },
+              "completion_tokens_details": {
+                "type": "object",
+                "description": "Breakdown of tokens used in a completion.",
+                "properties": {
+                  "accepted_prediction_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "When using Predicted Outputs, the number of tokens in the\nprediction that appeared in the completion.\n"
+                  },
+                  "audio_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Audio input tokens generated by the model."
+                  },
+                  "reasoning_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Tokens generated by the model for reasoning."
+                  },
+                  "rejected_prediction_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "When using Predicted Outputs, the number of tokens in the\nprediction that did not appear in the completion. However, like\nreasoning tokens, these tokens are still counted in the total\ncompletion tokens for purposes of billing, output, and context window\nlimits.\n"
+                  }
+                }
+              },
+              "prompt_tokens_details": {
+                "type": "object",
+                "description": "Breakdown of tokens used in the prompt.",
+                "properties": {
+                  "audio_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Audio input tokens present in the prompt."
+                  },
+                  "cached_tokens": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Cached tokens present in the prompt."
+                  }
+                }
+              }
+            },
+            "required": [
+              "prompt_tokens",
+              "completion_tokens",
+              "total_tokens"
+            ]
+          }
+        },
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ]
+      }
+    }
+  }
+}

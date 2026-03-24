@@ -21,7 +21,6 @@ guardrails
 *.env
 !default.env
 opentelemetry-lambda-layer
-open-api-spec.json
 open-api-spec.yml
 requirements-lock-old.txt
 opensearch
