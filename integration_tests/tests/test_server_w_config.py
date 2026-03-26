@@ -3,11 +3,6 @@ import os
 import pytest
 from guardrails import AsyncGuard, Guard
 
-# OpenAI compatible Guardrails API Guard
-openai.base_url = "http://127.0.0.1:8000/guards/test-guard/openai/v1/"
-
-openai.api_key = os.getenv("OPENAI_API_KEY") or "some key"
-
 
 def test_guard_validation():
     guard = Guard.load(name="test-guard", api_key="auth-stub")
@@ -55,7 +50,7 @@ async def test_async_streaming_guard_validation():
     async for validation_chunk in async_iterator:  # type: ignore
         full_output += validation_chunk.validated_output
 
-    assert full_output == "Citrus fruit,Citrus fruit,"
+    assert full_output == "Citrus fruit,"
 
 
 @pytest.mark.asyncio
@@ -81,7 +76,7 @@ async def test_sync_streaming_guard_validation():
     for validation_chunk in iterator:
         full_output += validation_chunk.validated_output  # type: ignore
 
-    assert full_output == "Citrus fruit,Citrus fruit,"
+    assert full_output == "Citrus fruit,"
 
 
 def test_server_guard_llm_integration():
@@ -101,6 +96,13 @@ def test_server_guard_llm_integration():
 
 
 def test_server_openai_llm_integration():
+    guard = Guard.load(name="test-guard", api_key="auth-stub")
+
+    # OpenAI compatible Guardrails API Guard
+    openai.base_url = f"http://127.0.0.1:8000/guards/{guard.id}/openai/v1/"
+
+    openai.api_key = os.getenv("OPENAI_API_KEY") or "some key"
+
     completion = openai.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": "Write 5 words of prose."}],

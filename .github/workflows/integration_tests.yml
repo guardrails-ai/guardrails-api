@@ -10,7 +10,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    build-test-server-w-config:
+    test-server-w-config:
         runs-on: ubuntu-latest
         steps:
             - name: Check out head
@@ -33,10 +33,10 @@ jobs:
               continue-on-error: false
               with:
                 context: .
-                file: integration_tests/Dockerfile
+                file: integration_tests/Dockerfile.w_config
                 platforms: linux/amd64
                 push: false
-                tags: guardrails-api:integration-tests
+                tags: guardrails-api:integration-tests-config
                 load: true
                 build-args: |
                   GUARDRAILS_TOKEN=${{ secrets.GUARDRAILS_API_KEY }}
@@ -44,7 +44,7 @@ jobs:
             - name: Start Docker container
               continue-on-error: false
               run: |
-                  docker run -d --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests
+                  docker run -d --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests-config
         
             - name: Wait for Docker container to be ready
               continue-on-error: false
@@ -76,9 +76,105 @@ jobs:
               continue-on-error: false
               run: |
                 pip install pytest pytest-asyncio openai ".[api]"
-                pytest integration_tests/tests
+                pytest integration_tests/tests/test_server_w_config.py
             - name: Cleanup
               if: always()
               run: |
                 docker stop guardrails-server
                 docker rm guardrails-server
+
+    test-server-w-db:
+      runs-on: ubuntu-latest
+      services:
+        # Label used to access the service container
+        postgres:
+          # Docker Hub image
+          image: postgres
+          # Provide the password for postgres
+          env:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: postgres
+          # Set health checks to wait until postgres has started
+          options: >-
+            --health-cmd pg_isready
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 5
+          ports:
+            # Maps tcp port 5432 on service container to the host
+            - 5432:5432
+      steps:
+          - name: Check out head
+            uses: actions/checkout@v5
+            with:
+              persist-credentials: false
+
+          - name: Set up QEMU
+            uses: docker/setup-qemu-action@master
+            with:
+              platforms: linux/amd64
+
+          - name: Set up Docker Buildx
+            uses: docker/setup-buildx-action@master
+            with:
+              platforms: linux/amd64
+
+          - name: Build Docker image
+            uses: docker/build-push-action@v6
+            continue-on-error: false
+            with:
+              context: .
+              file: integration_tests/Dockerfile.w_db
+              platforms: linux/amd64
+              push: false
+              tags: guardrails-api:integration-tests-db
+              load: true
+              build-args: |
+                GUARDRAILS_TOKEN=${{ secrets.GUARDRAILS_API_KEY }}
+
+          - name: Start Docker container
+            continue-on-error: false
+            run: |
+                docker run -d --network="host" --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests-db
+      
+          - name: Wait for Docker container to be ready
+            continue-on-error: false
+            run: |
+              up="F"
+              for i in {1..30}; do
+              if docker exec guardrails-server curl -s http://localhost:8000/; then
+                  echo "Server is up!"
+                  up="T"
+                  break
+              fi
+              echo "Waiting for server..."
+              echo "i=$i"
+              if [ $i == 30 ]; then
+                echo "docker container logs: "
+                docker_logs=$(docker logs guardrails-server)
+                echo "$docker_logs"
+              fi
+              sleep 5
+              done
+
+              if [ "T" != "${up}" ];
+                  then
+                      echo "Server never started!"
+                      exit 1
+              fi
+  
+          - name: Run Pytest
+            continue-on-error: false
+            run: |
+              python -m venv ./.venv
+              source ./.venv/bin/activate
+              pip install openai ".[api]"
+              guardrails configure --enable-metrics --enable-remote-inferencing --token ${{ secrets.GUARDRAILS_API_KEY }}
+              guardrails hub install hub://guardrails/two_words
+              python -m unittest integration_tests.tests.test_server_w_db -v
+          - name: Cleanup
+            if: always()
+            run: |
+              docker stop guardrails-server
+              docker rm guardrails-server
