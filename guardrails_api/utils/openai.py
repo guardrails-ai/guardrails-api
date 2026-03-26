@@ -17,8 +17,6 @@ ctx_chat_completion_stream = contextvars.ContextVar(
     "x_guardrails_api_ctx_chat_completion_stream"
 )
 
-ctx = contextvars.copy_context()
-
 
 async def guarded_chat_completion(
     guard: Guard | AsyncGuard, payload: Any
@@ -69,6 +67,8 @@ async def guarded_chat_completion(
         guarded_completion = GuardedChatCompletion.model_validate(completion)
 
         return guarded_completion
+
+    ctx = contextvars.copy_context()
 
     return await ctx.run(run_guard)
 
@@ -125,5 +125,7 @@ async def guarded_chat_completion_stream(
             ser_chunk["guardrails"] = result.model_dump()
             yield f"data: {json.dumps(ser_chunk)}\n\n"
         yield "\n"
+
+    ctx = contextvars.copy_context()
 
     return ctx.run(run_guard)
