@@ -1,6 +1,7 @@
 import sys
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -105,7 +106,7 @@ def create_app(
 
     resolved_config_file_path = register_config(config)
 
-    app = FastAPI(openapi_url="")
+    app = FastAPI()
 
     # Add CORS middleware
     app.add_middleware(
@@ -146,6 +147,19 @@ def create_app(
             content={"message": str(exc)},
         )
 
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
+        exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
+        # Log the error details for debugging
+        print(f"{request.method} {request.url} - Validation error: {exc_str}")
+
+        content = {"status_code": 422, "message": exc_str, "data": None}
+        return JSONResponse(
+            content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+
     console.print(f"\n:rocket: Guardrails API is available at {self_endpoint}")
     console.print(
         f":book: Visit {self_endpoint}/docs to see available API endpoints.\n"
@@ -157,7 +171,7 @@ def create_app(
     guards = guard_client.get_guards()
 
     for g in guards:
-        g_dict = g.to_dict()
+        g_dict = g.model_dump(exclude_none=True, by_alias=True)
         console.print(
             f"- Guard: [bold white]{g_dict.get('name')}[/bold white] {self_endpoint}/guards/{g_dict.get('name')}/openai/v1"
         )

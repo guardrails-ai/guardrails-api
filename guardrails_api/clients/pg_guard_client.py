@@ -1,25 +1,29 @@
 from contextlib import contextmanager
-from typing import List, Optional
+from typing import List, Optional, Any
+import uuid
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
-from guardrails_api_client import Guard as GuardStruct
 from sqlalchemy.orm import Session
 from guardrails_api.classes.http_error import HttpError
 from guardrails_api.clients.guard_client import GuardClient
 from guardrails_api.db.models.guard_item import GuardItem
 from guardrails_api.db.postgres_client import PostgresClient
 from guardrails_api.db.models.guard_item_audit import GuardItemAudit
+from guardrails_ai.types import CreateGuardRequest, Guard
 
 
 def from_guard_item(
-    guard_item: GuardItem | GuardItemAudit | None,
-) -> GuardStruct | None:
-    if not guard_item:
-        return guard_item
-    guard = GuardStruct.from_dict(guard_item.guard)  # type: ignore
-    if guard and guard_item.id:  # type: ignore
-        guard.id = guard_item.id  # type: ignore
+    guard_item: GuardItem | GuardItemAudit,
+) -> Guard:
+    guard_json: dict[str, Any] = guard_item.guard  # type: ignore
+    if (
+        guard_json
+        and guard_item.id is not None
+        and (not guard_json.get("id") or guard_json.get("id") != guard_item.id)
+    ):
+        guard_json["id"] = str(guard_item.id)
+    guard = Guard.model_validate(guard_json)
     return guard
 
 
@@ -38,13 +42,19 @@ class PGGuardClient(GuardClient):
 
     # These are only internal utilities and do not start db sessions
 
-    def util_get_guard_item(self, id: str, db: Session) -> GuardItem:
+    def util_get_guard_item(self, id: str, db: Session) -> GuardItem | None:
         item = db.query(GuardItem).get(id)
         return item
 
-    def util_create_guard(self, guard: GuardStruct, db) -> GuardStruct:
+    def util_create_guard(self, guard: Guard | CreateGuardRequest, db) -> Guard:
         try:
-            guard_item = GuardItem(name=guard.name, guard=guard.to_dict())
+            # Should remove id property from Guard
+            guard_id = guard.id if isinstance(guard, Guard) else str(uuid.uuid4())
+            guard_item = GuardItem(
+                id=guard_id,
+                name=guard.name,
+                guard=guard.model_dump(exclude_none=True, by_alias=True),
+            )
             db.add(guard_item)
             db.commit()
             return from_guard_item(guard_item)
@@ -59,7 +69,7 @@ class PGGuardClient(GuardClient):
 
     # Below are used directly by Controllers and start db sessions
 
-    def get_guard(self, id: str, as_of_date: Optional[str] = None) -> GuardStruct:
+    def get_guard(self, id: str, as_of_date: Optional[str] = None) -> Guard:
         with self.get_db_context() as db:
             latest_guard_item = db.query(GuardItem).get(id)
             audit_item = None
@@ -72,8 +82,8 @@ class PGGuardClient(GuardClient):
                     .first()
                 )
             guard_item = audit_item if audit_item is not None else latest_guard_item
-            if audit_item:
-                guard_item = audit_item.guard_id
+            if audit_item and guard_item:
+                guard_item.id = audit_item.guard_id
             if guard_item is None:
                 raise HttpError(
                     status=404,
@@ -82,7 +92,7 @@ class PGGuardClient(GuardClient):
                 )
             return from_guard_item(guard_item)
 
-    def get_guards(self, guard_name: Optional[str] = None) -> List[GuardStruct]:
+    def get_guards(self, guard_name: Optional[str] = None) -> List[Guard]:
         with self.get_db_context() as db:
             guard_items: list[GuardItem] = []
             if guard_name:
@@ -91,11 +101,11 @@ class PGGuardClient(GuardClient):
                 guard_items = db.query(GuardItem).all()
             return [from_guard_item(gi) for gi in guard_items]
 
-    def create_guard(self, guard: GuardStruct) -> GuardStruct:
+    def create_guard(self, guard: Guard | CreateGuardRequest) -> Guard:
         with self.get_db_context() as db:
             return self.util_create_guard(guard, db)
 
-    def update_guard(self, id: str, guard: GuardStruct) -> GuardStruct:
+    def update_guard(self, id: str, guard: Guard) -> Guard:
         with self.get_db_context() as db:
             guard_item = self.util_get_guard_item(id, db)
             if guard_item is None:
@@ -104,19 +114,19 @@ class PGGuardClient(GuardClient):
                     message="NotFound",
                     cause="A Guard with the id {id} does not exist!".format(id=id),
                 )
-            guard_item.guard = guard.to_dict()
-            guard_item.updated_at = db.execute(
+            guard_item.guard = guard.model_dump(exclude_none=True)  # type: ignore - guard_item.guard == JSONB == Column[Any], guard.model_dump() == dict[str, Any]
+            guard_item.updated_at = db.execute(  # type: ignore - .scalar() returns datetime or None; either is fine since if None the server will default
                 select(func.current_timestamp())
             ).scalar()
             db.commit()
             return from_guard_item(guard_item)
 
-    def upsert_guard(self, id: str, guard: GuardStruct) -> GuardStruct:
+    def upsert_guard(self, id: str, guard: Guard | CreateGuardRequest) -> Guard:
         with self.get_db_context() as db:
             guard_item = self.util_get_guard_item(id, db)
             if guard_item is not None:
-                guard_item.guard = guard.to_dict()
-                guard_item.updated_at = db.execute(
+                guard_item.guard = guard.model_dump(exclude_none=True)  # type: ignore - guard_item.guard == JSONB == Column[Any], guard.model_dump() == dict[str, Any]
+                guard_item.updated_at = db.execute(  # type: ignore - .scalar() returns datetime or None; either is fine since if None the server will default
                     select(func.current_timestamp())
                 ).scalar()
                 db.commit()
@@ -124,7 +134,7 @@ class PGGuardClient(GuardClient):
             else:
                 return self.util_create_guard(guard, db)
 
-    def delete_guard(self, id: str) -> GuardStruct:
+    def delete_guard(self, id: str) -> Guard:
         with self.get_db_context() as db:
             guard_item = self.util_get_guard_item(id, db)
             if guard_item is None:

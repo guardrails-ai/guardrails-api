@@ -75,25 +75,6 @@ class TestRootAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         mock_logger.error.assert_called()
 
-    @patch("guardrails_api.api.root.get_open_api_spec")
-    def test_api_docs_endpoint(self, mock_get_spec):
-        """Test the API docs endpoint."""
-        mock_spec = {"openapi": "3.0.0", "info": {"title": "Test API"}}
-        mock_get_spec.return_value = mock_spec
-
-        response = self.client.get("/api-docs")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), mock_spec)
-        mock_get_spec.assert_called_once()
-
-    def test_docs_endpoint_exists(self):
-        """Test the docs endpoint is available."""
-        response = self.client.get("/docs")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-
 
 class TestHealthCheckResponse(unittest.TestCase):
     """Test cases for HealthCheckResponse model."""

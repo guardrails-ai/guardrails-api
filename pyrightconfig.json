@@ -11,6 +11,7 @@
 
   "reportMissingImports": "error",
   "reportMissingTypeStubs": false,
+  "reportDeprecated": true,
 
-  "pythonVersion": "3.11"
+  "pythonVersion": "3.10"
 }

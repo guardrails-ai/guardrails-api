@@ -1,7 +1,8 @@
 """Unit tests for guardrails_api.clients.pg_guard_client module."""
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, ANY
+from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 from guardrails_api.classes.http_error import HttpError
@@ -18,56 +19,26 @@ class _ComparableMock(Mock):
 class TestFromGuardItem(unittest.TestCase):
     """Test cases for the from_guard_item function."""
 
-    def test_none_input_returns_none(self):
-        """Test that None input returns None."""
-        result = from_guard_item(None)
-        self.assertIsNone(result)
-
-    @patch("guardrails_api.clients.pg_guard_client.GuardStruct")
-    def test_from_guard_item_sets_id_when_present(self, mock_guard_struct):
+    def test_from_guard_item_sets_id_when_present(self):
         """Test that guard.id is set from guard_item.id when both exist."""
         guard_data = {"name": "test"}
         guard_item = Mock()
         guard_item.guard = guard_data
         guard_item.id = "some-uuid"
 
-        mock_guard = Mock()
-        mock_guard_struct.from_dict.return_value = mock_guard
-
         result = from_guard_item(guard_item)
 
-        mock_guard_struct.from_dict.assert_called_once_with(guard_data)
-        self.assertEqual(mock_guard.id, "some-uuid")
-        self.assertEqual(result, mock_guard)
+        self.assertEqual(result.id, "some-uuid")
 
-    @patch("guardrails_api.clients.pg_guard_client.GuardStruct")
-    def test_from_guard_item_no_id_on_guard_item(self, mock_guard_struct):
-        """Test that guard.id is not set when guard_item.id is falsy."""
+    def test_from_guard_item_no_id_on_guard_item(self):
+        """Test that ValidationError is raised if guard.id is not set when guard_item.id is falsy."""
         guard_data = {"name": "test"}
         guard_item = Mock()
         guard_item.guard = guard_data
         guard_item.id = None
 
-        mock_guard = Mock()
-        mock_guard_struct.from_dict.return_value = mock_guard
-
-        result = from_guard_item(guard_item)
-
-        mock_guard_struct.from_dict.assert_called_once_with(guard_data)
-        self.assertEqual(result, mock_guard)
-
-    @patch("guardrails_api.clients.pg_guard_client.GuardStruct")
-    def test_from_guard_item_from_dict_returns_none(self, mock_guard_struct):
-        """Test behavior when GuardStruct.from_dict returns None."""
-        guard_item = Mock()
-        guard_item.guard = {}
-        guard_item.id = "some-uuid"
-
-        mock_guard_struct.from_dict.return_value = None
-
-        result = from_guard_item(guard_item)
-
-        self.assertIsNone(result)
+        with self.assertRaises(ValidationError):
+            from_guard_item(guard_item)
 
 
 class TestPGGuardClientInit(unittest.TestCase):
@@ -184,7 +155,7 @@ class TestUtilCreateGuard(unittest.TestCase):
         mock_db = Mock()
         mock_guard = Mock()
         mock_guard.name = "test_guard"
-        mock_guard.to_dict.return_value = {"name": "test_guard"}
+        mock_guard.model_dump.return_value = {"name": "test_guard"}
 
         mock_guard_item = Mock()
         mock_guard_item_class.return_value = mock_guard_item
@@ -195,7 +166,7 @@ class TestUtilCreateGuard(unittest.TestCase):
         result = client.util_create_guard(mock_guard, mock_db)
 
         mock_guard_item_class.assert_called_once_with(
-            name="test_guard", guard={"name": "test_guard"}
+            id=ANY, name="test_guard", guard={"name": "test_guard"}
         )
         mock_db.add.assert_called_once_with(mock_guard_item)
         mock_db.commit.assert_called_once()
@@ -211,7 +182,7 @@ class TestUtilCreateGuard(unittest.TestCase):
         mock_db = Mock()
         mock_guard = Mock()
         mock_guard.name = "duplicate_guard"
-        mock_guard.to_dict.return_value = {"name": "duplicate_guard"}
+        mock_guard.model_dump.return_value = {"name": "duplicate_guard"}
 
         unique_violation = UniqueViolation()
         integrity_error = IntegrityError(
@@ -238,7 +209,7 @@ class TestUtilCreateGuard(unittest.TestCase):
         mock_db = Mock()
         mock_guard = Mock()
         mock_guard.name = "test_guard"
-        mock_guard.to_dict.return_value = {}
+        mock_guard.model_dump.return_value = {}
 
         other_error = IntegrityError(
             statement=None, params=None, orig=Exception("other")
@@ -299,8 +270,10 @@ class TestGetGuard(unittest.TestCase):
         """Test get_guard uses audit item's guard_id when as_of_date is provided."""
         mock_audit_class.replaced_on = _ComparableMock()
         mock_latest = Mock()
+        mock_latest = "guard-id"
         mock_audit_item = Mock()
-        mock_audit_item.guard_id = "audit-guard-id-string"
+        mock_audit_item.id = "audit-id"
+        mock_audit_item.guard_id = "guard-id"
 
         mock_session = Mock()
         mock_session.query.return_value.get.return_value = mock_latest
@@ -313,11 +286,10 @@ class TestGetGuard(unittest.TestCase):
         mock_from_guard_item.return_value = mock_result
 
         client = PGGuardClient()
-        result = client.get_guard("some-id", as_of_date="2024-01-01")
+        client.get_guard("some-id", as_of_date="2024-01-01")
 
-        # When audit_item is found, guard_item is replaced by audit_item.guard_id
-        mock_from_guard_item.assert_called_once_with("audit-guard-id-string")
-        self.assertEqual(result, mock_result)
+        guard_item = mock_from_guard_item.call_args[0][0]
+        self.assertEqual(guard_item.id, "guard-id")
 
     @patch("guardrails_api.clients.pg_guard_client.from_guard_item")
     @patch("guardrails_api.clients.pg_guard_client.GuardItemAudit")
@@ -442,7 +414,7 @@ class TestUpdateGuard(unittest.TestCase):
         mock_pg_client.return_value.SessionLocal.return_value = mock_session
 
         mock_guard = Mock()
-        mock_guard.to_dict.return_value = {"name": "updated"}
+        mock_guard.model_dump.return_value = {"name": "updated"}
         mock_result = Mock()
         mock_from_guard_item.return_value = mock_result
 
@@ -490,7 +462,7 @@ class TestUpsertGuard(unittest.TestCase):
         mock_pg_client.return_value.SessionLocal.return_value = mock_session
 
         mock_guard = Mock()
-        mock_guard.to_dict.return_value = {"name": "updated"}
+        mock_guard.model_dump.return_value = {"name": "updated"}
         mock_result = Mock()
         mock_from_guard_item.return_value = mock_result
 

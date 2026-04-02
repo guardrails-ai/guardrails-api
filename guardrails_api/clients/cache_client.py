@@ -26,13 +26,13 @@ class CacheClient:
         self.cache = caches.get("default")
 
     async def get(self, key: str):
-        return await self.cache.get(key)
+        return await self.cache.get(key)  # type: ignore
 
     async def set(self, key: str, value: str, ttl: int):
-        await self.cache.set(key, value, ttl=ttl)
+        await self.cache.set(key, value, ttl=ttl)  # type: ignore
 
     async def delete(self, key: str):
-        await self.cache.delete(key)
+        await self.cache.delete(key)  # type: ignore
 
     async def clear(self):
-        await self.cache.clear()
+        await self.cache.clear()  # type: ignore
