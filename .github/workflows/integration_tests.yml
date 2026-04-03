@@ -38,7 +38,7 @@ jobs:
                 push: false
                 tags: guardrails-api:integration-tests-config
                 load: true
-                build-args: |
+                secrets: |
                   GUARDRAILS_TOKEN=${{ secrets.GUARDRAILS_API_KEY }}
 
             - name: Start Docker container
@@ -130,7 +130,7 @@ jobs:
               push: false
               tags: guardrails-api:integration-tests-db
               load: true
-              build-args: |
+              secrets: |
                 GUARDRAILS_TOKEN=${{ secrets.GUARDRAILS_API_KEY }}
 
           - name: Start Docker container
