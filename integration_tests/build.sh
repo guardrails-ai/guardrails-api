@@ -3,9 +3,9 @@
 
 docker buildx build \
     --platform linux/arm64 \
-    -f "./integration_tests/Dockerfile" \
+    -f "./integration_tests/Dockerfile.w_config" \
     -t "guardrails-api:integration-tests" \
-    --build-arg GUARDRAILS_TOKEN="$GUARDRAILS_TOKEN" \
+    --secret id=GUARDRAILS_TOKEN \
     --progress plain \
     --load . \
     || exit 1

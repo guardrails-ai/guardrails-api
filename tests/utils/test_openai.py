@@ -35,7 +35,7 @@ class TestGuardedChatCompletion(unittest.TestCase):
         async def fake_guard_call(*args, **kwargs):
             llm_api = kwargs.get("llm_api")
             if llm_api:
-                await llm_api(messages=kwargs.get("messages", []))
+                await llm_api(model="my-model", messages=kwargs.get("messages", []))
             return mock_outcome
 
         mock_guard.side_effect = fake_guard_call
@@ -48,11 +48,12 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_outcome.model_dump.return_value = {
             "validation_passed": True,
             "validated_output": "Hello!",
+            "callId": "123",
         }
         mock_guard = self._make_fake_guard(mock_outcome)
 
         with patch(
-            "guardrails_api.utils.openai.litellm.completion",
+            "guardrails_api.utils.openai.litellm.acompletion",
             return_value=mock_model_response,
         ):
             result = asyncio.run(
@@ -64,23 +65,29 @@ class TestGuardedChatCompletion(unittest.TestCase):
 
         self.assertIn("guardrails", result)
         self.assertIn("choices", result)
-        self.assertTrue(result["guardrails"]["validation_passed"])
+        self.assertTrue(result["guardrails"].validation_passed)
 
     def test_guard_called_with_num_reasks_zero(self):
         """Test guard is always called with num_reasks=0."""
         mock_model_response = self._make_mock_model_response()
         mock_outcome = Mock()
-        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "callId": "123",
+        }
         mock_guard = self._make_fake_guard(mock_outcome)
 
         with patch(
-            "guardrails_api.utils.openai.litellm.completion",
+            "guardrails_api.utils.openai.litellm.acompletion",
             return_value=mock_model_response,
         ):
             asyncio.run(
                 guarded_chat_completion(
                     mock_guard,
-                    {"messages": [{"role": "user", "content": "Test"}]},
+                    {
+                        "model": "my-model",
+                        "messages": [{"role": "user", "content": "Test"}],
+                    },
                 )
             )
 
@@ -93,7 +100,10 @@ class TestGuardedChatCompletion(unittest.TestCase):
             content="Extracted content"
         )
         mock_outcome = Mock()
-        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "callId": "123",
+        }
         captured_output = []
 
         mock_guard = AsyncMock()
@@ -108,7 +118,7 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_guard.side_effect = fake_guard_call
 
         with patch(
-            "guardrails_api.utils.openai.litellm.completion",
+            "guardrails_api.utils.openai.litellm.acompletion",
             return_value=mock_model_response,
         ):
             asyncio.run(
@@ -138,7 +148,10 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_model_response.choices = [mock_choice]
 
         mock_outcome = Mock()
-        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "callId": "123",
+        }
         captured_output = []
 
         mock_guard = AsyncMock()
@@ -153,7 +166,7 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_guard.side_effect = fake_guard_call
 
         with patch(
-            "guardrails_api.utils.openai.litellm.completion",
+            "guardrails_api.utils.openai.litellm.acompletion",
             return_value=mock_model_response,
         ):
             asyncio.run(guarded_chat_completion(mock_guard, {"messages": []}))
@@ -183,7 +196,10 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_model_response.choices = [mock_choice]
 
         mock_outcome = Mock()
-        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "callId": "123",
+        }
         captured_output = []
 
         mock_guard = AsyncMock()
@@ -198,7 +214,7 @@ class TestGuardedChatCompletion(unittest.TestCase):
         mock_guard.side_effect = fake_guard_call
 
         with patch(
-            "guardrails_api.utils.openai.litellm.completion",
+            "guardrails_api.utils.openai.litellm.acompletion",
             return_value=mock_model_response,
         ):
             asyncio.run(guarded_chat_completion(mock_guard, {"messages": []}))
@@ -248,7 +264,10 @@ class TestGuardedChatCompletionStream(unittest.TestCase):
         """Test guarded_chat_completion_stream returns iterable SSE strings."""
         mock_chunk = self._make_mock_stream_chunk(content="Hello")
         mock_outcome = Mock()
-        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "callId": "123",
+        }
         mock_outcome.validation_summaries = [Mock()]
 
         mock_guard = self._make_fake_stream_guard(mock_outcome)
@@ -314,7 +333,10 @@ class TestGuardedChatCompletionStream(unittest.TestCase):
         """Test that the stream ends with a final newline sentinel."""
         mock_chunk = self._make_mock_stream_chunk(content="End")
         mock_outcome = Mock()
-        mock_outcome.model_dump.return_value = {"validation_passed": True}
+        mock_outcome.model_dump.return_value = {
+            "validation_passed": True,
+            "callId": "123",
+        }
         mock_outcome.validation_summaries = [Mock()]
 
         mock_guard = self._make_fake_stream_guard(mock_outcome)

@@ -1,9 +1,5 @@
 FROM public.ecr.aws/docker/library/python:3.12-slim
 
-# Accept a build arg for the Guardrails token
-# We'll add this to the config using the configure command below
-ARG GUARDRAILS_TOKEN
-
 # Create app directory
 WORKDIR /app
 
@@ -39,7 +35,7 @@ RUN pip install -r requirements-lock.txt
 RUN python -m nltk.downloader -d /opt/nltk_data punkt
 
 # Run the Guardrails configure command to create a .guardrailsrc file
-RUN guardrails configure --enable-metrics --enable-remote-inferencing  --token $GUARDRAILS_TOKEN
+RUN --mount=type=secret,id=GUARDRAILS_TOKEN,env=GUARDRAILS_TOKEN guardrails configure --enable-metrics --enable-remote-inferencing  --token $GUARDRAILS_TOKEN
 
 # Install any validators from the hub you want
 RUN guardrails hub install hub://guardrails/detect_pii --no-install-local-models && \
