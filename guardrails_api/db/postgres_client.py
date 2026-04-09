@@ -49,14 +49,10 @@ class PostgresClient:
         print("\n==> PostgresClient.initialize was called")
         url = get_db_url()
         pool_config = get_db_pool_config()
+        pool_config_kwargs = {k: v for k, v in pool_config.items() if v is not None}
 
         # TODO: Make this a default and allow users to pass in their own SQL Alchemy engine
-        engine = create_engine(
-            url,
-            pool_size=pool_config["pool_size"],
-            max_overflow=pool_config["max_overflow"],
-            pool_timeout=pool_config["pool_timeout"],
-        )
+        engine = create_engine(url, **pool_config_kwargs)
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
         self.app = app
