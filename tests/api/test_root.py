@@ -1,7 +1,7 @@
 """Unit tests for guardrails_api.api.root module."""
 
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from guardrails_api.api.root import router, HealthCheckResponse
@@ -46,8 +46,8 @@ class TestRootAPI(unittest.TestCase):
         mock_session = Mock()
         mock_session.execute.return_value.all.return_value = [(5,)]
 
-        mock_pg_client = Mock()
-        mock_pg_client.SessionLocal.return_value = mock_session
+        mock_pg_client = MagicMock()
+        mock_pg_client.SessionLocal.return_value.__enter__.return_value = mock_session
         mock_pg_client_class.return_value = mock_pg_client
 
         response = self.client.get("/health-check")
