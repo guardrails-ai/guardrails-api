@@ -3,6 +3,7 @@ import threading
 from fastapi import FastAPI
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from guardrails_api.db.get_db_pool_config import get_db_pool_config
 from guardrails_api.db.get_db_url import get_db_url
 from guardrails_api.db.migrations.upgrade import upgrade
 from guardrails_api.db.models.base import Base
@@ -46,8 +47,16 @@ class PostgresClient:
 
     def initialize(self, app: FastAPI):
         print("\n==> PostgresClient.initialize was called")
-        conf = get_db_url()
-        engine = create_engine(conf)
+        url = get_db_url()
+        pool_config = get_db_pool_config()
+
+        # TODO: Make this a default and allow users to pass in their own SQL Alchemy engine
+        engine = create_engine(
+            url,
+            pool_size=pool_config["pool_size"],
+            max_overflow=pool_config["max_overflow"],
+            pool_timeout=pool_config["pool_timeout"],
+        )
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
         self.app = app

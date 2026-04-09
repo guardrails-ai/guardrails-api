@@ -187,6 +187,9 @@ DB_URL=postgresql://postgres:password@localhost:5432/guardrails
 
 # Optional connection extras
 DB_EXTRAS=?sslmode=verify-ca
+PG_POOL_SIZE=5
+PG_POOL_MAX_OVERFLOW=10
+PG_POOL_TIMEOUT=30
 ```
 
 When `PGHOST` (or `DB_URL`) is set, the server will automatically run schema migrations on startup and enable full CRUD operations on guards via the API.

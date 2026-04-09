@@ -28,11 +28,12 @@ async def health_check():
 
         pg_client = PostgresClient()
         query = text("SELECT count(datid) FROM pg_stat_activity;")
-        response = pg_client.SessionLocal().execute(query).all()
+        with pg_client.SessionLocal() as session:
+            response = session.execute(query).all()
 
-        logger.debug("response: %s", response)
+            logger.debug("response: %s", response)
 
-        return HealthCheck(200, "Ok").to_dict()
+            return HealthCheck(200, "Ok").to_dict()
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
