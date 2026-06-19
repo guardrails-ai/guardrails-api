@@ -339,8 +339,27 @@ class TestGuardsAPI(unittest.TestCase):
 
     # --- Router structure ---
 
+    @staticmethod
+    def _iter_routes(routes):
+        """Yield every leaf route that exposes a `path`.
+
+        FastAPI >=0.137 no longer flattens `include_router` into `app.routes`;
+        it inserts a single `_IncludedRouter` wrapper whose real routes live on
+        its `original_router`. Recurse through those (and any nested `routes`)
+        so this works on both old (flat) and new (nested) FastAPI.
+        """
+        for route in routes:
+            if hasattr(route, "path"):
+                yield route
+            nested = getattr(route, "routes", None)
+            if not nested:
+                included = getattr(route, "original_router", None)
+                nested = getattr(included, "routes", None) if included else None
+            if nested:
+                yield from TestGuardsAPI._iter_routes(nested)
+
     def test_all_expected_routes_registered(self):
-        routes = {route.path for route in self.app.routes}
+        routes = {route.path for route in self._iter_routes(self.app.routes)}
         expected = {
             "/guards",
             "/guards/{id}",
@@ -352,7 +371,7 @@ class TestGuardsAPI(unittest.TestCase):
 
     def test_guards_route_has_get_and_post(self):
         methods = set()
-        for route in self.app.routes:
+        for route in self._iter_routes(self.app.routes):
             if route.path == "/guards" and hasattr(route, "methods"):
                 methods.update(route.methods)
         self.assertIn("GET", methods)
@@ -360,7 +379,7 @@ class TestGuardsAPI(unittest.TestCase):
 
     def test_guard_id_route_has_get_put_delete(self):
         methods = set()
-        for route in self.app.routes:
+        for route in self._iter_routes(self.app.routes):
             if route.path == "/guards/{id}" and hasattr(route, "methods"):
                 methods.update(route.methods)
         self.assertIn("GET", methods)
