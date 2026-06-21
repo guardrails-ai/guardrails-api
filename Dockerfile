@@ -50,6 +50,9 @@ COPY . .
 
 EXPOSE ${PORT}
 
+RUN useradd -U -u 1000 appuser && chown -R 1000:1000 /app /opt/venv /opt/nltk_data
+USER 1000
+
 # This is our start command; yours might be different.
 # The guardrails-api is a standard FastAPI application.
 # You can use whatever production server you want that support FastAPI.
