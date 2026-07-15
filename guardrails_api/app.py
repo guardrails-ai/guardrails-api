@@ -11,7 +11,7 @@ from guardrails_api.db.postgres_client import postgres_is_enabled
 
 from rich.console import Console
 from rich.rule import Rule
-from typing import Optional
+from typing import Optional, cast
 import importlib.util
 import json
 import os
@@ -71,7 +71,7 @@ def register_middleware(*, middleware: Optional[str] = None, app: FastAPI):
                         and export != BaseHTTPMiddleware
                     )
                     if is_middleware:
-                        app.add_middleware(export)
+                        app.add_middleware(cast(type[BaseHTTPMiddleware], export))
         except Exception as e:
             raise RuntimeError(
                 f"Failed to register middleware from {middleware_file_path}", e
