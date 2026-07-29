@@ -1,0 +1,40 @@
+name: Dependency Audit
+
+# Fails the build when any CRITICAL or HIGH severity vulnerability is present in
+# requirements-lock.txt -- the file the Dockerfile installs from, and therefore the
+# dependency set that actually ships. Mirrors the severity threshold used by the
+# Aikido feed so regressions are caught in CI rather than post-merge.
+#
+# Note: pyproject.toml intentionally keeps wide version ranges so downstream users
+# can resolve their own versions; the lockfile is what we pin and audit.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # Advisories land continuously, so re-scan main daily rather than only on PRs.
+    - cron: "0 13 * * 1-5"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Python dependencies (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+
+      - name: Scan locked dependencies
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: requirements-lock.txt
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          exit-code: "1"
+          format: table
