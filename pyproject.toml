@@ -51,5 +51,15 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["guardrails_api*"]
 
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes, matching
+# snowglobe-sdk. This must stay explicit: `ruff` is an unpinned dev dependency,
+# and with no `select` the project silently inherits whatever ruff's defaults
+# are that week. ruff 0.16.0 widened those defaults (adding DTZ, BLE, TRY, S,
+# UP, I and more), which turned a green `make lint` into 136 errors with no
+# source change. Declaring the rule set makes linting deterministic across
+# ruff upgrades.
+select = ["E4", "E7", "E9", "F"]
+
 [tool.pyright]
 include = ["guardrails_api"]
