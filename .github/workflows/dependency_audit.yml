@@ -30,9 +30,14 @@ jobs:
 
       - name: Scan locked dependencies
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          # Trivy's pip analyzer only matches files literally named requirements.txt.
+          # Without this our lockfile is skipped entirely and the scan reports a
+          # vacuous pass, so keep this in sync if the lockfile is ever renamed.
+          TRIVY_FILE_PATTERNS: 'pip:.*requirements.*\.txt'
         with:
           scan-type: fs
-          scan-ref: requirements-lock.txt
+          scan-ref: .
           scanners: vuln
           severity: CRITICAL,HIGH
           ignore-unfixed: false
