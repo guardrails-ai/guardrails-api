@@ -29,7 +29,7 @@ h11==0.16.0
 hf-xet==1.5.1
 httpcore==1.0.9
 httpx==0.28.1
-huggingface_hub==1.13.0
+huggingface_hub==1.26.0
 idna==3.18
 importlib_metadata==8.9.0
 isoduration==20.11.0
