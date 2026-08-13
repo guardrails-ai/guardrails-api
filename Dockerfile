@@ -34,12 +34,9 @@ RUN pip install -r requirements-lock.txt
 # Download punkt data
 RUN python -m nltk.downloader -d /opt/nltk_data punkt
 
-# Run the Guardrails configure command to create a .guardrailsrc file
-RUN --mount=type=secret,id=GUARDRAILS_TOKEN,env=GUARDRAILS_TOKEN guardrails configure --enable-metrics --enable-remote-inferencing  --token $GUARDRAILS_TOKEN
-
 # Install any validators from the hub you want
-RUN guardrails hub install hub://guardrails/detect_pii --no-install-local-models && \
-    guardrails hub install hub://guardrails/competitor_check --no-install-local-models
+RUN pip install "guardrails-ai-detect-pii==0.0.6" && \
+    pip install "guardrails-ai-competitor-check==0.0.2"
 
 # Fetch AWS RDS cert
 RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o ./global-bundle.pem

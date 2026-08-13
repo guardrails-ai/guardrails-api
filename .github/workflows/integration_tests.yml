@@ -38,13 +38,13 @@ jobs:
                 push: false
                 tags: guardrails-api:integration-tests-config
                 load: true
-                secrets: |
-                  GUARDRAILS_TOKEN=${{ secrets.GUARDRAILS_API_KEY }}
 
             - name: Start Docker container
               continue-on-error: false
+              env:
+                OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
               run: |
-                  docker run -d --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests-config
+                  docker run -d --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY guardrails-api:integration-tests-config
         
             - name: Wait for Docker container to be ready
               continue-on-error: false
@@ -130,13 +130,13 @@ jobs:
               push: false
               tags: guardrails-api:integration-tests-db
               load: true
-              secrets: |
-                GUARDRAILS_TOKEN=${{ secrets.GUARDRAILS_API_KEY }}
 
           - name: Start Docker container
             continue-on-error: false
+            env:
+              OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
             run: |
-                docker run -d --network="host" --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} guardrails-api:integration-tests-db
+              docker run -d --network="host" --name guardrails-server -p 8000:8000 -e OPENAI_API_KEY guardrails-api:integration-tests-db
       
           - name: Wait for Docker container to be ready
             continue-on-error: false
@@ -170,8 +170,7 @@ jobs:
               python -m venv ./.venv
               source ./.venv/bin/activate
               pip install openai ".[api]"
-              guardrails configure --enable-metrics --enable-remote-inferencing --token ${{ secrets.GUARDRAILS_API_KEY }}
-              guardrails hub install hub://guardrails/two_words
+              pip install guardrails-ai-two-words==0.1.0
               python -m unittest integration_tests.tests.test_server_w_db -v
           - name: Cleanup
             if: always()

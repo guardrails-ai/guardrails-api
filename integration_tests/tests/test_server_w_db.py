@@ -4,7 +4,7 @@ import os
 import unittest
 import asyncio
 from guardrails import AsyncGuard, Guard
-from guardrails.hub import TwoWords
+from guardrails_ai.two_words import TwoWords
 
 
 class TestApiWithPostgresDB(unittest.TestCase):
