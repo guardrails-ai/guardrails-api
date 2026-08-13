@@ -9,10 +9,8 @@ these guards will not be initialized.
 """
 
 from guardrails import Guard
-from guardrails.hub import (
-    DetectPII,
-    CompetitorCheck
-)
+from guardrails_ai.detect_pii import DetectPII
+from guardrails_ai.competitor_check import CompetitorCheck
 
 
 no_guards = Guard()
@@ -21,11 +19,5 @@ no_guards.name = "No Guards"
 output_guard = Guard()
 output_guard.name = "Output Guard"
 output_guard.use_many(
-    DetectPII(
-        pii_entities='pii'
-    ),
-    CompetitorCheck(
-        competitors=['OpenAI', 'Anthropic']
-    )
+    DetectPII(pii_entities="pii"), CompetitorCheck(competitors=["OpenAI", "Anthropic"])
 )
-

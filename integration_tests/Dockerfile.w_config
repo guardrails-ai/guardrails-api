@@ -1,15 +1,12 @@
 # New LiteLLM version has a dependency on madoka which requires g++ to build the wheel
 FROM python:3.13
 
-ARG GUARDRAILS_TEMPLATE="guard-template.json"
-
 # Set environment variables to avoid writing .pyc files and to unbuffer Python output
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV LOGLEVEL="DEBUG"
 ENV GUARDRAILS_LOG_LEVEL="DEBUG"
 ENV APP_ENVIRONMENT="production"
-ENV GUARDRAILS_TEMPLATE=$GUARDRAILS_TEMPLATE
 
 WORKDIR /app
 
@@ -32,10 +29,8 @@ RUN pip install "uvicorn[standard]" --no-cache-dir
 
 RUN pip install -U "/app/guardrails-api"
 
-RUN --mount=type=secret,id=GUARDRAILS_TOKEN,env=GUARDRAILS_TOKEN guardrails configure --enable-metrics --enable-remote-inferencing --token $GUARDRAILS_TOKEN
-
-# Install Hub Deps and create config.py
-RUN guardrails hub install hub://guardrails/two_words
+# Install validators; could move this to requirements.txt now if we want
+RUN pip install "guardrails-ai-two-words==0.1.0"
 
 # Expose port 8000 for the application
 EXPOSE 8000

@@ -23,7 +23,7 @@ pip install -e ".[dev]"
 ### 1. Install Guardrails Hub validators
 
 ```bash
-guardrails hub install hub://guardrails/detect_pii
+pip install guardrails-ai-detect-pii
 ```
 
 ### 2. Set up your guards
@@ -34,7 +34,7 @@ Create a `config.py` that defines your guards:
 
 ```python
 from guardrails import Guard
-from guardrails.hub import DetectPII
+from guardrails_ai.detect_pii import DetectPII
 
 guard = Guard(name="pii-guard")
 guard.use(DetectPII(pii_entities=["EMAIL_ADDRESS", "PHONE_NUMBER"]))
@@ -68,6 +68,12 @@ DB_URL=postgresql://postgres:password@localhost:5432/guardrails
 ```
 
 When a database is configured, schema migrations run automatically on startup and guards can be created, updated, and deleted via the API.
+
+Guards themselves live in the database, so `config.py` does not need to define any. However, any validator you plan to use at runtime must be imported at startup so its class is registered in the process. Import them in your `config.py`:
+
+```py
+from guardrails_ai.detect_pii import DetectPII  # noqa: F401 — imported for validator registration
+```
 
 ### 3. Start the server
 
@@ -241,4 +247,4 @@ gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 "guardrails_api.ap
 
 **In-memory (default):** Guards are loaded from `config.py` at startup. The API is read-only — guards cannot be created or updated via the API.
 
-**PostgreSQL:** Full CRUD via the API. Guards defined in `config.py` are seeded on startup. Schema migrations run automatically.
+**PostgreSQL:** Full CRUD via the API. Guards are persisted in the database, not seeded from `config.py`. Schema migrations run automatically on startup, and any validators imported in `config.py` are registered so they can be referenced by guards created via the API.
