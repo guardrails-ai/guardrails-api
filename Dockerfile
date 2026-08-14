@@ -39,7 +39,8 @@ RUN pip install "guardrails-ai-detect-pii==0.0.6" && \
     pip install "guardrails-ai-competitor-check==0.0.2"
 
 # Fetch AWS RDS cert
-RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o ./global-bundle.pem
+RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o ./global-bundle.pem && \
+    echo "e5bb2084ccf45087bda1c9bffdea0eb15ee67f0b91646106e466714f9de3c7e3  ./global-bundle.pem" | sha256sum -c -
 
 # Copy the rest over
 # We use a .dockerignore to keep unwanted files exluded
